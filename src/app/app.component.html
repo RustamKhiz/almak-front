@@ -1,1 +1,15 @@
-hello!
+<div class="app-shell" *ngIf="!isAuthPage(); else authOnly">
+  <app-navigation-menu class="sidebar"></app-navigation-menu>
+  <main class="content">
+    <header class="topbar">
+      <div class="page-title">Manager Panel</div>
+    </header>
+    <section class="page">
+      <router-outlet></router-outlet>
+    </section>
+  </main>
+</div>
+
+<ng-template #authOnly>
+  <router-outlet></router-outlet>
+</ng-template>

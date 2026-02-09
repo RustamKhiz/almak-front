@@ -1,0 +1,23 @@
+<div class="auth-page">
+  <mat-card class="auth-card">
+    <h1>Форма</h1>
+    <form [formGroup]="form" (ngSubmit)="onSubmitClick()">
+      <mat-form-field appearance="outline">
+        <mat-label>Логин</mat-label>
+        <input matInput formControlName="login" autocomplete="username" />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Пароль</mat-label>
+        <input
+          matInput
+          type="password"
+          formControlName="password"
+          autocomplete="current-password"
+        />
+      </mat-form-field>
+
+      <button mat-flat-button color="primary" type="submit">Войти</button>
+    </form>
+  </mat-card>
+</div>

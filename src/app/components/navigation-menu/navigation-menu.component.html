@@ -1,0 +1,16 @@
+<div class="nav">
+  <div class="brand">Almak CRM</div>
+  <mat-nav-list>
+    <a
+      mat-list-item
+      routerLink="/orders"
+      routerLinkActive="active"
+      [routerLinkActiveOptions]="{ exact: true }"
+    >
+      <span class="nav-item"> All Orders</span>
+    </a>
+    <a mat-list-item routerLink="/orders-charts" routerLinkActive="active">
+      <span class="nav-item"> Charts</span>
+    </a>
+  </mat-nav-list>
+</div>

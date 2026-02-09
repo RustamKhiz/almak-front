@@ -1,0 +1,40 @@
+:host {
+  display: block;
+  height: 100%;
+}
+
+.nav {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: #111827;
+  color: #f9fafb;
+  padding: 20px 12px;
+  box-shadow: 2px 0 12px rgba(17, 24, 39, 0.2);
+}
+
+.nav-item {
+  color: #f9fafb;
+}
+
+.brand {
+  font-size: 18px;
+  font-weight: 700;
+  margin: 4px 8px 16px;
+}
+
+mat-nav-list a {
+  color: #e5e7eb;
+  border-radius: 8px;
+  margin: 4px 0;
+}
+
+mat-nav-list {
+  flex: 1;
+}
+
+mat-nav-list a.active,
+mat-nav-list a:hover {
+  background: #1f2937;
+  color: #ffffff;
+}
