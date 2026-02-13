@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 import { OrderCreateComponent } from '../../components/order-create/order-create.component';
 
 @Component({
@@ -8,4 +9,13 @@ import { OrderCreateComponent } from '../../components/order-create/order-create
   styleUrl: './order.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class OrderComponent {}
+export class OrderComponent {
+  private readonly route = inject(ActivatedRoute);
+
+  protected readonly orderId = signal<number | undefined>(undefined);
+
+  constructor() {
+    const id = this.route.snapshot.paramMap.get('id');
+    this.orderId.set(id ? Number(id) : undefined);
+  }
+}

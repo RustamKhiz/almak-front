@@ -44,6 +44,10 @@
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
 }
 
+.order-create__comment {
+  grid-column: 1 / -1;
+}
+
 .door-list {
   display: grid;
   gap: 12px;
@@ -73,6 +77,11 @@
   display: grid;
   align-content: center;
   justify-items: end;
+  gap: 8px;
+}
+
+.door-item__actions {
+  display: grid;
   gap: 8px;
 }
 

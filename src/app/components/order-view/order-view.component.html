@@ -1,4 +1,4 @@
-<section class="order-view">
+﻿<section class="order-view">
   <header class="order-view__header">
     <div>
       <h1>Просмотр заказа</h1>
@@ -6,6 +6,15 @@
         <p>Заказ №{{ state()!.id }}</p>
       }
     </div>
+    @if (state()) {
+      <div class="order-view__actions">
+        <button mat-stroked-button (click)="onPrintClick()">Печать</button>
+        <button mat-stroked-button (click)="onDownloadClick()">Скачать .doc</button>
+        <button mat-stroked-button color="primary" [routerLink]="['/order', state()!.id, 'edit']">
+          Редактировать
+        </button>
+      </div>
+    }
   </header>
 
   @if (isLoading()) {
@@ -34,6 +43,10 @@
           <div>
             <div class="order-view__label">Количество</div>
             <div class="order-view__value">{{ state()!.data.quantity }}</div>
+          </div>
+          <div>
+            <div class="order-view__label">Комментарий</div>
+            <div class="order-view__value">{{ state()!.data.comment }}</div>
           </div>
         </div>
       </div>

@@ -6,7 +6,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatRadioModule } from '@angular/material/radio';
-import { DoorItem, DoorLeafType, DoorType } from '../order-create/order-create.component';
+import { DoorItem, DoorLeafType, DoorType } from '../../types/order.types';
 
 export type DoorDialogData = {
   mode: 'create' | 'edit';

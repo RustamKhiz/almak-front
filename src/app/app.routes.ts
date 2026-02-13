@@ -11,6 +11,7 @@ export const routes: Routes = [
   { path: 'orders', component: OrdersComponent, title: 'Все заказы', canActivate: [authGuard] },
   { path: 'order', component: OrderComponent, title: 'Заказ', canActivate: [authGuard] },
   { path: 'order/:id', component: OrderViewComponent, title: 'Просмотр заказа', canActivate: [authGuard] },
+  { path: 'order/:id/edit', component: OrderComponent, title: 'Редактирование заказа', canActivate: [authGuard] },
   {
     path: 'orders-charts',
     component: OrdersChartsComponent,

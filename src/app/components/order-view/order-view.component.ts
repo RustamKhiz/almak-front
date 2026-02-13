@@ -1,6 +1,11 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
-import { DoorItem, OrderCreatePayload } from '../order-create/order-create.component';
+import { ActivatedRoute, RouterModule } from '@angular/router';
+import { MatButtonModule } from '@angular/material/button';
+import { FileDownloadService } from '../../services/file-download.service';
+import { OrderDocumentService } from '../../services/order-document.service';
+import { OrdersService } from '../../services/orders.service';
+import { OrderPrintService } from '../../services/order-print.service';
+import { OrderCreatePayload } from '../../types/order.types';
 
 export type OrderViewState = {
   id: number;
@@ -9,12 +14,17 @@ export type OrderViewState = {
 
 @Component({
   selector: 'app-order-view',
+  imports: [MatButtonModule, RouterModule],
   templateUrl: './order-view.component.html',
   styleUrl: './order-view.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class OrderViewComponent {
   private readonly route = inject(ActivatedRoute);
+  private readonly orderDocumentService = inject(OrderDocumentService);
+  private readonly fileDownloadService = inject(FileDownloadService);
+  private readonly orderPrintService = inject(OrderPrintService);
+  private readonly ordersService = inject(OrdersService);
 
   protected readonly isLoading = signal(true);
   protected readonly state = signal<OrderViewState | null>(null);
@@ -26,43 +36,29 @@ export class OrderViewComponent {
 
   private fetchOrder(id: number): void {
     this.isLoading.set(true);
-    setTimeout(() => {
-      const data = this.mockOrder(id);
+    this.ordersService.getOrder(id).subscribe((data) => {
       this.state.set({ id, data });
       this.isLoading.set(false);
-    }, 400);
+    });
   }
 
-  private mockOrder(id: number): OrderCreatePayload {
-    const orders: DoorItem[] = [
-      {
-        id: 1,
-        type: 'Entrance',
-        model: 'Nordic',
-        price: 450,
-        color: 'White',
-        width: 90,
-        height: 210,
-        leafType: 'Single',
-        count: 1,
-      },
-    ];
+  protected onDownloadClick(): void {
+    const current = this.state();
+    if (!current) {
+      return;
+    }
 
-    return {
-      name: 'Иван Петров',
-      phone: '+7 900 000-00-00',
-      date: this.todayIso(),
-      prepayment: 100,
-      quantity: orders.reduce((sum, item) => sum + item.count, 0),
-      orders,
-    };
+    const blob = this.orderDocumentService.createDocBlob(current.id, current.data);
+    this.fileDownloadService.download(blob, `order-${current.id}.doc`);
   }
 
-  private todayIso(): string {
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, '0');
-    const day = String(now.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
+  protected onPrintClick(): void {
+    const current = this.state();
+    if (!current) {
+      return;
+    }
+
+    const html = this.orderDocumentService.buildOrderHtml(current.id, current.data);
+    this.orderPrintService.printHtml(html);
   }
 }

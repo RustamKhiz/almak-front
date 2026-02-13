@@ -1,9 +1,10 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, AfterViewInit, ViewChild, inject } from '@angular/core';
+﻿import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, AfterViewInit, ViewChild, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatSort, MatSortModule } from '@angular/material/sort';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Router } from '@angular/router';
 import { OrderRecord, OrderStatus, OrdersService } from '../../services/orders.service';
 
 @Component({
@@ -15,6 +16,7 @@ import { OrderRecord, OrderStatus, OrdersService } from '../../services/orders.s
 })
 export class OrdersTableComponent implements OnInit, AfterViewInit {
   private readonly ordersService = inject(OrdersService);
+  private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
 
   protected readonly dataSource = new MatTableDataSource<OrderRecord>([]);
@@ -26,6 +28,7 @@ export class OrdersTableComponent implements OnInit, AfterViewInit {
     'count',
     'price',
     'prepayment',
+    'comment',
     'status',
   ] as const;
 
@@ -54,6 +57,8 @@ export class OrdersTableComponent implements OnInit, AfterViewInit {
           return item.customer;
         case 'phone':
           return item.phone;
+        case 'comment':
+          return item.comment;
         case 'status':
           return item.status;
         default:
@@ -78,4 +83,11 @@ export class OrdersTableComponent implements OnInit, AfterViewInit {
     this.sort.disableClear = true;
     this.sort.sortChange.emit({ active: 'date', direction: 'asc' });
   }
+
+  protected onRowClick(row: OrderRecord): void {
+    this.ordersService.createOrder().subscribe((id) => {
+      void this.router.navigate(['/order', id]);
+    });
+  }
 }
+

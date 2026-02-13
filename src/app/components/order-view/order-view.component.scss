@@ -24,6 +24,13 @@
   color: #6b7280;
 }
 
+.order-view__actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
 .order-view__card {
   background: #ffffff;
   border-radius: 16px;
@@ -85,4 +92,16 @@
   background: #fafafa;
   text-align: center;
   color: #6b7280;
+}
+
+@media (max-width: 720px) {
+  .order-view__header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .order-view__actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
 }

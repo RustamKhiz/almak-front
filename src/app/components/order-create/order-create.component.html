@@ -1,7 +1,7 @@
-<section class="order-create">
+﻿<section class="order-create">
   <header class="order-create__header">
     <div>
-      <h1>Создать заказ</h1>
+      <h1>{{ isEditMode() ? 'Редактировать заказ' : 'Создать заказ' }}</h1>
       <p>Добавьте двери и проверьте список перед сохранением заказа.</p>
     </div>
     <button mat-flat-button color="primary" (click)="onAddDoorClick()">Добавить дверь</button>
@@ -49,6 +49,14 @@
           <mat-error>Введите число >= 1</mat-error>
         }
       </mat-form-field>
+
+      <mat-form-field appearance="outline" class="order-create__comment">
+        <mat-label>Комментарий</mat-label>
+        <textarea matInput formControlName="comment" rows="3"></textarea>
+        @if (form.controls.comment.touched && form.controls.comment.invalid) {
+          <mat-error>Обязательное поле</mat-error>
+        }
+      </mat-form-field>
     </div>
   </form>
 
@@ -57,17 +65,21 @@
       @for (door of doors(); track $index) {
         <div class="door-item">
           <div class="door-item__main">
-            <div class="door-item__title">{{ door.type }} дверь {{ door.model }}</div>
+            <div class="door-item__title">{{ door.type }} дверь · {{ door.model }}</div>
             <div class="door-item__meta">
-              {{ door.width }}Г—{{ door.height }} СМ {{ door.leafType }} количество
-              {{ door.count }}
+              {{ door.width }}×{{ door.height }} см · {{ door.leafType }} · количество {{ door.count }}
             </div>
           </div>
           <div class="door-item__aside">
             <div class="door-item__price">${{ door.price | number: '1.0-0' }}</div>
-            <button mat-stroked-button color="primary" (click)="onEditDoorClick(door.id)">
-              Редактировать
-            </button>
+            <div class="door-item__actions">
+              <button mat-stroked-button color="primary" (click)="onEditDoorClick(door.id)">
+                Редактировать
+              </button>
+              <button mat-stroked-button color="warn" (click)="onRemoveDoorClick(door.id)">
+                Удалить
+              </button>
+            </div>
           </div>
         </div>
       }

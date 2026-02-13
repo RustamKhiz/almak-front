@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input, OnInit, inject, signal } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -11,33 +11,8 @@ import {
   DoorDialogData,
   DoorDialogResult,
 } from '../order-door-dialog/order-door-dialog.component';
-
-export type DoorType = 'Entrance' | 'Interior';
-export type DoorLeafType = 'Single' | 'Double';
-
-export type DoorItem = {
-  id: number;
-  type: DoorType;
-  model: string;
-  price: number;
-  color: string;
-  width: number;
-  height: number;
-  leafType: DoorLeafType;
-  count: number;
-};
-
-export type OrderCustomerForm = {
-  name: string;
-  phone: string;
-  date: string;
-  prepayment: number;
-  quantity: number;
-};
-
-export type OrderCreatePayload = OrderCustomerForm & {
-  orders: readonly DoorItem[];
-};
+import { OrdersService } from '../../services/orders.service';
+import { DoorItem, OrderCreatePayload } from '../../types/order.types';
 
 @Component({
   selector: 'app-order-create',
@@ -53,13 +28,17 @@ export type OrderCreatePayload = OrderCustomerForm & {
   styleUrl: './order-create.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class OrderCreateComponent {
+export class OrderCreateComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly dialog = inject(MatDialog);
+  private readonly ordersService = inject(OrdersService);
   private readonly router = inject(Router);
+
+  @Input() orderId?: number;
 
   protected readonly doors = signal<readonly DoorItem[]>([]);
   protected readonly showOrdersError = signal(false);
+  protected readonly isEditMode = signal(false);
 
   protected readonly form = this.fb.group({
     name: ['', [Validators.required]],
@@ -67,7 +46,19 @@ export class OrderCreateComponent {
     date: [this.todayIso(), [Validators.required]],
     prepayment: [0, [Validators.required, Validators.min(0)]],
     quantity: [{ value: 0, disabled: true }, [Validators.required, Validators.min(1)]],
+    comment: [''],
   });
+
+  ngOnInit(): void {
+    if (!this.orderId) {
+      return;
+    }
+
+    this.isEditMode.set(true);
+    this.ordersService.getOrder(this.orderId).subscribe((order) => {
+      this.applyOrder(order);
+    });
+  }
 
   protected onAddDoorClick(): void {
     const dialogRef = this.dialog.open(DoorDialogComponent, {
@@ -113,6 +104,12 @@ export class OrderCreateComponent {
     });
   }
 
+  protected onRemoveDoorClick(id: number): void {
+    const current = this.doors();
+    this.doors.set(current.filter((item) => item.id !== id));
+    this.syncQuantity();
+  }
+
   protected onSaveClick(): void {
     const hasOrders = this.doors().length > 0;
     this.showOrdersError.set(!hasOrders);
@@ -129,11 +126,12 @@ export class OrderCreateComponent {
       date: value.date ?? this.todayIso(),
       prepayment: Number(value.prepayment ?? 0),
       quantity: this.totalQuantity(),
+      comment: value.comment ?? '',
       orders: this.doors(),
     };
 
     console.log('Order payload', payload);
-    this.createOrder(payload);
+    this.saveOrder(payload);
   }
 
   private nextId(current: readonly DoorItem[]): number {
@@ -151,12 +149,29 @@ export class OrderCreateComponent {
     }
   }
 
-  private createOrder(payload: OrderCreatePayload): void {
-    console.log('Creating order (mock)...', payload);
-    setTimeout(() => {
-      const createdId = 1;
-      void this.router.navigate(['/order', createdId]);
-    }, 400);
+  private saveOrder(payload: OrderCreatePayload): void {
+    if (this.isEditMode() && this.orderId) {
+      this.ordersService.updateOrder(this.orderId, payload).subscribe((id) => {
+        void this.router.navigate(['/order', id]);
+      });
+      return;
+    }
+
+    this.ordersService.createOrder().subscribe((id) => {
+      void this.router.navigate(['/order', id]);
+    });
+  }
+
+  private applyOrder(order: OrderCreatePayload): void {
+    this.doors.set(order.orders);
+    this.form.patchValue({
+      name: order.name,
+      phone: order.phone,
+      date: order.date,
+      prepayment: order.prepayment,
+      comment: order.comment,
+    });
+    this.syncQuantity();
   }
 
   private todayIso(): string {
