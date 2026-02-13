@@ -48,6 +48,10 @@
             <div class="order-view__label">Комментарий</div>
             <div class="order-view__value">{{ state()!.data.comment }}</div>
           </div>
+          <div>
+            <div class="order-view__label">Статус</div>
+            <div class="order-view__value">{{ statusLabels[state()!.data.status] }}</div>
+          </div>
         </div>
       </div>
 

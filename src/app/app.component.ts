@@ -6,15 +6,16 @@ import {
   inject,
   signal,
 } from '@angular/core';
-import { NgIf } from '@angular/common';
 import { NavigationEnd, Router, RouterOutlet } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { filter } from 'rxjs/operators';
+import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
 import { NavigationMenuComponent } from './components/navigation-menu/navigation-menu.component';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, NavigationMenuComponent],
+  imports: [RouterOutlet, NavigationMenuComponent, MatButtonModule, MatIconModule],
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -37,5 +38,10 @@ export class AppComponent implements OnInit {
         const url = (event as NavigationEnd).urlAfterRedirects;
         this.isAuthPage.set(url.startsWith('/auth'));
       });
+  }
+
+  protected onLogoutClick(): void {
+    localStorage.clear();
+    void this.router.navigate(['/auth']);
   }
 }

@@ -5,7 +5,8 @@ import { MatChipsModule } from '@angular/material/chips';
 import { MatSort, MatSortModule } from '@angular/material/sort';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
-import { OrderRecord, OrderStatus, OrdersService } from '../../services/orders.service';
+import { OrdersService, OrderRecord } from '../../services/orders.service';
+import { OrderStatus } from '../../types/order.types';
 
 @Component({
   selector: 'app-orders-table',

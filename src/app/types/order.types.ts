@@ -1,5 +1,10 @@
 export type DoorType = 'Entrance' | 'Interior';
 export type DoorLeafType = 'Single' | 'Double';
+export enum OrderStatus {
+  Accepted = 0,
+  Progress = 1,
+  Completed = 2,
+}
 
 export type DoorItem = {
   id: number;
@@ -20,6 +25,7 @@ export type OrderCustomerForm = {
   prepayment: number;
   quantity: number;
   comment: string;
+  status: OrderStatus;
 };
 
 export type OrderCreatePayload = OrderCustomerForm & {

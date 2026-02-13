@@ -1,13 +1,7 @@
-import { Injectable } from '@angular/core';
+﻿import { Injectable } from '@angular/core';
 import { Observable, of } from 'rxjs';
 import { delay } from 'rxjs/operators';
-import { DoorItem, OrderCreatePayload } from '../types/order.types';
-
-export enum OrderStatus {
-  Accepted = 0,
-  Progress = 1,
-  Completed = 2,
-}
+import { DoorItem, OrderCreatePayload, OrderStatus } from '../types/order.types';
 
 export type OrderRecord = {
   id: number;
@@ -96,6 +90,7 @@ export class OrdersService {
       prepayment: 100,
       quantity: orders.reduce((sum, item) => sum + item.count, 0),
       comment: `Заказ ${id} (мок)`,
+      status: OrderStatus.Accepted,
       orders,
     }).pipe(delay(400));
   }

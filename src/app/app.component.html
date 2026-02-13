@@ -1,9 +1,18 @@
-@if (!isAuthPage()) {
+﻿@if (!isAuthPage()) {
   <div class="app-shell">
     <app-navigation-menu class="sidebar"></app-navigation-menu>
     <main class="content">
       <header class="topbar">
         <div class="page-title">Панель менеджеров</div>
+        <button
+          mat-icon-button
+          type="button"
+          class="logout-button"
+          aria-label="Выйти"
+          (click)="onLogoutClick()"
+        >
+          <mat-icon>logout</mat-icon>
+        </button>
       </header>
       <section class="page">
         <router-outlet></router-outlet>

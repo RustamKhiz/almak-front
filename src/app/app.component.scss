@@ -28,6 +28,7 @@
   height: 56px;
   display: flex;
   align-items: center;
+  justify-content: space-between;
   padding: 0 20px;
   background: #ffffff;
   border-bottom: 1px solid #e5e7eb;
@@ -36,6 +37,10 @@
 .page-title {
   font-size: 16px;
   font-weight: 600;
+}
+
+.logout-button {
+  color: #374151;
 }
 
 .page {

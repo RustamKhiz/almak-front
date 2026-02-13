@@ -50,6 +50,17 @@
         }
       </mat-form-field>
 
+      @if (isEditMode()) {
+        <mat-form-field appearance="outline">
+          <mat-label>Статус</mat-label>
+          <mat-select formControlName="status">
+            @for (status of statusOptions; track status) {
+              <mat-option [value]="status">{{ statusLabels[status] }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      }
+
       <mat-form-field appearance="outline" class="order-create__comment">
         <mat-label>Комментарий</mat-label>
         <textarea matInput formControlName="comment" rows="3"></textarea>

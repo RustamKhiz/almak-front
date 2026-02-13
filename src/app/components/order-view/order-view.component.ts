@@ -5,7 +5,7 @@ import { FileDownloadService } from '../../services/file-download.service';
 import { OrderDocumentService } from '../../services/order-document.service';
 import { OrdersService } from '../../services/orders.service';
 import { OrderPrintService } from '../../services/order-print.service';
-import { OrderCreatePayload } from '../../types/order.types';
+import { OrderCreatePayload, OrderStatus } from '../../types/order.types';
 
 export type OrderViewState = {
   id: number;
@@ -28,6 +28,11 @@ export class OrderViewComponent {
 
   protected readonly isLoading = signal(true);
   protected readonly state = signal<OrderViewState | null>(null);
+  protected readonly statusLabels: Record<OrderStatus, string> = {
+    [OrderStatus.Accepted]: 'Принят',
+    [OrderStatus.Progress]: 'В процессе',
+    [OrderStatus.Completed]: 'Завершен',
+  };
 
   constructor() {
     const id = Number(this.route.snapshot.paramMap.get('id') ?? 0);

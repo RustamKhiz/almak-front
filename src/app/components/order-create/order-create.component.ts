@@ -5,6 +5,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
 import { Router } from '@angular/router';
 import {
   DoorDialogComponent,
@@ -12,7 +13,7 @@ import {
   DoorDialogResult,
 } from '../order-door-dialog/order-door-dialog.component';
 import { OrdersService } from '../../services/orders.service';
-import { DoorItem, OrderCreatePayload } from '../../types/order.types';
+import { DoorItem, OrderCreatePayload, OrderStatus } from '../../types/order.types';
 
 @Component({
   selector: 'app-order-create',
@@ -23,6 +24,7 @@ import { DoorItem, OrderCreatePayload } from '../../types/order.types';
     MatDialogModule,
     MatFormFieldModule,
     MatInputModule,
+    MatSelectModule,
   ],
   templateUrl: './order-create.component.html',
   styleUrl: './order-create.component.scss',
@@ -39,6 +41,16 @@ export class OrderCreateComponent implements OnInit {
   protected readonly doors = signal<readonly DoorItem[]>([]);
   protected readonly showOrdersError = signal(false);
   protected readonly isEditMode = signal(false);
+  protected readonly statusOptions: readonly OrderStatus[] = [
+    OrderStatus.Accepted,
+    OrderStatus.Progress,
+    OrderStatus.Completed,
+  ];
+  protected readonly statusLabels: Record<OrderStatus, string> = {
+    [OrderStatus.Accepted]: 'Принят',
+    [OrderStatus.Progress]: 'В процессе',
+    [OrderStatus.Completed]: 'Завершен',
+  };
 
   protected readonly form = this.fb.group({
     name: ['', [Validators.required]],
@@ -47,6 +59,7 @@ export class OrderCreateComponent implements OnInit {
     prepayment: [0, [Validators.required, Validators.min(0)]],
     quantity: [{ value: 0, disabled: true }, [Validators.required, Validators.min(1)]],
     comment: [''],
+    status: [OrderStatus.Accepted, [Validators.required]],
   });
 
   ngOnInit(): void {
@@ -127,6 +140,7 @@ export class OrderCreateComponent implements OnInit {
       prepayment: Number(value.prepayment ?? 0),
       quantity: this.totalQuantity(),
       comment: value.comment ?? '',
+      status: Number(value.status ?? OrderStatus.Accepted) as OrderStatus,
       orders: this.doors(),
     };
 
@@ -170,6 +184,7 @@ export class OrderCreateComponent implements OnInit {
       date: order.date,
       prepayment: order.prepayment,
       comment: order.comment,
+      status: order.status,
     });
     this.syncQuantity();
   }
