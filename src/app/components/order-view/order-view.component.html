@@ -1,3 +1,63 @@
-<div class="order-view">
-  <!-- order details here -->
-</div>
+<section class="order-view">
+  <header class="order-view__header">
+    <div>
+      <h1>Просмотр заказа</h1>
+      @if (state()) {
+        <p>Заказ №{{ state()!.id }}</p>
+      }
+    </div>
+  </header>
+
+  @if (isLoading()) {
+    <div class="order-view__loading">Загрузка...</div>
+  } @else {
+    @if (state()) {
+      <div class="order-view__card">
+        <h2>Клиент</h2>
+        <div class="order-view__grid">
+          <div>
+            <div class="order-view__label">Имя</div>
+            <div class="order-view__value">{{ state()!.data.name }}</div>
+          </div>
+          <div>
+            <div class="order-view__label">Телефон</div>
+            <div class="order-view__value">{{ state()!.data.phone }}</div>
+          </div>
+          <div>
+            <div class="order-view__label">Дата</div>
+            <div class="order-view__value">{{ state()!.data.date }}</div>
+          </div>
+          <div>
+            <div class="order-view__label">Предоплата</div>
+            <div class="order-view__value">{{ state()!.data.prepayment }}</div>
+          </div>
+          <div>
+            <div class="order-view__label">Количество</div>
+            <div class="order-view__value">{{ state()!.data.quantity }}</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="order-view__card">
+        <h2>Товары</h2>
+        @if (state()!.data.orders.length) {
+          <div class="order-view__list">
+            @for (door of state()!.data.orders; track door.id) {
+              <div class="order-view__item">
+                <div>
+                  <div class="order-view__value">{{ door.type }} дверь · {{ door.model }}</div>
+                  <div class="order-view__meta">
+                    {{ door.width }}×{{ door.height }} см · {{ door.leafType }} · количество {{ door.count }}
+                  </div>
+                </div>
+                <div class="order-view__price">${{ door.price }}</div>
+              </div>
+            }
+          </div>
+        } @else {
+          <div class="order-view__empty">Нет товаров.</div>
+        }
+      </div>
+    }
+  }
+</section>

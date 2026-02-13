@@ -1,4 +1,11 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  DestroyRef,
+  OnInit,
+  inject,
+  signal,
+} from '@angular/core';
 import { NgIf } from '@angular/common';
 import { NavigationEnd, Router, RouterOutlet } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -7,7 +14,7 @@ import { NavigationMenuComponent } from './components/navigation-menu/navigation
 
 @Component({
   selector: 'app-root',
-  imports: [NgIf, RouterOutlet, NavigationMenuComponent],
+  imports: [RouterOutlet, NavigationMenuComponent],
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

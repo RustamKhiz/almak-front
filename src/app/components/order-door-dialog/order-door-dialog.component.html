@@ -1,0 +1,60 @@
+<h2 mat-dialog-title>{{ title }}</h2>
+
+<form class="dialog-form" [formGroup]="form">
+  <mat-form-field appearance="outline">
+    <mat-label>Door Type</mat-label>
+    <mat-select formControlName="type">
+      <mat-option value="Entrance">Entrance door</mat-option>
+      <mat-option value="Interior">Interior door</mat-option>
+    </mat-select>
+  </mat-form-field>
+
+  <mat-form-field appearance="outline">
+    <mat-label>Model</mat-label>
+    <input matInput formControlName="model" />
+  </mat-form-field>
+
+  <mat-form-field appearance="outline">
+    <mat-label>Price</mat-label>
+    <input matInput type="number" formControlName="price" />
+  </mat-form-field>
+
+  <mat-form-field appearance="outline">
+    <mat-label>Color</mat-label>
+    <input matInput formControlName="color" />
+  </mat-form-field>
+
+  <div class="dialog-row">
+    <mat-form-field appearance="outline">
+      <mat-label>Width (cm)</mat-label>
+      <input matInput type="number" formControlName="width" />
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Height (cm)</mat-label>
+      <input matInput type="number" formControlName="height" />
+    </mat-form-field>
+  </div>
+
+  <div class="dialog-row">
+    <mat-form-field appearance="outline">
+      <mat-label>Count</mat-label>
+      <input matInput type="number" formControlName="count" />
+    </mat-form-field>
+
+    <div class="leaf-type">
+      <div class="leaf-type__label">Leaf Type</div>
+      <mat-radio-group formControlName="leafType">
+        <mat-radio-button value="Single">Single</mat-radio-button>
+        <mat-radio-button value="Double">Double</mat-radio-button>
+      </mat-radio-group>
+    </div>
+  </div>
+</form>
+
+<div mat-dialog-actions align="end">
+  <button mat-stroked-button (click)="onCancelClick()">Cancel</button>
+  <button mat-flat-button color="primary" [disabled]="form.invalid" (click)="onSaveClick()">
+    Save
+  </button>
+</div>

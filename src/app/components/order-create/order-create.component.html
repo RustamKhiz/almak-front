@@ -1,3 +1,89 @@
-<div class="order-create">
-  <!-- create form here -->
-</div>
+<section class="order-create">
+  <header class="order-create__header">
+    <div>
+      <h1>Создать заказ</h1>
+      <p>Добавьте двери и проверьте список перед сохранением заказа.</p>
+    </div>
+    <button mat-flat-button color="primary" (click)="onAddDoorClick()">Добавить дверь</button>
+  </header>
+
+  <form class="order-create__form" [formGroup]="form">
+    <h2>Данные клиента</h2>
+    <div class="order-create__form-grid">
+      <mat-form-field appearance="outline">
+        <mat-label>Имя</mat-label>
+        <input matInput formControlName="name" />
+        @if (form.controls.name.touched && form.controls.name.invalid) {
+          <mat-error>Обязательное поле</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Телефон</mat-label>
+        <input matInput formControlName="phone" />
+        @if (form.controls.phone.touched && form.controls.phone.invalid) {
+          <mat-error>Обязательное поле</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Дата</mat-label>
+        <input matInput type="date" formControlName="date" />
+        @if (form.controls.date.touched && form.controls.date.invalid) {
+          <mat-error>Обязательное поле</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Предоплата</mat-label>
+        <input matInput type="number" formControlName="prepayment" />
+        @if (form.controls.prepayment.touched && form.controls.prepayment.invalid) {
+          <mat-error>Введите число >= 0</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Количество</mat-label>
+        <input matInput type="number" formControlName="quantity" readonly />
+        @if (form.controls.quantity.touched && form.controls.quantity.invalid) {
+          <mat-error>Введите число >= 1</mat-error>
+        }
+      </mat-form-field>
+    </div>
+  </form>
+
+  @if (doors().length) {
+    <div class="door-list">
+      @for (door of doors(); track $index) {
+        <div class="door-item">
+          <div class="door-item__main">
+            <div class="door-item__title">{{ door.type }} дверь {{ door.model }}</div>
+            <div class="door-item__meta">
+              {{ door.width }}Г—{{ door.height }} СМ {{ door.leafType }} количество
+              {{ door.count }}
+            </div>
+          </div>
+          <div class="door-item__aside">
+            <div class="door-item__price">${{ door.price | number: '1.0-0' }}</div>
+            <button mat-stroked-button color="primary" (click)="onEditDoorClick(door.id)">
+              Редактировать
+            </button>
+          </div>
+        </div>
+      }
+    </div>
+  } @else {
+    <div class="empty">
+      <div class="empty__title">Двери пока не добавлены.</div>
+      <div class="empty__text">Нажмите «Добавить дверь», чтобы начать формирование заказа.</div>
+    </div>
+  }
+
+  @if (showOrdersError() && !doors().length) {
+    <div class="order-create__error">Добавьте хотя бы одну дверь.</div>
+  }
+
+  <div class="order-create__actions">
+    <button mat-flat-button color="primary" (click)="onSaveClick()">Сохранить</button>
+  </div>
+</section>
