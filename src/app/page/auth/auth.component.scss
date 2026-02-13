@@ -23,6 +23,15 @@ form {
   gap: 16px;
 }
 
+.auth-error {
+  color: #b91c1c;
+  background: #fee2e2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 14px;
+}
+
 button {
   height: 44px;
 }

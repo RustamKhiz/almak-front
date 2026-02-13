@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, Input, OnInit, inject, signal } from '@angular/core';
+﻿import { ChangeDetectionStrategy, Component, Input, OnInit, inject, signal } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -171,7 +171,7 @@ export class OrderCreateComponent implements OnInit {
       return;
     }
 
-    this.ordersService.createOrder().subscribe((id) => {
+    this.ordersService.createOrder(payload).subscribe((id) => {
       void this.router.navigate(['/order', id]);
     });
   }

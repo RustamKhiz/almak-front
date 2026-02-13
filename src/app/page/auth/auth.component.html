@@ -1,6 +1,6 @@
-<div class="auth-page">
+﻿<div class="auth-page">
   <mat-card class="auth-card">
-    <h1>Форма</h1>
+    <h1>Вход</h1>
     <form [formGroup]="form" (ngSubmit)="onSubmitClick()">
       <mat-form-field appearance="outline">
         <mat-label>Логин</mat-label>
@@ -17,7 +17,13 @@
         />
       </mat-form-field>
 
-      <button mat-flat-button color="primary" type="submit">Войти</button>
+      @if (authError()) {
+        <div class="auth-error">{{ authError() }}</div>
+      }
+
+      <button mat-flat-button color="primary" type="submit" [disabled]="isSubmitting()">
+        Войти
+      </button>
     </form>
   </mat-card>
 </div>

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnInit, inject } from '@angular/core';
+﻿import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
@@ -24,6 +24,8 @@ export class AuthComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly router = inject(Router);
   private readonly authService = inject(AuthService);
+  protected readonly authError = signal<string | null>(null);
+  protected readonly isSubmitting = signal(false);
 
   protected readonly form = this.fb.group({
     login: ['', [Validators.required]],
@@ -31,9 +33,9 @@ export class AuthComponent implements OnInit {
   });
 
   ngOnInit(): void {
-    // if (this.authService.hasToken()) {
-    //   this.router.navigateByUrl('/orders');
-    // }
+    if (this.authService.hasToken()) {
+      void this.router.navigateByUrl('/orders');
+    }
   }
 
   protected onSubmitClick(): void {
@@ -42,6 +44,23 @@ export class AuthComponent implements OnInit {
       return;
     }
 
-    this.router.navigateByUrl('/orders');
+    this.authError.set(null);
+    this.isSubmitting.set(true);
+    const value = this.form.getRawValue();
+    this.authService
+      .login({
+        login: value.login ?? '',
+        password: value.password ?? '',
+      })
+      .subscribe({
+        next: () => {
+          this.isSubmitting.set(false);
+          void this.router.navigateByUrl('/orders');
+        },
+        error: () => {
+          this.isSubmitting.set(false);
+          this.authError.set('Неверный логин или пароль');
+        },
+      });
   }
 }

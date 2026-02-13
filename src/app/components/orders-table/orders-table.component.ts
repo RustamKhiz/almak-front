@@ -86,9 +86,7 @@ export class OrdersTableComponent implements OnInit, AfterViewInit {
   }
 
   protected onRowClick(row: OrderRecord): void {
-    this.ordersService.createOrder().subscribe((id) => {
-      void this.router.navigate(['/order', id]);
-    });
+    void this.router.navigate(['/order', row.id]);
   }
 }
 
