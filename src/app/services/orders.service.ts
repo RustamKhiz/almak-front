@@ -15,7 +15,21 @@ type BackendOrder = {
   prepayment: number;
   comment: string;
   status: string;
+  orders?: BackendDoor[];
   created_at?: string;
+};
+
+type BackendDoor = {
+  id: number;
+  order_id: number;
+  type: string;
+  model: string;
+  price: number;
+  color: string;
+  width: number;
+  height: number;
+  leafType: string;
+  count: number;
 };
 
 type BackendOrderPayload = {
@@ -27,6 +41,18 @@ type BackendOrderPayload = {
   prepayment: number;
   comment: string;
   status: string;
+  orders: BackendDoorPayload[];
+};
+
+type BackendDoorPayload = {
+  type: string;
+  model: string;
+  price: number;
+  color: string;
+  width: number;
+  height: number;
+  leafType: string;
+  count: number;
 };
 
 export type OrderRecord = {
@@ -64,13 +90,19 @@ export class OrdersService {
 
   createOrder(payload: OrderCreatePayload): Observable<number> {
     return this.http
-      .post<BackendOrder>(`${this.coreService.apiBaseUrl}/orders`, this.mapCreatePayloadToBackend(payload))
+      .post<BackendOrder>(
+        `${this.coreService.apiBaseUrl}/orders`,
+        this.mapCreatePayloadToBackend(payload),
+      )
       .pipe(map((order) => order.id));
   }
 
   updateOrder(id: number, payload: OrderCreatePayload): Observable<number> {
     return this.http
-      .put<BackendOrder>(`${this.coreService.apiBaseUrl}/orders/${id}`, this.mapCreatePayloadToBackend(payload))
+      .put<BackendOrder>(
+        `${this.coreService.apiBaseUrl}/orders/${id}`,
+        this.mapCreatePayloadToBackend(payload),
+      )
       .pipe(map((order) => order.id));
   }
 
@@ -89,21 +121,8 @@ export class OrdersService {
   }
 
   private mapBackendOrderToCreatePayload(order: BackendOrder): OrderCreatePayload {
-    const count = Math.max(order.count, 1);
-    const unitPrice = count > 0 ? order.price / count : order.price;
-    const orders: DoorItem[] = [
-      {
-        id: 1,
-        type: 'Entrance',
-        model: 'Без детализации',
-        price: unitPrice,
-        color: '-',
-        width: 0,
-        height: 0,
-        leafType: 'Single',
-        count,
-      },
-    ];
+    const orders = (order.orders ?? []).map((item) => this.mapBackendDoorToDoorItem(item));
+    const resolvedOrders = orders.length ? orders : this.createFallbackDoors(order);
 
     return {
       name: order.customer,
@@ -113,7 +132,7 @@ export class OrdersService {
       quantity: order.count,
       comment: order.comment ?? '',
       status: this.mapBackendStatusToOrderStatus(order.status),
-      orders,
+      orders: resolvedOrders,
     };
   }
 
@@ -128,7 +147,49 @@ export class OrdersService {
       prepayment: payload.prepayment,
       comment: payload.comment,
       status: this.mapOrderStatusToBackendStatus(payload.status),
+      orders: payload.orders.map((item) => ({
+        type: item.type,
+        model: item.model,
+        price: item.price,
+        color: item.color,
+        width: item.width,
+        height: item.height,
+        leafType: item.leafType,
+        count: item.count,
+      })),
     };
+  }
+
+  private mapBackendDoorToDoorItem(door: BackendDoor): DoorItem {
+    return {
+      id: door.id,
+      type: door.type === 'Interior' ? 'Interior' : 'Entrance',
+      model: door.model,
+      price: door.price,
+      color: door.color,
+      width: door.width,
+      height: door.height,
+      leafType: door.leafType === 'Double' ? 'Double' : 'Single',
+      count: door.count,
+    };
+  }
+
+  private createFallbackDoors(order: BackendOrder): DoorItem[] {
+    const count = Math.max(order.count, 1);
+    const unitPrice = count > 0 ? order.price / count : order.price;
+    return [
+      {
+        id: 1,
+        type: 'Entrance',
+        model: 'Без детализации',
+        price: unitPrice,
+        color: '-',
+        width: 0,
+        height: 0,
+        leafType: 'Single',
+        count,
+      },
+    ];
   }
 
   private mapBackendStatusToOrderStatus(status: string): OrderStatus {

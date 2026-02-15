@@ -64,10 +64,11 @@
                 <div>
                   <div class="order-view__value">{{ door.type }} дверь · {{ door.model }}</div>
                   <div class="order-view__meta">
-                    {{ door.width }}×{{ door.height }} см · {{ door.leafType }} · количество {{ door.count }}
+                    {{ door.width }}×{{ door.height }} см · {{ door.leafType }} · количество
+                    {{ door.count }}
                   </div>
                 </div>
-                <div class="order-view__price">${{ door.price }}</div>
+                <div class="order-view__price">{{ door.price | number }} ₽</div>
               </div>
             }
           </div>

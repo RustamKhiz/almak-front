@@ -6,6 +6,7 @@ import { OrderDocumentService } from '../../services/order-document.service';
 import { OrdersService } from '../../services/orders.service';
 import { OrderPrintService } from '../../services/order-print.service';
 import { OrderCreatePayload, OrderStatus } from '../../types/order.types';
+import { DecimalPipe } from '@angular/common';
 
 export type OrderViewState = {
   id: number;
@@ -14,7 +15,7 @@ export type OrderViewState = {
 
 @Component({
   selector: 'app-order-view',
-  imports: [MatButtonModule, RouterModule],
+  imports: [MatButtonModule, RouterModule, DecimalPipe],
   templateUrl: './order-view.component.html',
   styleUrl: './order-view.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
