@@ -1,16 +1,19 @@
-﻿<section class="order-view">
+﻿@let $state = state();
+
+<section class="order-view">
   <header class="order-view__header">
     <div>
       <h1>Просмотр заказа</h1>
-      @if (state()) {
-        <p>Заказ №{{ state()!.id }}</p>
+      @if ($state) {
+        <p>Заказ №{{ $state.id }}</p>
       }
     </div>
-    @if (state()) {
+    @if ($state) {
       <div class="order-view__actions">
+        <button mat-stroked-button (click)="onDeleteClick()">Удалить</button>
         <button mat-stroked-button (click)="onPrintClick()">Печать</button>
         <button mat-stroked-button (click)="onDownloadClick()">Скачать .doc</button>
-        <button mat-stroked-button color="primary" [routerLink]="['/order', state()!.id, 'edit']">
+        <button mat-stroked-button color="primary" [routerLink]="['/order', $state.id, 'edit']">
           Редактировать
         </button>
       </div>
@@ -20,46 +23,46 @@
   @if (isLoading()) {
     <div class="order-view__loading">Загрузка...</div>
   } @else {
-    @if (state()) {
+    @if ($state) {
       <div class="order-view__card">
         <h2>Клиент</h2>
         <div class="order-view__grid">
           <div>
             <div class="order-view__label">Имя</div>
-            <div class="order-view__value">{{ state()!.data.name }}</div>
+            <div class="order-view__value">{{ $state.data.name }}</div>
           </div>
           <div>
             <div class="order-view__label">Телефон</div>
-            <div class="order-view__value">{{ state()!.data.phone }}</div>
+            <div class="order-view__value">{{ $state.data.phone }}</div>
           </div>
           <div>
             <div class="order-view__label">Дата</div>
-            <div class="order-view__value">{{ state()!.data.date }}</div>
+            <div class="order-view__value">{{ $state.data.date }}</div>
           </div>
           <div>
             <div class="order-view__label">Предоплата</div>
-            <div class="order-view__value">{{ state()!.data.prepayment }}</div>
+            <div class="order-view__value">{{ $state.data.prepayment }}</div>
           </div>
           <div>
             <div class="order-view__label">Количество</div>
-            <div class="order-view__value">{{ state()!.data.quantity }}</div>
+            <div class="order-view__value">{{ $state.data.quantity }}</div>
           </div>
           <div>
             <div class="order-view__label">Комментарий</div>
-            <div class="order-view__value">{{ state()!.data.comment }}</div>
+            <div class="order-view__value">{{ $state.data.comment }}</div>
           </div>
           <div>
             <div class="order-view__label">Статус</div>
-            <div class="order-view__value">{{ statusLabels[state()!.data.status] }}</div>
+            <div class="order-view__value">{{ statusLabels[$state.data.status] }}</div>
           </div>
         </div>
       </div>
 
       <div class="order-view__card">
         <h2>Товары</h2>
-        @if (state()!.data.orders.length) {
+        @if ($state.data.orders.length) {
           <div class="order-view__list">
-            @for (door of state()!.data.orders; track door.id) {
+            @for (door of $state.data.orders; track door.id) {
               <div class="order-view__item">
                 <div>
                   <div class="order-view__value">{{ door.type }} дверь · {{ door.model }}</div>

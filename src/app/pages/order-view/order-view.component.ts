@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { FileDownloadService } from '../../services/file-download.service';
@@ -7,8 +7,9 @@ import { OrdersService } from '../../services/orders.service';
 import { OrderPrintService } from '../../services/order-print.service';
 import { OrderCreatePayload, OrderStatus } from '../../types/order.types';
 import { DecimalPipe } from '@angular/common';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
-export type OrderViewState = {
+type OrderViewState = {
   id: number;
   data: OrderCreatePayload;
 };
@@ -26,6 +27,7 @@ export class OrderViewComponent {
   private readonly fileDownloadService = inject(FileDownloadService);
   private readonly orderPrintService = inject(OrderPrintService);
   private readonly ordersService = inject(OrdersService);
+  private readonly destroyRef = inject(DestroyRef);
 
   protected readonly isLoading = signal(true);
   protected readonly state = signal<OrderViewState | null>(null);
@@ -40,13 +42,7 @@ export class OrderViewComponent {
     this.fetchOrder(id);
   }
 
-  private fetchOrder(id: number): void {
-    this.isLoading.set(true);
-    this.ordersService.getOrder(id).subscribe((data) => {
-      this.state.set({ id, data });
-      this.isLoading.set(false);
-    });
-  }
+  protected onDeleteClick(): void {}
 
   protected onDownloadClick(): void {
     const current = this.state();
@@ -67,4 +63,16 @@ export class OrderViewComponent {
     const html = this.orderDocumentService.buildOrderHtml(current.id, current.data);
     this.orderPrintService.printHtml(html);
   }
+
+  private fetchOrder(id: number): void {
+    this.isLoading.set(true);
+    this.ordersService
+      .getOrder(id)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((data) => {
+        this.state.set({ id, data });
+        this.isLoading.set(false);
+      });
+  }
 }
+

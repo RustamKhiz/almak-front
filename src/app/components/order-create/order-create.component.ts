@@ -1,4 +1,14 @@
-﻿import { ChangeDetectionStrategy, Component, Input, OnInit, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  DestroyRef,
+  Input,
+  OnInit,
+  inject,
+  input,
+  signal,
+} from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DecimalPipe } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -35,8 +45,9 @@ export class OrderCreateComponent implements OnInit {
   private readonly dialog = inject(MatDialog);
   private readonly ordersService = inject(OrdersService);
   private readonly router = inject(Router);
+  private readonly destroyRef = inject(DestroyRef);
 
-  @Input() orderId?: number;
+  readonly orderId = input.required<number>();
 
   protected readonly doors = signal<readonly DoorItem[]>([]);
   protected readonly showOrdersError = signal(false);
@@ -68,9 +79,12 @@ export class OrderCreateComponent implements OnInit {
     }
 
     this.isEditMode.set(true);
-    this.ordersService.getOrder(this.orderId).subscribe((order) => {
-      this.applyOrder(order);
-    });
+    this.ordersService
+      .getOrder(this.orderId())
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((order) => {
+        this.applyOrder(order);
+      });
   }
 
   protected onAddDoorClick(): void {
@@ -81,15 +95,18 @@ export class OrderCreateComponent implements OnInit {
       } as DoorDialogData,
     });
 
-    dialogRef.afterClosed().subscribe((result: DoorDialogResult) => {
-      if (!result) {
-        return;
-      }
+    dialogRef
+      .afterClosed()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((result: DoorDialogResult) => {
+        if (!result) {
+          return;
+        }
 
-      const current = this.doors();
-      this.doors.set([...current, { ...result, id: this.nextId(current) }]);
-      this.syncQuantity();
-    });
+        const current = this.doors();
+        this.doors.set([...current, { ...result, id: this.nextId(current) }]);
+        this.syncQuantity();
+      });
   }
 
   protected onEditDoorClick(id: number): void {
@@ -107,14 +124,17 @@ export class OrderCreateComponent implements OnInit {
       } as DoorDialogData,
     });
 
-    dialogRef.afterClosed().subscribe((result: DoorDialogResult) => {
-      if (!result) {
-        return;
-      }
+    dialogRef
+      .afterClosed()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((result: DoorDialogResult) => {
+        if (!result) {
+          return;
+        }
 
-      this.doors.set(current.map((item) => (item.id === id ? { ...item, ...result } : item)));
-      this.syncQuantity();
-    });
+        this.doors.set(current.map((item) => (item.id === id ? { ...item, ...result } : item)));
+        this.syncQuantity();
+      });
   }
 
   protected onRemoveDoorClick(id: number): void {
@@ -164,16 +184,23 @@ export class OrderCreateComponent implements OnInit {
   }
 
   private saveOrder(payload: OrderCreatePayload): void {
-    if (this.isEditMode() && this.orderId) {
-      this.ordersService.updateOrder(this.orderId, payload).subscribe((id) => {
-        void this.router.navigate(['/order', id]);
-      });
-      return;
-    }
+    const orderId = this.orderId();
 
-    this.ordersService.createOrder(payload).subscribe((id) => {
-      void this.router.navigate(['/order', id]);
-    });
+    if (this.isEditMode() && orderId) {
+      this.ordersService
+        .updateOrder(orderId, payload)
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe((id) => {
+          this.router.navigate(['/order', id]);
+        });
+    } else {
+      this.ordersService
+        .createOrder(payload)
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe((id) => {
+          this.router.navigate(['/order', id]);
+        });
+    }
   }
 
   private applyOrder(order: OrderCreatePayload): void {

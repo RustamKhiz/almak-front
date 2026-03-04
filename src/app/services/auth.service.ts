@@ -1,36 +1,32 @@
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
 import { CoreService } from './core.service';
 
-type LoginRequest = {
+interface LoginRequest {
   login: string;
   password: string;
-};
+}
 
-type LoginResponse = {
+interface LoginResponse {
   token: string;
-};
+}
 
 @Injectable({
   providedIn: 'root',
 })
 export class AuthService {
+  private readonly http = inject(HttpClient);
+  private readonly coreService = inject(CoreService);
+
   private readonly tokenKey = 'auth_token';
 
-  constructor(
-    private readonly http: HttpClient,
-    private readonly coreService: CoreService,
-  ) {}
-
   login(payload: LoginRequest): Observable<string> {
-    return this.http
-      .post<LoginResponse>(`${this.coreService.apiBaseUrl}/login`, payload)
-      .pipe(
-        map((response) => response.token),
-        tap((token) => this.setToken(token)),
-      );
+    return this.http.post<LoginResponse>(`${this.coreService.apiBaseUrl}/login`, payload).pipe(
+      map((response) => response.token),
+      tap((token) => this.setToken(token)),
+    );
   }
 
   logout(): void {

@@ -1,4 +1,12 @@
-﻿import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  DestroyRef,
+  OnInit,
+  inject,
+  signal,
+} from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
@@ -24,8 +32,9 @@ export class AuthComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly router = inject(Router);
   private readonly authService = inject(AuthService);
-  protected readonly authError = signal<string | null>(null);
-  protected readonly isSubmitting = signal(false);
+  private readonly destroyRef = inject(DestroyRef);
+  protected readonly authError = signal<string>(null);
+  protected readonly isSubmitting = signal<boolean>(false);
 
   protected readonly form = this.fb.group({
     login: ['', [Validators.required]],
@@ -52,6 +61,7 @@ export class AuthComponent implements OnInit {
         login: value.login ?? '',
         password: value.password ?? '',
       })
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: () => {
           this.isSubmitting.set(false);

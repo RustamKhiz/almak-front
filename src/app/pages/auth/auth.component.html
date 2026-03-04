@@ -17,8 +17,10 @@
         />
       </mat-form-field>
 
-      @if (authError()) {
-        <div class="auth-error">{{ authError() }}</div>
+      @let $authError = authError();
+
+      @if ($authError) {
+        <div class="auth-error">{{ $authError }}</div>
       }
 
       <button mat-flat-button color="primary" type="submit" [disabled]="isSubmitting()">

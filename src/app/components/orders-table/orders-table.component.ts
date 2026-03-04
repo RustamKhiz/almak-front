@@ -1,4 +1,12 @@
-﻿import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, AfterViewInit, ViewChild, inject } from '@angular/core';
+﻿import {
+  ChangeDetectionStrategy,
+  Component,
+  DestroyRef,
+  OnInit,
+  AfterViewInit,
+  inject,
+  viewChild,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { MatChipsModule } from '@angular/material/chips';
@@ -19,6 +27,7 @@ export class OrdersTableComponent implements OnInit, AfterViewInit {
   private readonly ordersService = inject(OrdersService);
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly sort = viewChild(MatSort);
 
   protected readonly dataSource = new MatTableDataSource<OrderRecord>([]);
   protected readonly displayedColumns = [
@@ -39,54 +48,47 @@ export class OrdersTableComponent implements OnInit, AfterViewInit {
     [OrderStatus.Completed]: 'Завершен',
   };
 
-  @ViewChild(MatSort) private readonly sort?: MatSort;
+  private readonly sortAccessors: Record<string, (item: OrderRecord) => string | number> = {
+    id: (item) => item.id,
+    date: (item) => new Date(item.date).getTime(),
+    count: (item) => item.count,
+    price: (item) => item.price,
+    prepayment: (item) => item.prepayment,
+    customer: (item) => item.customer.toLocaleLowerCase(),
+    phone: (item) => item.phone,
+    comment: (item) => item.comment.toLocaleLowerCase(),
+    status: (item) => item.status,
+  };
 
   ngOnInit(): void {
-    this.dataSource.sortingDataAccessor = (item, property) => {
-      switch (property) {
-        case 'date':
-          return new Date(item.date).getTime();
-        case 'id':
-          return item.id;
-        case 'count':
-          return item.count;
-        case 'price':
-          return item.price;
-        case 'prepayment':
-          return item.prepayment;
-        case 'customer':
-          return item.customer;
-        case 'phone':
-          return item.phone;
-        case 'comment':
-          return item.comment;
-        case 'status':
-          return item.status;
-        default:
-          return '';
-      }
-    };
+    this.dataSource.sortingDataAccessor = (item, property) =>
+      this.sortAccessors[property]?.(item) ?? '';
 
     this.ordersService
       .getOrders()
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((orders) => this.dataSource.data = [...orders]);
+      .subscribe((orders) => (this.dataSource.data = [...orders]));
   }
 
   ngAfterViewInit(): void {
-    if (!this.sort) {
+    const sort = this.sort();
+
+    if (!sort) {
       return;
     }
 
-    this.dataSource.sort = this.sort;
-    this.sort.active = 'date';
-    this.sort.direction = 'asc';
-    this.sort.disableClear = true;
-    this.sort.sortChange.emit({ active: 'date', direction: 'asc' });
+    this.dataSource.sort = sort;
+    sort.active = 'date';
+    sort.direction = 'asc';
+    sort.disableClear = true;
+    sort.sortChange.emit({ active: 'date', direction: 'asc' });
   }
 
   protected onRowClick(row: OrderRecord): void {
     void this.router.navigate(['/order', row.id]);
   }
-}
 
+  protected getStatusLabel(status: OrderStatus): string {
+    return this.statusLabels[status] || 'Неизвестный статус';
+  }
+}

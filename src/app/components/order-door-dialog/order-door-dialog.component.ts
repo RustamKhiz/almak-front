@@ -6,7 +6,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatRadioModule } from '@angular/material/radio';
-import { DoorItem, DoorLeafType, DoorType } from '../../types/order.types';
+import { DoorItem } from '../../types/order.types';
 
 export type DoorDialogData = {
   mode: 'create' | 'edit';
@@ -60,14 +60,14 @@ export class DoorDialogComponent {
 
     const value = this.form.getRawValue();
     this.dialogRef.close({
-      type: value.type as DoorType,
+      type: value.type,
       model: value.model ?? '',
-      price: Number(value.price ?? 0),
+      price: value.price ?? 0,
       color: value.color ?? '',
-      width: Number(value.width ?? 0),
-      height: Number(value.height ?? 0),
-      leafType: value.leafType as DoorLeafType,
-      count: Number(value.count ?? 1),
+      width: value.width ?? 0,
+      height: value.height ?? 0,
+      leafType: value.leafType,
+      count: value.count ?? 1,
     });
   }
 }

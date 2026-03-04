@@ -71,9 +71,11 @@
     </div>
   </form>
 
-  @if (doors().length) {
+  @let $doors = doors();
+
+  @if ($doors.length) {
     <div class="door-list">
-      @for (door of doors(); track $index) {
+      @for (door of $doors; track $index) {
         <div class="door-item">
           <div class="door-item__main">
             <div class="door-item__title">{{ door.type }} дверь · {{ door.model }}</div>
@@ -83,7 +85,7 @@
             </div>
           </div>
           <div class="door-item__aside">
-            <div class="door-item__price">${{ door.price | number: '1.0-0' }}</div>
+            <div class="door-item__price">{{ door.price | number: '1.0-0' }}</div>
             <div class="door-item__actions">
               <button mat-stroked-button color="primary" (click)="onEditDoorClick(door.id)">
                 Редактировать
@@ -103,7 +105,7 @@
     </div>
   }
 
-  @if (showOrdersError() && !doors().length) {
+  @if (showOrdersError() && !$doors.length) {
     <div class="order-create__error">Добавьте хотя бы одну дверь.</div>
   }
 

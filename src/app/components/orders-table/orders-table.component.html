@@ -44,7 +44,7 @@
       <th mat-header-cell *matHeaderCellDef mat-sort-header>Статус</th>
       <td mat-cell *matCellDef="let row">
         <mat-chip class="status-chip" [class]="'status-' + row.status">
-          {{ statusLabels[row.status] }}
+          {{ getStatusLabel(row.status) }}
         </mat-chip>
       </td>
     </ng-container>

@@ -24,8 +24,8 @@ export class AppComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
 
-  protected readonly title = signal('almak');
-  protected readonly isAuthPage = signal(false);
+  protected readonly title = signal<string>('Almak');
+  protected readonly isAuthPage = signal<boolean>(false);
 
   ngOnInit(): void {
     this.isAuthPage.set(this.router.url.startsWith('/auth'));
