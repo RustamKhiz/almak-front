@@ -33,7 +33,7 @@
           </div>
           <div>
             <div class="order-view__label">Телефон</div>
-            <div class="order-view__value">{{ $state.data.phone }}</div>
+            <div class="order-view__value">{{ $state.data.phone | phoneFormat }}</div>
           </div>
           <div>
             <div class="order-view__label">Дата</div>
@@ -67,7 +67,8 @@
                 <div>
                   <div class="order-view__value">{{ door.type }} дверь · {{ door.model }}</div>
                   <div class="order-view__meta">
-                    {{ door.width }}×{{ door.height }} см · {{ door.leafType }} · количество
+                    {{ door.width }}×{{ door.height }} см · {{ leafTypesLabels[door.leafType] }} ·
+                    количество
                     {{ door.count }}
                   </div>
                 </div>

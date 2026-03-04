@@ -13,12 +13,13 @@ import { MatChipsModule } from '@angular/material/chips';
 import { MatSort, MatSortModule } from '@angular/material/sort';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
+import { PhoneFormatPipe } from '../../common/pipes/phone-format.pipe';
 import { OrdersService, OrderRecord } from '../../services/orders.service';
 import { OrderStatus } from '../../types/order.types';
 
 @Component({
   selector: 'app-orders-table',
-  imports: [CommonModule, MatTableModule, MatChipsModule, MatSortModule],
+  imports: [CommonModule, MatTableModule, MatChipsModule, MatSortModule, PhoneFormatPipe],
   templateUrl: './orders-table.component.html',
   styleUrl: './orders-table.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

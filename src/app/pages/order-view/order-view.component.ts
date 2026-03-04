@@ -1,13 +1,20 @@
+import { DecimalPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal } from '@angular/core';
-import { ActivatedRoute, RouterModule } from '@angular/router';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
+import { filter, switchMap } from 'rxjs';
+import {
+  ConfirmDialogComponent,
+  ConfirmDialogData,
+} from '../../common/confirm-dialog/confirm-dialog.component';
+import { PhoneFormatPipe } from '../../common/pipes/phone-format.pipe';
 import { FileDownloadService } from '../../services/file-download.service';
 import { OrderDocumentService } from '../../services/order-document.service';
-import { OrdersService } from '../../services/orders.service';
 import { OrderPrintService } from '../../services/order-print.service';
-import { OrderCreatePayload, OrderStatus } from '../../types/order.types';
-import { DecimalPipe } from '@angular/common';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { OrdersService } from '../../services/orders.service';
+import { DoorLeafType, OrderCreatePayload, OrderStatus } from '../../types/order.types';
 
 type OrderViewState = {
   id: number;
@@ -16,13 +23,15 @@ type OrderViewState = {
 
 @Component({
   selector: 'app-order-view',
-  imports: [MatButtonModule, RouterModule, DecimalPipe],
+  imports: [MatButtonModule, MatDialogModule, RouterModule, DecimalPipe, PhoneFormatPipe],
   templateUrl: './order-view.component.html',
   styleUrl: './order-view.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class OrderViewComponent {
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+  private readonly dialog = inject(MatDialog);
   private readonly orderDocumentService = inject(OrderDocumentService);
   private readonly fileDownloadService = inject(FileDownloadService);
   private readonly orderPrintService = inject(OrderPrintService);
@@ -36,13 +45,49 @@ export class OrderViewComponent {
     [OrderStatus.Progress]: 'В процессе',
     [OrderStatus.Completed]: 'Завершен',
   };
+  protected readonly leafTypesLabels: Record<DoorLeafType, string> = {
+    Single: 'Одностворчатая',
+    Double: 'Двустворчатая',
+  };
 
   constructor() {
     const id = Number(this.route.snapshot.paramMap.get('id') ?? 0);
     this.fetchOrder(id);
   }
 
-  protected onDeleteClick(): void {}
+  protected onDeleteClick(): void {
+    const current = this.state();
+    if (!current) {
+      return;
+    }
+
+    const dialogData: ConfirmDialogData = {
+      title: 'Удаление заказа',
+      message: 'Вы уверены что хотите удалить заказ?',
+      confirmText: 'Да, удалить',
+      cancelText: 'Нет',
+    };
+
+    this.dialog
+      .open(ConfirmDialogComponent, { data: dialogData })
+      .afterClosed()
+      .pipe(
+        filter((isConfirmed) => isConfirmed === true),
+        switchMap(() => {
+          this.isLoading.set(true);
+          return this.ordersService.deleteOrder(current.id);
+        }),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe({
+        next: () => {
+          void this.router.navigate(['/orders']);
+        },
+        error: () => {
+          this.isLoading.set(false);
+        },
+      });
+  }
 
   protected onDownloadClick(): void {
     const current = this.state();
@@ -75,4 +120,3 @@ export class OrderViewComponent {
       });
   }
 }
-

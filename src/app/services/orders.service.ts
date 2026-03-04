@@ -3,9 +3,14 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { CoreService } from './core.service';
-import { DoorItem, OrderCreatePayload, OrderStatus } from '../types/order.types';
+import {
+  BackendOrderStatus,
+  DoorItem,
+  OrderCreatePayload,
+  OrderStatus,
+} from '../types/order.types';
 
-type BackendOrder = {
+interface BackendOrder {
   id: number;
   customer: string;
   phone: string;
@@ -14,12 +19,12 @@ type BackendOrder = {
   price: number;
   prepayment: number;
   comment: string;
-  status: string;
+  status: BackendOrderStatus;
   orders?: BackendDoor[];
   created_at?: string;
-};
+}
 
-type BackendDoor = {
+interface BackendDoor {
   id: number;
   order_id: number;
   type: string;
@@ -30,9 +35,9 @@ type BackendDoor = {
   height: number;
   leafType: string;
   count: number;
-};
+}
 
-type BackendOrderPayload = {
+interface BackendOrderPayload {
   customer: string;
   phone: string;
   date: string;
@@ -40,11 +45,11 @@ type BackendOrderPayload = {
   price: number;
   prepayment: number;
   comment: string;
-  status: string;
+  status: BackendOrderStatus;
   orders: BackendDoorPayload[];
-};
+}
 
-type BackendDoorPayload = {
+interface BackendDoorPayload {
   type: string;
   model: string;
   price: number;
@@ -53,9 +58,9 @@ type BackendDoorPayload = {
   height: number;
   leafType: string;
   count: number;
-};
+}
 
-export type OrderRecord = {
+export interface OrderRecord {
   id: number;
   customer: string;
   phone: string;
@@ -65,7 +70,7 @@ export type OrderRecord = {
   prepayment: number;
   comment: string;
   status: OrderStatus;
-};
+}
 
 @Injectable({
   providedIn: 'root',
@@ -106,6 +111,10 @@ export class OrdersService {
       .pipe(map((order) => order.id));
   }
 
+  deleteOrder(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.coreService.apiBaseUrl}/orders/${id}`);
+  }
+
   private mapBackendOrderToRecord(order: BackendOrder): OrderRecord {
     return {
       id: order.id,
@@ -122,7 +131,6 @@ export class OrdersService {
 
   private mapBackendOrderToCreatePayload(order: BackendOrder): OrderCreatePayload {
     const orders = (order.orders ?? []).map((item) => this.mapBackendDoorToDoorItem(item));
-    const resolvedOrders = orders.length ? orders : this.createFallbackDoors(order);
 
     return {
       name: order.customer,
@@ -132,7 +140,7 @@ export class OrdersService {
       quantity: order.count,
       comment: order.comment ?? '',
       status: this.mapBackendStatusToOrderStatus(order.status),
-      orders: resolvedOrders,
+      orders,
     };
   }
 
@@ -174,45 +182,27 @@ export class OrdersService {
     };
   }
 
-  private createFallbackDoors(order: BackendOrder): DoorItem[] {
-    const count = Math.max(order.count, 1);
-    const unitPrice = count > 0 ? order.price / count : order.price;
-    return [
-      {
-        id: 1,
-        type: 'Entrance',
-        model: 'Без детализации',
-        price: unitPrice,
-        color: '-',
-        width: 0,
-        height: 0,
-        leafType: 'Single',
-        count,
-      },
-    ];
-  }
-
-  private mapBackendStatusToOrderStatus(status: string): OrderStatus {
+  private mapBackendStatusToOrderStatus(status: BackendOrderStatus): OrderStatus {
     switch (status) {
-      case 'progress':
+      case BackendOrderStatus.Progress:
         return OrderStatus.Progress;
-      case 'completed':
+      case BackendOrderStatus.Completed:
         return OrderStatus.Completed;
-      case 'accepted':
+      case BackendOrderStatus.Accepted:
       default:
         return OrderStatus.Accepted;
     }
   }
 
-  private mapOrderStatusToBackendStatus(status: OrderStatus): string {
+  private mapOrderStatusToBackendStatus(status: OrderStatus): BackendOrderStatus {
     switch (status) {
       case OrderStatus.Progress:
-        return 'progress';
+        return BackendOrderStatus.Progress;
       case OrderStatus.Completed:
-        return 'completed';
+        return BackendOrderStatus.Completed;
       case OrderStatus.Accepted:
       default:
-        return 'accepted';
+        return BackendOrderStatus.Accepted;
     }
   }
 }

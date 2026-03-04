@@ -6,7 +6,13 @@ export enum OrderStatus {
   Completed = 2,
 }
 
-export type DoorItem = {
+export enum BackendOrderStatus {
+  Accepted = 'accepted',
+  Progress = 'progress',
+  Completed = 'completed',
+}
+
+export interface DoorItem {
   id: number;
   type: DoorType;
   model: string;
@@ -16,9 +22,9 @@ export type DoorItem = {
   height: number;
   leafType: DoorLeafType;
   count: number;
-};
+}
 
-export type OrderCustomerForm = {
+export interface OrderCustomerForm {
   name: string;
   phone: string;
   date: string;
@@ -26,8 +32,8 @@ export type OrderCustomerForm = {
   quantity: number;
   comment: string;
   status: OrderStatus;
-};
+}
 
-export type OrderCreatePayload = OrderCustomerForm & {
+export interface OrderCreatePayload extends OrderCustomerForm {
   orders: readonly DoorItem[];
-};
+}

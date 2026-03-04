@@ -22,6 +22,7 @@ import {
   DoorDialogData,
   DoorDialogResult,
 } from '../order-door-dialog/order-door-dialog.component';
+import { PhoneMaskDirective } from '../../common/directives/phone-mask.directive';
 import { OrdersService } from '../../services/orders.service';
 import { DoorItem, OrderCreatePayload, OrderStatus } from '../../types/order.types';
 
@@ -35,6 +36,7 @@ import { DoorItem, OrderCreatePayload, OrderStatus } from '../../types/order.typ
     MatFormFieldModule,
     MatInputModule,
     MatSelectModule,
+    PhoneMaskDirective,
   ],
   templateUrl: './order-create.component.html',
   styleUrl: './order-create.component.scss',
@@ -65,7 +67,7 @@ export class OrderCreateComponent implements OnInit {
 
   protected readonly form = this.fb.group({
     name: ['', [Validators.required]],
-    phone: ['', [Validators.required]],
+    phone: ['', [Validators.required, Validators.pattern(/^7\d{10}$/)]],
     date: [this.todayIso(), [Validators.required]],
     prepayment: [0, [Validators.required, Validators.min(0)]],
     quantity: [{ value: 0, disabled: true }, [Validators.required, Validators.min(1)]],
@@ -74,13 +76,15 @@ export class OrderCreateComponent implements OnInit {
   });
 
   ngOnInit(): void {
-    if (!this.orderId) {
+    const orderId = this.orderId();
+
+    if (!orderId) {
       return;
     }
 
     this.isEditMode.set(true);
     this.ordersService
-      .getOrder(this.orderId())
+      .getOrder(orderId)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((order) => {
         this.applyOrder(order);
@@ -117,7 +121,7 @@ export class OrderCreateComponent implements OnInit {
     }
 
     const dialogRef = this.dialog.open(DoorDialogComponent, {
-      width: '520px',
+      width: '600px',
       data: {
         mode: 'edit',
         door,
