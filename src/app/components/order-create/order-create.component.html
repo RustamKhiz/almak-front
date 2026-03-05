@@ -87,12 +87,8 @@
           <div class="door-item__aside">
             <div class="door-item__price">{{ door.price | number: '1.0-0' }}</div>
             <div class="door-item__actions">
-              <button mat-stroked-button color="primary" (click)="onEditDoorClick(door.id)">
-                Редактировать
-              </button>
-              <button mat-stroked-button color="warn" (click)="onRemoveDoorClick(door.id)">
-                Удалить
-              </button>
+              <button mat-stroked-button color="primary" (click)="onEditDoorClick(door.id)">Редактировать</button>
+              <button mat-stroked-button color="warn" (click)="onRemoveDoorClick(door.id)">Удалить</button>
             </div>
           </div>
         </div>

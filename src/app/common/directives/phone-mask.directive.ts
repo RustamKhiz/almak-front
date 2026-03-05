@@ -15,8 +15,12 @@ import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 export class PhoneMaskDirective implements ControlValueAccessor {
   private readonly elementRef = inject<ElementRef<HTMLInputElement>>(ElementRef);
 
-  private onChange: (value: string) => void = () => {};
-  private onTouched: () => void = () => {};
+  private onChange: (value: string) => void = () => {
+    // no-op
+  };
+  private onTouched: () => void = () => {
+    // no-op
+  };
 
   writeValue(value: string | null): void {
     const digits = this.normalize(value ?? '');

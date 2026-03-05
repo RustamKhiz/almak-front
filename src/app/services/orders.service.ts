@@ -1,14 +1,9 @@
 ﻿import { HttpClient } from '@angular/common/http';
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { CoreService } from './core.service';
-import {
-  BackendOrderStatus,
-  DoorItem,
-  OrderCreatePayload,
-  OrderStatus,
-} from '../types/order.types';
+import { BackendOrderStatus, DoorItem, OrderCreatePayload, OrderStatus } from '../types/order.types';
 
 interface BackendOrder {
   id: number;
@@ -76,10 +71,8 @@ export interface OrderRecord {
   providedIn: 'root',
 })
 export class OrdersService {
-  constructor(
-    private readonly http: HttpClient,
-    private readonly coreService: CoreService,
-  ) {}
+  private readonly http: HttpClient = inject(HttpClient);
+  private readonly coreService: CoreService = inject(CoreService);
 
   getOrders(): Observable<readonly OrderRecord[]> {
     return this.http
@@ -95,19 +88,13 @@ export class OrdersService {
 
   createOrder(payload: OrderCreatePayload): Observable<number> {
     return this.http
-      .post<BackendOrder>(
-        `${this.coreService.apiBaseUrl}/orders`,
-        this.mapCreatePayloadToBackend(payload),
-      )
+      .post<BackendOrder>(`${this.coreService.apiBaseUrl}/orders`, this.mapCreatePayloadToBackend(payload))
       .pipe(map((order) => order.id));
   }
 
   updateOrder(id: number, payload: OrderCreatePayload): Observable<number> {
     return this.http
-      .put<BackendOrder>(
-        `${this.coreService.apiBaseUrl}/orders/${id}`,
-        this.mapCreatePayloadToBackend(payload),
-      )
+      .put<BackendOrder>(`${this.coreService.apiBaseUrl}/orders/${id}`, this.mapCreatePayloadToBackend(payload))
       .pipe(map((order) => order.id));
   }
 

@@ -5,10 +5,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { filter, switchMap } from 'rxjs';
-import {
-  ConfirmDialogComponent,
-  ConfirmDialogData,
-} from '../../common/confirm-dialog/confirm-dialog.component';
+import { ConfirmDialogComponent, ConfirmDialogData } from '../../common/confirm-dialog/confirm-dialog.component';
 import { PhoneFormatPipe } from '../../common/pipes/phone-format.pipe';
 import { FileDownloadService } from '../../services/file-download.service';
 import { OrderDocumentService } from '../../services/order-document.service';
@@ -16,10 +13,10 @@ import { OrderPrintService } from '../../services/order-print.service';
 import { OrdersService } from '../../services/orders.service';
 import { DoorLeafType, OrderCreatePayload, OrderStatus } from '../../types/order.types';
 
-type OrderViewState = {
+interface OrderViewState {
   id: number;
   data: OrderCreatePayload;
-};
+}
 
 @Component({
   selector: 'app-order-view',
