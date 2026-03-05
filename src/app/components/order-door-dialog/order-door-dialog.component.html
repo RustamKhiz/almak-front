@@ -4,8 +4,9 @@
   <mat-form-field appearance="outline">
     <mat-label>Тип двери</mat-label>
     <mat-select formControlName="type">
-      <mat-option value="Entrance">Входная дверь</mat-option>
-      <mat-option value="Interior">Межкомнатная дверь</mat-option>
+      @for (type of doorTypeOptions; track type) {
+        <mat-option [value]="type">{{ doorTypeLabels[type] }}</mat-option>
+      }
     </mat-select>
   </mat-form-field>
 
@@ -45,8 +46,9 @@
     <div class="leaf-type">
       <div class="leaf-type__label">Тип створки</div>
       <mat-radio-group formControlName="leafType">
-        <mat-radio-button value="Single">Одна створка</mat-radio-button>
-        <mat-radio-button value="Double">Две створки</mat-radio-button>
+        @for (leafType of doorLeafTypeOptions; track leafType) {
+          <mat-radio-button [value]="leafType">{{ doorLeafTypeLabels[leafType] }}</mat-radio-button>
+        }
       </mat-radio-group>
     </div>
   </div>

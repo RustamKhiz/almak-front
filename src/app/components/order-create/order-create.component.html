@@ -78,14 +78,14 @@
       @for (door of $doors; track $index) {
         <div class="door-item">
           <div class="door-item__main">
-            <div class="door-item__title">{{ door.type }} дверь · {{ door.model }}</div>
+            <div class="door-item__title">{{ doorTypeLabels[door.type] }} · {{ door.model }}</div>
             <div class="door-item__meta">
-              {{ door.width }}×{{ door.height }} см · {{ door.leafType }} · количество
+              {{ door.width }}×{{ door.height }} см · {{ doorLeafTypeLabels[door.leafType] }} · количество
               {{ door.count }}
             </div>
           </div>
           <div class="door-item__aside">
-            <div class="door-item__price">{{ door.price | number: '1.0-0' }}</div>
+            <div class="door-item__price">{{ door.price | number: '1.0-0' }} ₽</div>
             <div class="door-item__actions">
               <button mat-stroked-button color="primary" (click)="onEditDoorClick(door.id)">Редактировать</button>
               <button mat-stroked-button color="warn" (click)="onRemoveDoorClick(door.id)">Удалить</button>
@@ -106,6 +106,10 @@
   }
 
   <div class="order-create__actions">
+    <div class="order-create__summary">
+      <div class="order-create__summary-label">Общая стоимость заказа</div>
+      <div class="order-create__summary-value">{{ totalPrice() | number: '1.0-0' }} ₽</div>
+    </div>
     <button mat-flat-button color="primary" (click)="onSaveClick()">Сохранить</button>
   </div>
 </section>

@@ -6,6 +6,12 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatRadioModule } from '@angular/material/radio';
+import {
+  DOOR_LEAF_TYPE_LABELS,
+  DOOR_LEAF_TYPE_OPTIONS,
+  DOOR_TYPE_LABELS,
+  DOOR_TYPE_OPTIONS,
+} from '../../common/constants/door-catalog';
 import { DoorItem } from '../../types/order.types';
 
 export interface DoorDialogData {
@@ -35,14 +41,19 @@ export class DoorDialogComponent {
   private readonly dialogRef = inject(MatDialogRef<DoorDialogComponent, DoorDialogResult>);
   private readonly data = inject<DoorDialogData>(MAT_DIALOG_DATA);
 
+  protected readonly doorTypeOptions = DOOR_TYPE_OPTIONS;
+  protected readonly doorTypeLabels = DOOR_TYPE_LABELS;
+  protected readonly doorLeafTypeOptions = DOOR_LEAF_TYPE_OPTIONS;
+  protected readonly doorLeafTypeLabels = DOOR_LEAF_TYPE_LABELS;
+
   protected readonly form = this.fb.group({
-    type: [this.data.door?.type ?? 'Entrance', [Validators.required]],
+    type: [this.data.door?.type ?? DOOR_TYPE_OPTIONS[0], [Validators.required]],
     model: [this.data.door?.model ?? '', [Validators.required]],
     price: [this.data.door?.price ?? 0, [Validators.required, Validators.min(0)]],
     color: [this.data.door?.color ?? '', [Validators.required]],
     width: [this.data.door?.width ?? 0, [Validators.required, Validators.min(1)]],
     height: [this.data.door?.height ?? 0, [Validators.required, Validators.min(1)]],
-    leafType: [this.data.door?.leafType ?? 'Single', [Validators.required]],
+    leafType: [this.data.door?.leafType ?? DOOR_LEAF_TYPE_OPTIONS[0], [Validators.required]],
     count: [this.data.door?.count ?? 1, [Validators.required, Validators.min(1)]],
   });
 
