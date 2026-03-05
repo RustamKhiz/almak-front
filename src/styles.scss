@@ -16,6 +16,19 @@ $app-theme: (
 
 html {
   @include mat.theme($app-theme);
+
+  /* Shared status palette */
+  --app-status-accepted-bg: #e8f1ff;
+  --app-status-accepted-text: #12408f;
+  --app-status-accepted-border: #7ea6ff;
+
+  --app-status-progress-bg: #fff4db;
+  --app-status-progress-text: #8a4b00;
+  --app-status-progress-border: #ffc166;
+
+  --app-status-completed-bg: #e6f6ec;
+  --app-status-completed-text: #1f6a3b;
+  --app-status-completed-border: #7bc79b;
 }
 
 body {

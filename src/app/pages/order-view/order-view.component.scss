@@ -19,6 +19,13 @@
   font-size: 22px;
 }
 
+.order-view__title-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
 .order-view__header p {
   margin: 0;
   color: #6b7280;
@@ -92,6 +99,32 @@
   background: #fafafa;
   text-align: center;
   color: #6b7280;
+}
+
+.status-chip {
+  font-size: 12px;
+  height: 24px;
+  font-weight: 600;
+  border-width: 1px;
+  border-style: solid;
+}
+
+.status-0 {
+  background: var(--app-status-accepted-bg);
+  color: var(--app-status-accepted-text);
+  border-color: var(--app-status-accepted-border);
+}
+
+.status-1 {
+  background: var(--app-status-progress-bg);
+  color: var(--app-status-progress-text);
+  border-color: var(--app-status-progress-border);
+}
+
+.status-2 {
+  background: var(--app-status-completed-bg);
+  color: var(--app-status-completed-text);
+  border-color: var(--app-status-completed-border);
 }
 
 @media (max-width: 720px) {

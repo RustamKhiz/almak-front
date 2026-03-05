@@ -3,7 +3,14 @@
 <section class="order-view">
   <header class="order-view__header">
     <div>
-      <h1>Просмотр заказа</h1>
+      <div class="order-view__title-row">
+        <h1>Просмотр заказа</h1>
+        @if ($state) {
+          <mat-chip class="status-chip" [class]="'status-chip status-' + $state.data.status">
+            {{ getStatusLabel($state.data.status) }}
+          </mat-chip>
+        }
+      </div>
       @if ($state) {
         <p>Заказ №{{ $state.id }}</p>
       }
@@ -48,10 +55,6 @@
           <div>
             <div class="order-view__label">Комментарий</div>
             <div class="order-view__value">{{ $state.data.comment }}</div>
-          </div>
-          <div>
-            <div class="order-view__label">Статус</div>
-            <div class="order-view__value">{{ statusLabels[$state.data.status] }}</div>
           </div>
         </div>
       </div>

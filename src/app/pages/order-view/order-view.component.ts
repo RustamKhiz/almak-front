@@ -2,6 +2,7 @@ import { DecimalPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
+import { MatChipsModule } from '@angular/material/chips';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { filter, switchMap } from 'rxjs';
@@ -20,7 +21,7 @@ interface OrderViewState {
 
 @Component({
   selector: 'app-order-view',
-  imports: [MatButtonModule, MatDialogModule, RouterModule, DecimalPipe, PhoneFormatPipe],
+  imports: [MatButtonModule, MatChipsModule, MatDialogModule, RouterModule, DecimalPipe, PhoneFormatPipe],
   templateUrl: './order-view.component.html',
   styleUrl: './order-view.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -104,6 +105,10 @@ export class OrderViewComponent {
 
     const html = this.orderDocumentService.buildOrderHtml(current.id, current.data);
     this.orderPrintService.printHtml(html);
+  }
+
+  protected getStatusLabel(status: OrderStatus): string {
+    return this.statusLabels[status] || 'Неизвестный статус';
   }
 
   private fetchOrder(id: number): void {

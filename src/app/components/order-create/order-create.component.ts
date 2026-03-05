@@ -60,7 +60,7 @@ export class OrderCreateComponent implements OnInit {
     name: ['', [Validators.required]],
     phone: ['', [Validators.required, Validators.pattern(/^7\d{10}$/)]],
     date: [this.todayIso(), [Validators.required]],
-    prepayment: [0, [Validators.required, Validators.min(0)]],
+    prepayment: [0, [Validators.required, Validators.min(1)]],
     quantity: [{ value: 0, disabled: true }, [Validators.required, Validators.min(1)]],
     comment: [''],
     status: [OrderStatus.Accepted, [Validators.required]],

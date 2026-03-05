@@ -50,19 +50,19 @@ th {
 }
 
 .status-0 {
-  background: var(--mat-sys-primary-container);
-  color: var(--mat-sys-on-primary-container);
-  border-color: var(--mat-sys-primary);
+  background: var(--app-status-accepted-bg);
+  color: var(--app-status-accepted-text);
+  border-color: var(--app-status-accepted-border);
 }
 
 .status-1 {
-  background: var(--mat-sys-tertiary-container);
-  color: var(--mat-sys-on-tertiary-container);
-  border-color: var(--mat-sys-tertiary);
+  background: var(--app-status-progress-bg);
+  color: var(--app-status-progress-text);
+  border-color: var(--app-status-progress-border);
 }
 
 .status-2 {
-  background: var(--mat-sys-secondary-container);
-  color: var(--mat-sys-on-secondary-container);
-  border-color: var(--mat-sys-secondary);
+  background: var(--app-status-completed-bg);
+  color: var(--app-status-completed-text);
+  border-color: var(--app-status-completed-border);
 }
