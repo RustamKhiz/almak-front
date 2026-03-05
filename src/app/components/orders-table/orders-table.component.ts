@@ -62,8 +62,7 @@ export class OrdersTableComponent implements OnInit, AfterViewInit {
   };
 
   ngOnInit(): void {
-    this.dataSource.sortingDataAccessor = (item, property) =>
-      this.sortAccessors[property]?.(item) ?? '';
+    this.dataSource.sortingDataAccessor = (item, property) => this.sortAccessors[property]?.(item) ?? '';
 
     this.ordersService
       .getOrders()

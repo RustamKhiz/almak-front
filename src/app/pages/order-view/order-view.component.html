@@ -10,12 +10,10 @@
     </div>
     @if ($state) {
       <div class="order-view__actions">
-        <button mat-stroked-button (click)="onDeleteClick()">Удалить</button>
+        <button mat-flat-button color="warn" (click)="onDeleteClick()">Удалить</button>
         <button mat-stroked-button (click)="onPrintClick()">Печать</button>
         <button mat-stroked-button (click)="onDownloadClick()">Скачать .doc</button>
-        <button mat-stroked-button color="primary" [routerLink]="['/order', $state.id, 'edit']">
-          Редактировать
-        </button>
+        <button mat-flat-button color="primary" [routerLink]="['/order', $state.id, 'edit']">Редактировать</button>
       </div>
     }
   </header>
@@ -67,8 +65,7 @@
                 <div>
                   <div class="order-view__value">{{ door.type }} дверь · {{ door.model }}</div>
                   <div class="order-view__meta">
-                    {{ door.width }}×{{ door.height }} см · {{ leafTypesLabels[door.leafType] }} ·
-                    количество
+                    {{ door.width }}×{{ door.height }} см · {{ leafTypesLabels[door.leafType] }} · количество
                     {{ door.count }}
                   </div>
                 </div>

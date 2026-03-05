@@ -8,10 +8,10 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatRadioModule } from '@angular/material/radio';
 import { DoorItem } from '../../types/order.types';
 
-export type DoorDialogData = {
+export interface DoorDialogData {
   mode: 'create' | 'edit';
   door?: DoorItem;
-};
+}
 
 export type DoorDialogResult = Omit<DoorItem, 'id'>;
 

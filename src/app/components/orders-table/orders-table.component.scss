@@ -50,19 +50,19 @@ th {
 }
 
 .status-0 {
-  background: #e0f2fe;
-  color: #075985;
-  border-color: #7dd3fc;
+  background: var(--mat-sys-primary-container);
+  color: var(--mat-sys-on-primary-container);
+  border-color: var(--mat-sys-primary);
 }
 
 .status-1 {
-  background: #fef3c7;
-  color: #92400e;
-  border-color: #fcd34d;
+  background: var(--mat-sys-tertiary-container);
+  color: var(--mat-sys-on-tertiary-container);
+  border-color: var(--mat-sys-tertiary);
 }
 
 .status-2 {
-  background: #dcfce7;
-  color: #166534;
-  border-color: #86efac;
+  background: var(--mat-sys-secondary-container);
+  color: var(--mat-sys-on-secondary-container);
+  border-color: var(--mat-sys-secondary);
 }
