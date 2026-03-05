@@ -3,7 +3,27 @@
 <section class="order-view">
   <header class="order-view__header">
     <div>
-      <h1>Просмотр заказа</h1>
+      <div class="order-view__title-row">
+        <h1>Просмотр заказа</h1>
+        @if ($state) {
+          <button
+            mat-button
+            type="button"
+            class="status-chip status-chip-button"
+            [ngClass]="'status-' + $state.data.status"
+            [matMenuTriggerFor]="statusMenu"
+          >
+            {{ getStatusLabel($state.data.status) }}
+          </button>
+          <mat-menu #statusMenu="matMenu">
+            @for (status of statusOptions; track status) {
+              <button mat-menu-item type="button" (click)="onStatusChange(status)">
+                {{ getStatusLabel(status) }}
+              </button>
+            }
+          </mat-menu>
+        }
+      </div>
       @if ($state) {
         <p>Заказ №{{ $state.id }}</p>
       }
@@ -48,10 +68,6 @@
           <div>
             <div class="order-view__label">Комментарий</div>
             <div class="order-view__value">{{ $state.data.comment }}</div>
-          </div>
-          <div>
-            <div class="order-view__label">Статус</div>
-            <div class="order-view__value">{{ statusLabels[$state.data.status] }}</div>
           </div>
         </div>
       </div>

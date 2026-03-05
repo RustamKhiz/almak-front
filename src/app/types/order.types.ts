@@ -1,9 +1,9 @@
 export type DoorType = 'Entrance' | 'Interior';
 export type DoorLeafType = 'Single' | 'Double';
 export enum OrderStatus {
-  Accepted = 0,
-  Progress = 1,
-  Completed = 2,
+  Accepted = 1,
+  Progress = 2,
+  Completed = 3,
 }
 
 export enum BackendOrderStatus {

@@ -1,10 +1,13 @@
-import { DecimalPipe } from '@angular/common';
+import { DecimalPipe, NgClass } from '@angular/common';
 import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
+import { MatChipsModule } from '@angular/material/chips';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { MatMenuModule } from '@angular/material/menu';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { filter, switchMap } from 'rxjs';
+import { getOrderStatusLabel, ORDER_STATUS_LABELS, ORDER_STATUS_OPTIONS } from '../../common/constants/order-status';
 import { ConfirmDialogComponent, ConfirmDialogData } from '../../common/confirm-dialog/confirm-dialog.component';
 import { PhoneFormatPipe } from '../../common/pipes/phone-format.pipe';
 import { FileDownloadService } from '../../services/file-download.service';
@@ -20,7 +23,16 @@ interface OrderViewState {
 
 @Component({
   selector: 'app-order-view',
-  imports: [MatButtonModule, MatDialogModule, RouterModule, DecimalPipe, PhoneFormatPipe],
+  imports: [
+    MatButtonModule,
+    MatChipsModule,
+    MatDialogModule,
+    MatMenuModule,
+    RouterModule,
+    DecimalPipe,
+    PhoneFormatPipe,
+    NgClass,
+  ],
   templateUrl: './order-view.component.html',
   styleUrl: './order-view.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -37,11 +49,8 @@ export class OrderViewComponent {
 
   protected readonly isLoading = signal(true);
   protected readonly state = signal<OrderViewState | null>(null);
-  protected readonly statusLabels: Record<OrderStatus, string> = {
-    [OrderStatus.Accepted]: 'Принят',
-    [OrderStatus.Progress]: 'В процессе',
-    [OrderStatus.Completed]: 'Завершен',
-  };
+  protected readonly statusOptions = ORDER_STATUS_OPTIONS;
+  protected readonly statusLabels = ORDER_STATUS_LABELS;
   protected readonly leafTypesLabels: Record<DoorLeafType, string> = {
     Single: 'Одностворчатая',
     Double: 'Двустворчатая',
@@ -104,6 +113,35 @@ export class OrderViewComponent {
 
     const html = this.orderDocumentService.buildOrderHtml(current.id, current.data);
     this.orderPrintService.printHtml(html);
+  }
+
+  protected onStatusChange(status: OrderStatus): void {
+    const current = this.state();
+    if (!current || current.data.status === status) {
+      return;
+    }
+
+    this.ordersService
+      .updateOrderStatus(current.id, status)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((nextStatus) => {
+        const state = this.state();
+        if (!state) {
+          return;
+        }
+
+        this.state.set({
+          ...state,
+          data: {
+            ...state.data,
+            status: nextStatus,
+          },
+        });
+      });
+  }
+
+  protected getStatusLabel(status: OrderStatus): string {
+    return getOrderStatusLabel(status);
   }
 
   private fetchOrder(id: number): void {

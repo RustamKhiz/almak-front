@@ -55,6 +55,10 @@ interface BackendDoorPayload {
   count: number;
 }
 
+interface BackendOrderStatusPayload {
+  status: number;
+}
+
 export interface OrderRecord {
   id: number;
   customer: string;
@@ -96,6 +100,13 @@ export class OrdersService {
     return this.http
       .put<BackendOrder>(`${this.coreService.apiBaseUrl}/orders/${id}`, this.mapCreatePayloadToBackend(payload))
       .pipe(map((order) => order.id));
+  }
+
+  updateOrderStatus(id: number, status: OrderStatus): Observable<OrderStatus> {
+    const payload: BackendOrderStatusPayload = { status };
+    return this.http
+      .patch<BackendOrder>(`${this.coreService.apiBaseUrl}/orders/${id}/status`, payload)
+      .pipe(map((order) => this.mapBackendStatusToOrderStatus(order.status)));
   }
 
   deleteOrder(id: number): Observable<void> {

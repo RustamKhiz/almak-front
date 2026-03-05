@@ -10,16 +10,18 @@
 import { CommonModule } from '@angular/common';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { MatChipsModule } from '@angular/material/chips';
+import { MatMenuModule } from '@angular/material/menu';
 import { MatSort, MatSortModule } from '@angular/material/sort';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
+import { getOrderStatusLabel, ORDER_STATUS_OPTIONS } from '../../common/constants/order-status';
 import { PhoneFormatPipe } from '../../common/pipes/phone-format.pipe';
 import { OrdersService, OrderRecord } from '../../services/orders.service';
 import { OrderStatus } from '../../types/order.types';
 
 @Component({
   selector: 'app-orders-table',
-  imports: [CommonModule, MatTableModule, MatChipsModule, MatSortModule, PhoneFormatPipe],
+  imports: [CommonModule, MatTableModule, MatChipsModule, MatMenuModule, MatSortModule, PhoneFormatPipe],
   templateUrl: './orders-table.component.html',
   styleUrl: './orders-table.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -42,12 +44,7 @@ export class OrdersTableComponent implements OnInit, AfterViewInit {
     'comment',
     'status',
   ] as const;
-
-  protected readonly statusLabels: Record<OrderStatus, string> = {
-    [OrderStatus.Accepted]: 'Принят',
-    [OrderStatus.Progress]: 'В процессе',
-    [OrderStatus.Completed]: 'Завершен',
-  };
+  protected readonly statusOptions = ORDER_STATUS_OPTIONS;
 
   private readonly sortAccessors: Record<string, (item: OrderRecord) => string | number> = {
     id: (item) => item.id,
@@ -88,7 +85,23 @@ export class OrdersTableComponent implements OnInit, AfterViewInit {
     void this.router.navigate(['/order', row.id]);
   }
 
+  protected onStatusClick(event: MouseEvent): void {
+    event.stopPropagation();
+  }
+
+  protected onStatusChange(orderId: number, status: OrderStatus): void {
+    this.ordersService
+      .updateOrderStatus(orderId, status)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((nextStatus) => {
+        const current = this.dataSource.data;
+        this.dataSource.data = current.map((order) =>
+          order.id === orderId ? { ...order, status: nextStatus } : order,
+        );
+      });
+  }
+
   protected getStatusLabel(status: OrderStatus): string {
-    return this.statusLabels[status] || 'Неизвестный статус';
+    return getOrderStatusLabel(status);
   }
 }

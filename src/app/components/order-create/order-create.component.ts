@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, inject, input, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, computed, inject, input, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DecimalPipe } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -8,12 +8,16 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { Router } from '@angular/router';
+import { Observable, filter, switchMap } from 'rxjs';
+import { DOOR_LEAF_TYPE_LABELS, DOOR_TYPE_LABELS } from '../../common/constants/door-catalog';
+import { ConfirmDialogComponent, ConfirmDialogData } from '../../common/confirm-dialog/confirm-dialog.component';
 import {
   DoorDialogComponent,
   DoorDialogData,
   DoorDialogResult,
 } from '../order-door-dialog/order-door-dialog.component';
 import { PhoneMaskDirective } from '../../common/directives/phone-mask.directive';
+import { ORDER_STATUS_LABELS, ORDER_STATUS_OPTIONS } from '../../common/constants/order-status';
 import { OrdersService } from '../../services/orders.service';
 import { DoorItem, OrderCreatePayload, OrderStatus } from '../../types/order.types';
 
@@ -45,22 +49,19 @@ export class OrderCreateComponent implements OnInit {
   protected readonly doors = signal<readonly DoorItem[]>([]);
   protected readonly showOrdersError = signal(false);
   protected readonly isEditMode = signal(false);
-  protected readonly statusOptions: readonly OrderStatus[] = [
-    OrderStatus.Accepted,
-    OrderStatus.Progress,
-    OrderStatus.Completed,
-  ];
-  protected readonly statusLabels: Record<OrderStatus, string> = {
-    [OrderStatus.Accepted]: 'Принят',
-    [OrderStatus.Progress]: 'В процессе',
-    [OrderStatus.Completed]: 'Завершен',
-  };
+  protected readonly statusOptions = ORDER_STATUS_OPTIONS;
+  protected readonly statusLabels = ORDER_STATUS_LABELS;
+  protected readonly doorTypeLabels = DOOR_TYPE_LABELS;
+  protected readonly doorLeafTypeLabels = DOOR_LEAF_TYPE_LABELS;
+  protected readonly totalPrice = computed(() =>
+    this.doors().reduce((total, item) => total + Number(item.price ?? 0) * Number(item.count ?? 0), 0),
+  );
 
   protected readonly form = this.fb.group({
     name: ['', [Validators.required]],
     phone: ['', [Validators.required, Validators.pattern(/^7\d{10}$/)]],
     date: [this.todayIso(), [Validators.required]],
-    prepayment: [0, [Validators.required, Validators.min(0)]],
+    prepayment: [0, [Validators.required, Validators.min(1)]],
     quantity: [{ value: 0, disabled: true }, [Validators.required, Validators.min(1)]],
     comment: [''],
     status: [OrderStatus.Accepted, [Validators.required]],
@@ -159,8 +160,24 @@ export class OrderCreateComponent implements OnInit {
       orders: this.doors(),
     };
 
-    console.log('Order payload', payload);
-    this.saveOrder(payload);
+    const dialogData: ConfirmDialogData = {
+      title: 'Подтверждение',
+      message: 'Вы уверены, что хотите сохранить заказ?',
+      confirmText: 'Да',
+      cancelText: 'Нет',
+    };
+
+    this.dialog
+      .open(ConfirmDialogComponent, { data: dialogData })
+      .afterClosed()
+      .pipe(
+        filter((isConfirmed) => isConfirmed === true),
+        switchMap(() => this.saveOrder(payload)),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe((id) => {
+        void this.router.navigate(['/order', id]);
+      });
   }
 
   private nextId(current: readonly DoorItem[]): number {
@@ -178,24 +195,14 @@ export class OrderCreateComponent implements OnInit {
     }
   }
 
-  private saveOrder(payload: OrderCreatePayload): void {
+  private saveOrder(payload: OrderCreatePayload): Observable<number> {
     const orderId = this.orderId();
 
     if (this.isEditMode() && orderId) {
-      this.ordersService
-        .updateOrder(orderId, payload)
-        .pipe(takeUntilDestroyed(this.destroyRef))
-        .subscribe((id) => {
-          this.router.navigate(['/order', id]);
-        });
-    } else {
-      this.ordersService
-        .createOrder(payload)
-        .pipe(takeUntilDestroyed(this.destroyRef))
-        .subscribe((id) => {
-          this.router.navigate(['/order', id]);
-        });
+      return this.ordersService.updateOrder(orderId, payload);
     }
+
+    return this.ordersService.createOrder(payload);
   }
 
   private applyOrder(order: OrderCreatePayload): void {

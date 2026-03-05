@@ -43,9 +43,23 @@
     <ng-container matColumnDef="status">
       <th mat-header-cell *matHeaderCellDef mat-sort-header>Статус</th>
       <td mat-cell *matCellDef="let row">
-        <mat-chip class="status-chip" [class]="'status-' + row.status">
+        <button
+          mat-button
+          type="button"
+          class="status-chip status-chip-button"
+          [ngClass]="'status-' + row.status"
+          [matMenuTriggerFor]="statusMenu"
+          (click)="onStatusClick($event)"
+        >
           {{ getStatusLabel(row.status) }}
-        </mat-chip>
+        </button>
+        <mat-menu #statusMenu="matMenu">
+          @for (status of statusOptions; track status) {
+            <button mat-menu-item type="button" (click)="onStatusChange(row.id, status)">
+              {{ getStatusLabel(status) }}
+            </button>
+          }
+        </mat-menu>
       </td>
     </ng-container>
 
