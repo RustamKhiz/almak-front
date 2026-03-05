@@ -23,7 +23,16 @@ interface OrderViewState {
 
 @Component({
   selector: 'app-order-view',
-  imports: [MatButtonModule, MatChipsModule, MatDialogModule, MatMenuModule, RouterModule, DecimalPipe, PhoneFormatPipe, NgClass],
+  imports: [
+    MatButtonModule,
+    MatChipsModule,
+    MatDialogModule,
+    MatMenuModule,
+    RouterModule,
+    DecimalPipe,
+    PhoneFormatPipe,
+    NgClass,
+  ],
   templateUrl: './order-view.component.html',
   styleUrl: './order-view.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
