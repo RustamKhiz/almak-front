@@ -109,19 +109,27 @@
   border-style: solid;
 }
 
-.status-0 {
+.status-chip-button {
+  min-width: auto;
+  line-height: 22px;
+  padding: 0 10px;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.status-1 {
   background: var(--app-status-accepted-bg);
   color: var(--app-status-accepted-text);
   border-color: var(--app-status-accepted-border);
 }
 
-.status-1 {
+.status-2 {
   background: var(--app-status-progress-bg);
   color: var(--app-status-progress-text);
   border-color: var(--app-status-progress-border);
 }
 
-.status-2 {
+.status-3 {
   background: var(--app-status-completed-bg);
   color: var(--app-status-completed-text);
   border-color: var(--app-status-completed-border);

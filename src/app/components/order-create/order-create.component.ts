@@ -14,6 +14,7 @@ import {
   DoorDialogResult,
 } from '../order-door-dialog/order-door-dialog.component';
 import { PhoneMaskDirective } from '../../common/directives/phone-mask.directive';
+import { ORDER_STATUS_LABELS, ORDER_STATUS_OPTIONS } from '../../common/constants/order-status';
 import { OrdersService } from '../../services/orders.service';
 import { DoorItem, OrderCreatePayload, OrderStatus } from '../../types/order.types';
 
@@ -45,16 +46,8 @@ export class OrderCreateComponent implements OnInit {
   protected readonly doors = signal<readonly DoorItem[]>([]);
   protected readonly showOrdersError = signal(false);
   protected readonly isEditMode = signal(false);
-  protected readonly statusOptions: readonly OrderStatus[] = [
-    OrderStatus.Accepted,
-    OrderStatus.Progress,
-    OrderStatus.Completed,
-  ];
-  protected readonly statusLabels: Record<OrderStatus, string> = {
-    [OrderStatus.Accepted]: 'Принят',
-    [OrderStatus.Progress]: 'В процессе',
-    [OrderStatus.Completed]: 'Завершен',
-  };
+  protected readonly statusOptions = ORDER_STATUS_OPTIONS;
+  protected readonly statusLabels = ORDER_STATUS_LABELS;
 
   protected readonly form = this.fb.group({
     name: ['', [Validators.required]],

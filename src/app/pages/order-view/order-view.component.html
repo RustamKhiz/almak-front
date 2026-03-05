@@ -6,9 +6,22 @@
       <div class="order-view__title-row">
         <h1>Просмотр заказа</h1>
         @if ($state) {
-          <mat-chip class="status-chip" [class]="'status-chip status-' + $state.data.status">
+          <button
+            mat-button
+            type="button"
+            class="status-chip status-chip-button"
+            [ngClass]="'status-' + $state.data.status"
+            [matMenuTriggerFor]="statusMenu"
+          >
             {{ getStatusLabel($state.data.status) }}
-          </mat-chip>
+          </button>
+          <mat-menu #statusMenu="matMenu">
+            @for (status of statusOptions; track status) {
+              <button mat-menu-item type="button" (click)="onStatusChange(status)">
+                {{ getStatusLabel(status) }}
+              </button>
+            }
+          </mat-menu>
         }
       </div>
       @if ($state) {
