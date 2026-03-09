@@ -12,6 +12,7 @@ import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatSort, MatSortModule } from '@angular/material/sort';
+import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import { getOrderStatusLabel, ORDER_STATUS_OPTIONS } from '../../common/constants/order-status';
@@ -27,6 +28,7 @@ import { OrdersTableFilters, OrdersTableFiltersComponent } from './orders-table-
     MatTableModule,
     MatChipsModule,
     MatMenuModule,
+    MatPaginatorModule,
     MatSortModule,
     PhoneFormatPipe,
     OrdersTableFiltersComponent,
@@ -40,6 +42,7 @@ export class OrdersTableComponent implements OnInit, AfterViewInit {
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
   private readonly sort = viewChild(MatSort);
+  private readonly paginator = viewChild(MatPaginator);
 
   protected readonly dataSource = new MatTableDataSource<OrderRecord>([]);
   protected readonly displayedColumns = [
@@ -83,16 +86,19 @@ export class OrdersTableComponent implements OnInit, AfterViewInit {
 
   ngAfterViewInit(): void {
     const sort = this.sort();
+    const paginator = this.paginator();
 
-    if (!sort) {
-      return;
+    if (sort) {
+      this.dataSource.sort = sort;
+      sort.active = 'date';
+      sort.direction = 'asc';
+      sort.disableClear = true;
+      sort.sortChange.emit({ active: 'date', direction: 'asc' });
     }
 
-    this.dataSource.sort = sort;
-    sort.active = 'date';
-    sort.direction = 'asc';
-    sort.disableClear = true;
-    sort.sortChange.emit({ active: 'date', direction: 'asc' });
+    if (paginator) {
+      this.dataSource.paginator = paginator;
+    }
   }
 
   protected onRowClick(row: OrderRecord): void {
@@ -122,11 +128,13 @@ export class OrdersTableComponent implements OnInit, AfterViewInit {
   protected onFiltersApply(filters: OrdersTableFilters): void {
     this.activeFilters = filters;
     this.applyFilters();
+    this.paginator()?.firstPage();
   }
 
   protected onFiltersClear(): void {
     this.activeFilters = null;
     this.applyFilters();
+    this.paginator()?.firstPage();
   }
 
   private applyFilters(): void {
