@@ -1,4 +1,6 @@
-﻿<div class="orders-table">
+<div class="orders-table">
+  <app-orders-table-filters (applyClick)="onFiltersApply($event)" (clearClick)="onFiltersClear()" />
+
   <table mat-table [dataSource]="dataSource" matSort matSortDisableClear class="mat-elevation-z1">
     <ng-container matColumnDef="id">
       <th mat-header-cell *matHeaderCellDef mat-sort-header>Заказ №</th>
@@ -31,7 +33,7 @@
     </ng-container>
 
     <ng-container matColumnDef="prepayment">
-      <th mat-header-cell *matHeaderCellDef>Предоплата</th>
+      <th mat-header-cell *matHeaderCellDef>Аванс</th>
       <td mat-cell *matCellDef="let row">{{ row.prepayment | number: '1.0-0' }} ₽</td>
     </ng-container>
 

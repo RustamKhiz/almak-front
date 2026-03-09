@@ -3,6 +3,9 @@
   border-radius: 12px;
   border: 1px solid #e5e7eb;
   overflow: hidden;
+  display: grid;
+  gap: 8px;
+  padding: 16px 16px 0;
 }
 
 table {
@@ -17,6 +20,10 @@ th {
 td,
 th {
   padding: 12px 16px;
+}
+
+.orders-table app-orders-table-filters {
+  display: block;
 }
 
 .orders-table tr.mat-row,
