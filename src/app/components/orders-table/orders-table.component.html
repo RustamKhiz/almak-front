@@ -71,5 +71,11 @@
     </table>
   </div>
 
-  <mat-paginator [pageSize]="10" [pageSizeOptions]="[10, 20, 50]" showFirstLastButtons></mat-paginator>
+  @if (dataSource.data.length !== 0) {
+    <mat-paginator [pageSize]="10" [pageSizeOptions]="[10, 20, 50]" showFirstLastButtons></mat-paginator>
+  }
+
+  @if (dataSource.data.length === 0) {
+    <div class="orders-table__empty">Ничего не найдено</div>
+  }
 </div>

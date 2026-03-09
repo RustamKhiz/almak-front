@@ -37,6 +37,13 @@ th {
   border-top: 1px solid #e5e7eb;
 }
 
+.orders-table__empty {
+  padding: 20px 12px 24px;
+  text-align: center;
+  color: #6b7280;
+  font-weight: 500;
+}
+
 .orders-table tr.mat-row,
 .orders-table tr.mat-mdc-row {
   cursor: pointer;
