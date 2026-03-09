@@ -1,3 +1,9 @@
+:host {
+  display: block;
+  height: calc(100vh - 96px);
+  overflow-y: auto;
+}
+
 .order-view {
   display: grid;
   gap: 20px;
