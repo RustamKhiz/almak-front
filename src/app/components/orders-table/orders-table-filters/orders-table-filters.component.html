@@ -1,0 +1,38 @@
+<form class="orders-table-form" [formGroup]="form">
+  <div class="orders-table-filters">
+    <mat-form-field appearance="outline">
+      <mat-label>Номер заказа</mat-label>
+      <input matInput type="number" formControlName="orderId" />
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Клиент</mat-label>
+      <input matInput formControlName="customer" />
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Телефон</mat-label>
+      <input matInput formControlName="phone" appPhoneMask autocomplete="tel" />
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Дата</mat-label>
+      <input matInput [matDatepicker]="picker" formControlName="date" />
+      <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
+      <mat-datepicker #picker></mat-datepicker>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Статус</mat-label>
+      <mat-select formControlName="status">
+        @for (status of statusOptions; track status) {
+          <mat-option [value]="status">{{ getStatusLabel(status) }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+  </div>
+  <div class="orders-table-actions">
+    <button matButton="filled" type="button" [disabled]="!hasAnyValue()" (click)="onApplyClick()">Применить</button>
+    <button matButton="outlined" type="button" (click)="onClearClick()">Очистить</button>
+  </div>
+</form>

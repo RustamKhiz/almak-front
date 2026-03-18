@@ -12,16 +12,27 @@ import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatSort, MatSortModule } from '@angular/material/sort';
+import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import { getOrderStatusLabel, ORDER_STATUS_OPTIONS } from '../../common/constants/order-status';
 import { PhoneFormatPipe } from '../../common/pipes/phone-format.pipe';
 import { OrdersService, OrderRecord } from '../../services/orders.service';
 import { OrderStatus } from '../../types/order.types';
+import { OrdersTableFilters, OrdersTableFiltersComponent } from './orders-table-filters/orders-table-filters.component';
 
 @Component({
   selector: 'app-orders-table',
-  imports: [CommonModule, MatTableModule, MatChipsModule, MatMenuModule, MatSortModule, PhoneFormatPipe],
+  imports: [
+    CommonModule,
+    MatTableModule,
+    MatChipsModule,
+    MatMenuModule,
+    MatPaginatorModule,
+    MatSortModule,
+    PhoneFormatPipe,
+    OrdersTableFiltersComponent,
+  ],
   templateUrl: './orders-table.component.html',
   styleUrl: './orders-table.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -31,6 +42,7 @@ export class OrdersTableComponent implements OnInit, AfterViewInit {
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
   private readonly sort = viewChild(MatSort);
+  private readonly paginator = viewChild(MatPaginator);
 
   protected readonly dataSource = new MatTableDataSource<OrderRecord>([]);
   protected readonly displayedColumns = [
@@ -45,6 +57,8 @@ export class OrdersTableComponent implements OnInit, AfterViewInit {
     'status',
   ] as const;
   protected readonly statusOptions = ORDER_STATUS_OPTIONS;
+  private allOrders: OrderRecord[] = [];
+  private activeFilters: OrdersTableFilters | null = null;
 
   private readonly sortAccessors: Record<string, (item: OrderRecord) => string | number> = {
     id: (item) => item.id,
@@ -64,21 +78,27 @@ export class OrdersTableComponent implements OnInit, AfterViewInit {
     this.ordersService
       .getOrders()
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((orders) => (this.dataSource.data = [...orders]));
+      .subscribe((orders) => {
+        this.allOrders = [...orders];
+        this.applyFilters();
+      });
   }
 
   ngAfterViewInit(): void {
     const sort = this.sort();
+    const paginator = this.paginator();
 
-    if (!sort) {
-      return;
+    if (sort) {
+      this.dataSource.sort = sort;
+      sort.active = 'date';
+      sort.direction = 'asc';
+      sort.disableClear = true;
+      sort.sortChange.emit({ active: 'date', direction: 'asc' });
     }
 
-    this.dataSource.sort = sort;
-    sort.active = 'date';
-    sort.direction = 'asc';
-    sort.disableClear = true;
-    sort.sortChange.emit({ active: 'date', direction: 'asc' });
+    if (paginator) {
+      this.dataSource.paginator = paginator;
+    }
   }
 
   protected onRowClick(row: OrderRecord): void {
@@ -94,14 +114,70 @@ export class OrdersTableComponent implements OnInit, AfterViewInit {
       .updateOrderStatus(orderId, status)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((nextStatus) => {
-        const current = this.dataSource.data;
-        this.dataSource.data = current.map((order) =>
+        this.allOrders = this.allOrders.map((order) =>
           order.id === orderId ? { ...order, status: nextStatus } : order,
         );
+        this.applyFilters();
       });
   }
 
   protected getStatusLabel(status: OrderStatus): string {
     return getOrderStatusLabel(status);
+  }
+
+  protected onFiltersApply(filters: OrdersTableFilters): void {
+    this.activeFilters = filters;
+    this.applyFilters();
+    this.paginator()?.firstPage();
+  }
+
+  protected onFiltersClear(): void {
+    this.activeFilters = null;
+    this.applyFilters();
+    this.paginator()?.firstPage();
+  }
+
+  private applyFilters(): void {
+    const filters = this.activeFilters;
+
+    if (!filters) {
+      this.dataSource.data = [...this.allOrders];
+      return;
+    }
+
+    const normalizedCustomer = filters.customer.toLocaleLowerCase();
+    const normalizedPhone = filters.phone;
+
+    this.dataSource.data = this.allOrders.filter((order) => {
+      if (filters.orderId && order.id !== filters.orderId) {
+        return false;
+      }
+
+      if (normalizedCustomer && !order.customer.toLocaleLowerCase().includes(normalizedCustomer)) {
+        return false;
+      }
+
+      if (normalizedPhone && !order.phone.includes(normalizedPhone)) {
+        return false;
+      }
+
+      if (filters.date && this.toIsoDate(order.date) !== filters.date) {
+        return false;
+      }
+
+      if (filters.status && order.status !== filters.status) {
+        return false;
+      }
+
+      return true;
+    });
+  }
+
+  private toIsoDate(value: string): string {
+    const date = new Date(value);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
   }
 }

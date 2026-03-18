@@ -1,0 +1,48 @@
+.orders-table-filters {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(140px, 1fr));
+  gap: 12px;
+  align-items: start;
+}
+
+.orders-table-filters mat-form-field {
+  width: 100%;
+}
+
+.orders-table-form {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: flex-end;
+}
+
+.orders-table-actions {
+  display: flex;
+  gap: 8px;
+  padding-bottom: 22px;
+}
+
+@media (max-width: 1200px) {
+  .orders-table-filters {
+    grid-template-columns: repeat(3, minmax(140px, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .orders-table-filters {
+    grid-template-columns: 1fr;
+  }
+
+  .orders-table-form {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .orders-table-actions {
+    padding-bottom: 0;
+  }
+
+  .orders-table-actions button {
+    width: 100%;
+  }
+}

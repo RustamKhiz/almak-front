@@ -5,6 +5,10 @@
       <p>Добавьте двери и проверьте список перед сохранением заказа.</p>
     </div>
     <button mat-flat-button color="primary" (click)="onAddDoorClick()">Добавить дверь</button>
+    <button mat-flat-button color="primary" (click)="onAddMoldingClick()">Добавить погонаж</button>
+    <button mat-flat-button color="primary" (click)="onAddExtensionClick()">Добавить доборы</button>
+    <button mat-flat-button color="primary" (click)="onAddCapitalClick()">Добавить капитель</button>
+    <button mat-flat-button color="primary" (click)="onAddHardwareClick()">Добавить фурнитуру</button>
   </header>
 
   <form class="order-create__form" [formGroup]="form">
@@ -35,7 +39,7 @@
       </mat-form-field>
 
       <mat-form-field appearance="outline">
-        <mat-label>Предоплата</mat-label>
+        <mat-label>Аванс</mat-label>
         <input matInput type="number" formControlName="prepayment" />
         @if (form.controls.prepayment.touched && form.controls.prepayment.invalid) {
           <mat-error>Введите число >= 0</mat-error>
