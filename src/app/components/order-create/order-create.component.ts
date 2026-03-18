@@ -105,6 +105,22 @@ export class OrderCreateComponent implements OnInit {
       });
   }
 
+  protected onAddMoldingClick(): void {
+    /* empty */
+  }
+
+  protected onAddExtensionClick(): void {
+    /* empty */
+  }
+
+  protected onAddCapitalClick(): void {
+    /* empty */
+  }
+
+  protected onAddHardwareClick(): void {
+    /* empty */
+  }
+
   protected onEditDoorClick(id: number): void {
     const current = this.doors();
     const door = current.find((item) => item.id === id);
