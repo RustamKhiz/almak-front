@@ -1,14 +1,21 @@
 ﻿<section class="order-create">
   <header class="order-create__header">
-    <div>
+    <div class="order-create__header-content">
       <h1>{{ isEditMode() ? 'Редактировать заказ' : 'Создать заказ' }}</h1>
       <p>Добавьте двери и проверьте список перед сохранением заказа.</p>
     </div>
-    <button mat-flat-button color="primary" (click)="onAddDoorClick()">Добавить дверь</button>
-    <button mat-flat-button color="primary" (click)="onAddMoldingClick()">Добавить погонаж</button>
-    <button mat-flat-button color="primary" (click)="onAddExtensionClick()">Добавить доборы</button>
-    <button mat-flat-button color="primary" (click)="onAddCapitalClick()">Добавить капитель</button>
-    <button mat-flat-button color="primary" (click)="onAddHardwareClick()">Добавить фурнитуру</button>
+    <div class="order-create__header-actions">
+      <button mat-flat-button color="primary" [matMenuTriggerFor]="addItemMenu">Добавить</button>
+      <mat-menu #addItemMenu="matMenu">
+        <button mat-menu-item type="button" (click)="onAddDoorClick()">Межкомнатная дверь</button>
+        <button mat-menu-item type="button" (click)="onAddDoorClick()">Входная дверь</button>
+        <button mat-menu-item type="button" (click)="onAddMoldingClick()">Погонаж</button>
+        <button mat-menu-item type="button" (click)="onAddExtensionClick()">Доборы</button>
+        <button mat-menu-item type="button" (click)="onAddCapitalClick()">Капитель</button>
+        <button mat-menu-item type="button" (click)="onAddHardwareClick()">Фурнитура</button>
+        <button mat-menu-item type="button" (click)="onAddHardwareClick()">Обшивка</button>
+      </mat-menu>
+    </div>
   </header>
 
   <form class="order-create__form" [formGroup]="form">

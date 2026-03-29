@@ -1,12 +1,4 @@
-﻿import {
-  ChangeDetectionStrategy,
-  Component,
-  DestroyRef,
-  OnInit,
-  AfterViewInit,
-  inject,
-  viewChild,
-} from '@angular/core';
+﻿import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, effect, inject, viewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { MatChipsModule } from '@angular/material/chips';
@@ -37,7 +29,7 @@ import { OrdersTableFilters, OrdersTableFiltersComponent } from './orders-table-
   styleUrl: './orders-table.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class OrdersTableComponent implements OnInit, AfterViewInit {
+export class OrdersTableComponent implements OnInit {
   private readonly ordersService = inject(OrdersService);
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
@@ -72,6 +64,30 @@ export class OrdersTableComponent implements OnInit, AfterViewInit {
     status: (item) => item.status,
   };
 
+  constructor() {
+    effect(() => {
+      const sort = this.sort();
+      if (!sort) {
+        return;
+      }
+
+      this.dataSource.sort = sort;
+      sort.active = 'date';
+      sort.direction = 'asc';
+      sort.disableClear = true;
+      sort.sortChange.emit({ active: 'date', direction: 'asc' });
+    });
+
+    effect(() => {
+      const paginator = this.paginator();
+      if (!paginator) {
+        return;
+      }
+
+      this.dataSource.paginator = paginator;
+    });
+  }
+
   ngOnInit(): void {
     this.dataSource.sortingDataAccessor = (item, property) => this.sortAccessors[property]?.(item) ?? '';
 
@@ -82,23 +98,6 @@ export class OrdersTableComponent implements OnInit, AfterViewInit {
         this.allOrders = [...orders];
         this.applyFilters();
       });
-  }
-
-  ngAfterViewInit(): void {
-    const sort = this.sort();
-    const paginator = this.paginator();
-
-    if (sort) {
-      this.dataSource.sort = sort;
-      sort.active = 'date';
-      sort.direction = 'asc';
-      sort.disableClear = true;
-      sort.sortChange.emit({ active: 'date', direction: 'asc' });
-    }
-
-    if (paginator) {
-      this.dataSource.paginator = paginator;
-    }
   }
 
   protected onRowClick(row: OrderRecord): void {

@@ -10,11 +10,24 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
   gap: 16px;
   background: #ffffff;
   border-radius: 16px;
   padding: 20px 24px;
   border: 1px solid #e5e7eb;
+}
+
+.order-create__header-content {
+  flex: 1 1 360px;
+  min-width: 0;
+}
+
+.order-create__header-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex: 0 0 auto;
 }
 
 .order-create__header h1 {
@@ -156,5 +169,14 @@
   .order-create__actions {
     flex-direction: column;
     align-items: stretch;
+  }
+
+  .order-create__header-actions {
+    width: 100%;
+    justify-content: stretch;
+  }
+
+  .order-create__header-actions button[mat-flat-button] {
+    width: 100%;
   }
 }
