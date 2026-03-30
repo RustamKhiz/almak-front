@@ -244,7 +244,7 @@ export class OrderCreateComponent implements OnInit {
         takeUntilDestroyed(this.destroyRef),
       )
       .subscribe((savedOrderId) => {
-        void this.router.navigate(['/order', savedOrderId]);
+        this.router.navigate(['/order', savedOrderId]);
       });
   }
 
@@ -255,7 +255,7 @@ export class OrderCreateComponent implements OnInit {
       return;
     }
 
-    void this.router.navigate(['/order', orderId]);
+    this.router.navigate(['/order', orderId]);
   }
 
   private nextId(current: readonly InteriorDoorItem[]): number {

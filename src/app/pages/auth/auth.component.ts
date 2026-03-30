@@ -30,7 +30,7 @@ export class AuthComponent implements OnInit {
 
   ngOnInit(): void {
     if (this.authService.hasToken()) {
-      void this.router.navigateByUrl('/orders');
+      this.router.navigateByUrl('/orders');
     }
   }
 
@@ -52,7 +52,7 @@ export class AuthComponent implements OnInit {
       .subscribe({
         next: () => {
           this.isSubmitting.set(false);
-          void this.router.navigateByUrl('/orders');
+          this.router.navigateByUrl('/orders');
         },
         error: () => {
           this.isSubmitting.set(false);

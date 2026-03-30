@@ -87,7 +87,7 @@ export class OrderViewComponent {
       )
       .subscribe({
         next: () => {
-          void this.router.navigate(['/orders']);
+          this.router.navigate(['/orders']);
         },
         error: () => {
           this.isLoading.set(false);

@@ -99,7 +99,7 @@ export class OrdersTableComponent implements OnInit {
   }
 
   protected onRowClick(row: OrderRecord): void {
-    void this.router.navigate(['/order', row.id]);
+    this.router.navigate(['/order', row.id]);
   }
 
   protected onStatusClick(event: MouseEvent): void {

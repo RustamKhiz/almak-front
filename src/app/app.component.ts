@@ -35,6 +35,6 @@ export class AppComponent implements OnInit {
 
   protected onLogoutClick(): void {
     localStorage.clear();
-    void this.router.navigate(['/auth']);
+    this.router.navigate(['/auth']);
   }
 }
