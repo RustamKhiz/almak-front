@@ -1,4 +1,4 @@
-﻿@let $state = state();
+@let $state = state();
 
 <section class="order-view">
   <header class="order-view__header">
@@ -101,8 +101,22 @@
             @for (door of $state.data.orders; track door.id) {
               <div class="order-view__item">
                 <div>
-                  <div class="order-view__value">{{ door.type }} дверь · {{ door.model }}</div>
-                  <div class="order-view__meta">{{ door.width }}×{{ door.height }} см · {{ leafTypesLabels[door.leafType] }}</div>
+                  <div class="order-view__value">Межкомнатная дверь · {{ door.model }}</div>
+                  <div class="order-view__meta">
+                    {{ door.width }}
+                    @if (door.width2 !== null) {
+                      + {{ door.width2 }}
+                    }
+                    × {{ door.height }} см ·
+                    {{ leafTypesLabels[door.leafType] }}
+                    @if (door.hasGlass) {
+                      · со стеклом
+                    }
+                    · количество {{ door.count }}
+                    @if (door.comment) {
+                      · {{ door.comment }}
+                    }
+                  </div>
                 </div>
                 <div class="order-view__price">{{ door.price | number }} ₽</div>
               </div>

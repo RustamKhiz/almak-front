@@ -1,9 +1,9 @@
-﻿import { HttpClient } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
+import { BackendOrderStatus, InteriorDoorItem, OrderCreatePayload, OrderStatus } from '../types/order.types';
 import { CoreService } from './core.service';
-import { BackendOrderStatus, DoorItem, OrderCreatePayload, OrderStatus } from '../types/order.types';
 
 interface BackendOrder {
   id: number;
@@ -17,21 +17,22 @@ interface BackendOrder {
   deliveryAddress: string;
   comment: string;
   status: BackendOrderStatus;
-  orders?: BackendDoor[];
+  orders?: BackendInteriorDoor[];
   created_at?: string;
 }
 
-interface BackendDoor {
+interface BackendInteriorDoor {
   id: number;
   order_id: number;
-  type: string;
   model: string;
   price: number;
-  color: string;
   width: number;
+  width2?: number | null;
   height: number;
+  hasGlass?: boolean;
   leafType: string;
   count: number;
+  comment?: string;
 }
 
 interface BackendOrderPayload {
@@ -45,18 +46,19 @@ interface BackendOrderPayload {
   deliveryAddress: string;
   comment: string;
   status: BackendOrderStatus;
-  orders: BackendDoorPayload[];
+  orders: BackendInteriorDoorPayload[];
 }
 
-interface BackendDoorPayload {
-  type: string;
+interface BackendInteriorDoorPayload {
   model: string;
   price: number;
-  color: string;
   width: number;
+  width2?: number | null;
   height: number;
+  hasGlass: boolean;
   leafType: string;
   count: number;
+  comment: string;
 }
 
 interface BackendOrderStatusPayload {
@@ -162,29 +164,31 @@ export class OrdersService {
       comment: payload.comment,
       status: this.mapOrderStatusToBackendStatus(payload.status),
       orders: payload.orders.map((item) => ({
-        type: item.type,
         model: item.model,
         price: item.price,
-        color: item.color,
         width: item.width,
+        width2: item.width2,
         height: item.height,
+        hasGlass: item.hasGlass,
         leafType: item.leafType,
         count: item.count,
+        comment: item.comment,
       })),
     };
   }
 
-  private mapBackendDoorToDoorItem(door: BackendDoor): DoorItem {
+  private mapBackendDoorToDoorItem(door: BackendInteriorDoor): InteriorDoorItem {
     return {
       id: door.id,
-      type: door.type === 'Interior' ? 'Interior' : 'Entrance',
       model: door.model,
       price: door.price,
-      color: door.color,
       width: door.width,
+      width2: door.width2 ?? null,
       height: door.height,
+      hasGlass: door.hasGlass ?? false,
       leafType: door.leafType === 'Double' ? 'Double' : 'Single',
       count: door.count,
+      comment: door.comment ?? '',
     };
   }
 

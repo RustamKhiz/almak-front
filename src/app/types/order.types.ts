@@ -1,4 +1,3 @@
-export type DoorType = 'Entrance' | 'Interior';
 export type DoorLeafType = 'Single' | 'Double';
 export enum OrderStatus {
   Accepted = 1,
@@ -12,16 +11,17 @@ export enum BackendOrderStatus {
   Completed = 'completed',
 }
 
-export interface DoorItem {
+export interface InteriorDoorItem {
   id: number;
-  type: DoorType;
   model: string;
   price: number;
-  color: string;
   width: number;
+  width2: number | null;
   height: number;
+  hasGlass: boolean;
   leafType: DoorLeafType;
   count: number;
+  comment: string;
 }
 
 export interface OrderCustomerForm {
@@ -37,5 +37,5 @@ export interface OrderCustomerForm {
 }
 
 export interface OrderCreatePayload extends OrderCustomerForm {
-  orders: readonly DoorItem[];
+  orders: readonly InteriorDoorItem[];
 }

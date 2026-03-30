@@ -1,27 +1,28 @@
+import { DecimalPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, computed, inject, input, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { DecimalPipe } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatSelectModule } from '@angular/material/select';
 import { Router } from '@angular/router';
 import { Observable, filter, switchMap } from 'rxjs';
-import { DOOR_LEAF_TYPE_LABELS, DOOR_TYPE_LABELS } from '../../common/constants/door-catalog';
+import { DOOR_LEAF_TYPE_LABELS } from '../../common/constants/door-catalog';
+import { ORDER_STATUS_LABELS, ORDER_STATUS_OPTIONS } from '../../common/constants/order-status';
 import { ConfirmDialogComponent, ConfirmDialogData } from '../../common/confirm-dialog/confirm-dialog.component';
 import {
-  DoorDialogComponent,
-  DoorDialogData,
-  DoorDialogResult,
-} from '../order-door-dialog/order-door-dialog.component';
+  InteriorDoorDialogComponent,
+  InteriorDoorDialogData,
+  InteriorDoorDialogResult,
+} from '../../common/dialogs/interior-door-dialog/interior-door-dialog.component';
 import { PhoneMaskDirective } from '../../common/directives/phone-mask.directive';
-import { ORDER_STATUS_LABELS, ORDER_STATUS_OPTIONS } from '../../common/constants/order-status';
 import { OrdersService } from '../../services/orders.service';
-import { DoorItem, OrderCreatePayload, OrderStatus } from '../../types/order.types';
+import { InteriorDoorItem, OrderCreatePayload, OrderStatus } from '../../types/order.types';
 
 @Component({
   selector: 'app-order-create',
@@ -32,6 +33,7 @@ import { DoorItem, OrderCreatePayload, OrderStatus } from '../../types/order.typ
     MatCheckboxModule,
     MatDialogModule,
     MatFormFieldModule,
+    MatIconModule,
     MatInputModule,
     MatMenuModule,
     MatSelectModule,
@@ -50,14 +52,13 @@ export class OrderCreateComponent implements OnInit {
 
   readonly orderId = input.required<number>();
 
-  protected readonly doors = signal<readonly DoorItem[]>([]);
+  protected readonly doors = signal<readonly InteriorDoorItem[]>([]);
   protected readonly showOrdersError = signal(false);
   protected readonly isEditMode = signal(false);
   protected readonly prepayment = signal(0);
   protected readonly discount = signal(0);
   protected readonly statusOptions = ORDER_STATUS_OPTIONS;
   protected readonly statusLabels = ORDER_STATUS_LABELS;
-  protected readonly doorTypeLabels = DOOR_TYPE_LABELS;
   protected readonly doorLeafTypeLabels = DOOR_LEAF_TYPE_LABELS;
   protected readonly orderTotal = computed(() =>
     this.doors().reduce((total, item) => total + Number(item.price ?? 0) * Number(item.count ?? 0), 0),
@@ -89,14 +90,7 @@ export class OrderCreateComponent implements OnInit {
     this.form.controls.needsDelivery.valueChanges
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((needsDelivery) => {
-        if (needsDelivery === true) {
-          this.form.controls.deliveryAddress.addValidators([Validators.required]);
-        } else {
-          this.form.controls.deliveryAddress.removeValidators([Validators.required]);
-          this.form.controls.deliveryAddress.setValue('', { emitEvent: false });
-        }
-
-        this.form.controls.deliveryAddress.updateValueAndValidity({ emitEvent: false });
+        this.syncDeliveryState(needsDelivery === true);
       });
   }
 
@@ -116,18 +110,18 @@ export class OrderCreateComponent implements OnInit {
       });
   }
 
-  protected onAddDoorClick(): void {
-    const dialogRef = this.dialog.open(DoorDialogComponent, {
+  protected onAddInteriorDoorClick(): void {
+    const dialogRef = this.dialog.open(InteriorDoorDialogComponent, {
       width: '520px',
       data: {
         mode: 'create',
-      } as DoorDialogData,
+      } as InteriorDoorDialogData,
     });
 
     dialogRef
       .afterClosed()
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((result: DoorDialogResult) => {
+      .subscribe((result: InteriorDoorDialogResult) => {
         if (!result) {
           return;
         }
@@ -136,6 +130,10 @@ export class OrderCreateComponent implements OnInit {
         this.doors.set([...current, { ...result, id: this.nextId(current) }]);
         this.syncQuantity();
       });
+  }
+
+  protected onAddEntranceDoorClick(): void {
+    /* empty */
   }
 
   protected onAddMoldingClick(): void {
@@ -154,25 +152,25 @@ export class OrderCreateComponent implements OnInit {
     /* empty */
   }
 
-  protected onEditDoorClick(id: number): void {
+  protected onEditInteriorDoorClick(id: number): void {
     const current = this.doors();
     const door = current.find((item) => item.id === id);
     if (!door) {
       return;
     }
 
-    const dialogRef = this.dialog.open(DoorDialogComponent, {
+    const dialogRef = this.dialog.open(InteriorDoorDialogComponent, {
       width: '600px',
       data: {
         mode: 'edit',
         door,
-      } as DoorDialogData,
+      } as InteriorDoorDialogData,
     });
 
     dialogRef
       .afterClosed()
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((result: DoorDialogResult) => {
+      .subscribe((result: InteriorDoorDialogResult) => {
         if (!result) {
           return;
         }
@@ -182,9 +180,26 @@ export class OrderCreateComponent implements OnInit {
       });
   }
 
-  protected onRemoveDoorClick(id: number): void {
+  protected onRemoveInteriorDoorClick(id: number): void {
     const current = this.doors();
     this.doors.set(current.filter((item) => item.id !== id));
+    this.syncQuantity();
+  }
+
+  protected onDuplicateInteriorDoorClick(id: number): void {
+    const current = this.doors();
+    const sourceIndex = current.findIndex((item) => item.id === id);
+
+    if (sourceIndex === -1) {
+      return;
+    }
+
+    const duplicatedDoor = {
+      ...current[sourceIndex],
+      id: this.nextId(current),
+    };
+
+    this.doors.set([...current.slice(0, sourceIndex + 1), duplicatedDoor, ...current.slice(sourceIndex + 1)]);
     this.syncQuantity();
   }
 
@@ -231,7 +246,7 @@ export class OrderCreateComponent implements OnInit {
       });
   }
 
-  private nextId(current: readonly DoorItem[]): number {
+  private nextId(current: readonly InteriorDoorItem[]): number {
     return current.length ? Math.max(...current.map((item) => item.id)) + 1 : 1;
   }
 
@@ -253,20 +268,44 @@ export class OrderCreateComponent implements OnInit {
 
   private applyOrder(order: OrderCreatePayload): void {
     this.doors.set(order.orders);
-    this.form.patchValue({
-      name: order.name,
-      phone: order.phone,
-      date: order.date,
-      prepayment: order.prepayment,
-      discount: order.discount,
-      needsDelivery: order.needsDelivery,
-      deliveryAddress: order.deliveryAddress,
-      comment: order.comment,
-      status: order.status,
-    });
+    this.form.patchValue(
+      {
+        name: order.name,
+        phone: order.phone,
+        date: order.date,
+        prepayment: order.prepayment,
+        discount: order.discount,
+        comment: order.comment,
+        status: order.status,
+      },
+      { emitEvent: false },
+    );
+    this.form.controls.needsDelivery.setValue(order.needsDelivery, { emitEvent: false });
+    this.syncDeliveryState(order.needsDelivery, { clearAddressWhenDisabled: false });
+    this.form.controls.deliveryAddress.setValue(order.deliveryAddress, { emitEvent: false });
     this.prepayment.set(Number(order.prepayment ?? 0));
     this.discount.set(Number(order.discount ?? 0));
     this.syncQuantity();
+  }
+
+  private syncDeliveryState(
+    needsDelivery: boolean,
+    options?: {
+      clearAddressWhenDisabled?: boolean;
+    },
+  ): void {
+    const clearAddressWhenDisabled = options?.clearAddressWhenDisabled ?? true;
+
+    if (needsDelivery) {
+      this.form.controls.deliveryAddress.addValidators([Validators.required]);
+    } else {
+      this.form.controls.deliveryAddress.removeValidators([Validators.required]);
+      if (clearAddressWhenDisabled) {
+        this.form.controls.deliveryAddress.setValue('', { emitEvent: false });
+      }
+    }
+
+    this.form.controls.deliveryAddress.updateValueAndValidity({ emitEvent: false });
   }
 
   private todayIso(): string {

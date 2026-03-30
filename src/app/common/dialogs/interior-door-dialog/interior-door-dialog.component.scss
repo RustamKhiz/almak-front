@@ -1,0 +1,63 @@
+.dialog-form {
+  display: grid;
+  gap: 16px;
+  padding-top: 8px;
+  padding-left: 24px;
+  padding-right: 24px;
+}
+
+.dialog-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.dialog-row--sizes {
+  align-items: start;
+}
+
+.dialog-column {
+  display: grid;
+  gap: 12px;
+}
+
+.leaf-type {
+  display: grid;
+  gap: 8px;
+}
+
+.leaf-type__label,
+.count-field__label {
+  font-size: 12px;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+mat-radio-group {
+  display: grid;
+  gap: 6px;
+}
+
+.count-field {
+  display: grid;
+  gap: 8px;
+}
+
+.count-field__controls {
+  display: grid;
+  grid-template-columns: auto minmax(72px, 96px) auto;
+  align-items: center;
+  justify-content: start;
+  gap: 8px;
+}
+
+.count-field__controls input {
+  text-align: center;
+}
+
+@media (max-width: 640px) {
+  .dialog-row {
+    grid-template-columns: 1fr;
+  }
+}

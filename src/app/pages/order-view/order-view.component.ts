@@ -69,7 +69,7 @@ export class OrderViewComponent {
 
     const dialogData: ConfirmDialogData = {
       title: 'Удаление заказа',
-      message: 'Вы уверены что хотите удалить заказ?',
+      message: 'Вы уверены, что хотите удалить заказ?',
       confirmText: 'Да, удалить',
       cancelText: 'Нет',
     };

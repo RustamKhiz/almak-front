@@ -1,4 +1,4 @@
-﻿<section class="order-create">
+<section class="order-create">
   <header class="order-create__header">
     <div class="order-create__header-content">
       <h1>{{ isEditMode() ? 'Редактировать заказ' : 'Создать заказ' }}</h1>
@@ -7,8 +7,8 @@
     <div class="order-create__header-actions">
       <button mat-flat-button color="primary" [matMenuTriggerFor]="addItemMenu">Добавить</button>
       <mat-menu #addItemMenu="matMenu">
-        <button mat-menu-item type="button" (click)="onAddDoorClick()">Межкомнатная дверь</button>
-        <button mat-menu-item type="button" (click)="onAddDoorClick()">Входная дверь</button>
+        <button mat-menu-item type="button" (click)="onAddInteriorDoorClick()">Межкомнатная дверь</button>
+        <button mat-menu-item type="button" disabled (click)="onAddEntranceDoorClick()">Входная дверь</button>
         <button mat-menu-item type="button" (click)="onAddMoldingClick()">Погонаж</button>
         <button mat-menu-item type="button" (click)="onAddExtensionClick()">Доборы</button>
         <button mat-menu-item type="button" (click)="onAddCapitalClick()">Капитель</button>
@@ -107,24 +107,58 @@
     </div>
   </form>
 
-  @let $doors = doors();
+  @let doorItems = doors();
 
-  @if ($doors.length) {
+  @if (doorItems.length) {
     <div class="door-list">
-      @for (door of $doors; track $index) {
+      @for (door of doorItems; track door.id) {
         <div class="door-item">
           <div class="door-item__main">
-            <div class="door-item__title">{{ doorTypeLabels[door.type] }} · {{ door.model }}</div>
+            <div class="door-item__title">Межкомнатная дверь · {{ door.model }}</div>
             <div class="door-item__meta">
-              {{ door.width }}×{{ door.height }} см · {{ doorLeafTypeLabels[door.leafType] }} · количество
-              {{ door.count }}
+              {{ door.width }}
+              @if (door.width2 !== null) {
+                + {{ door.width2 }}
+              }
+              × {{ door.height }} см ·
+              {{ doorLeafTypeLabels[door.leafType] }}
+              @if (door.hasGlass) {
+                · со стеклом
+              }
+              · количество {{ door.count }}
+              @if (door.comment) {
+                · {{ door.comment }}
+              }
             </div>
           </div>
           <div class="door-item__aside">
             <div class="door-item__price">{{ door.price | number: '1.0-0' }} ₽</div>
             <div class="door-item__actions">
-              <button mat-stroked-button color="primary" (click)="onEditDoorClick(door.id)">Редактировать</button>
-              <button mat-stroked-button color="warn" (click)="onRemoveDoorClick(door.id)">Удалить</button>
+              <button
+                mat-icon-button
+                type="button"
+                aria-label="Дублировать"
+                (click)="onDuplicateInteriorDoorClick(door.id)"
+              >
+                <mat-icon>content_copy</mat-icon>
+              </button>
+              <button
+                mat-icon-button
+                type="button"
+                aria-label="Редактировать"
+                (click)="onEditInteriorDoorClick(door.id)"
+              >
+                <mat-icon>edit</mat-icon>
+              </button>
+              <button
+                mat-icon-button
+                type="button"
+                color="warn"
+                aria-label="Удалить"
+                (click)="onRemoveInteriorDoorClick(door.id)"
+              >
+                <mat-icon>delete</mat-icon>
+              </button>
             </div>
           </div>
         </div>
@@ -137,7 +171,7 @@
     </div>
   }
 
-  @if (showOrdersError() && !$doors.length) {
+  @if (showOrdersError() && !doorItems.length) {
     <div class="order-create__error">Добавьте хотя бы одну дверь.</div>
   }
 

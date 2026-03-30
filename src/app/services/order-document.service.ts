@@ -1,4 +1,4 @@
-﻿import { Injectable } from '@angular/core';
+import { Injectable } from '@angular/core';
 import { OrderCreatePayload } from '../types/order.types';
 
 @Injectable({
@@ -20,11 +20,13 @@ export class OrderDocumentService {
         (item, index) => `
           <tr>
             <td class="num">${index + 1}</td>
-            <td>${this.escapeHtml(this.getDoorTypeLabel(item.type))}</td>
+            <td>Межкомнатная</td>
             <td>${this.escapeHtml(item.model)}</td>
-            <td>${this.escapeHtml(item.color)}</td>
-            <td class="num">${item.width}x${item.height}</td>
+            <td>${item.hasGlass ? 'Со стеклом' : 'Глухая'}</td>
+            <td class="num">${this.escapeHtml(this.formatDoorSize(item.width, item.height, item.width2))}</td>
             <td>${this.escapeHtml(this.getLeafTypeLabel(item.leafType))}</td>
+            <td>${this.escapeHtml(item.comment || '-')}</td>
+            <td class="num">${item.count}</td>
             <td class="money">${item.price}</td>
             <td class="money">${item.price * item.count}</td>
           </tr>
@@ -193,9 +195,11 @@ export class OrderDocumentService {
                   <th style="width: 34px;">№</th>
                   <th>Тип двери</th>
                   <th>Модель</th>
-                  <th>Цвет</th>
+                  <th>Исполнение</th>
                   <th style="width: 84px;">Размер</th>
                   <th style="width: 102px;">Створка</th>
+                  <th>Комментарий</th>
+                  <th style="width: 62px;">Кол-во</th>
                   <th style="width: 76px;">Цена</th>
                   <th style="width: 86px;">Сумма</th>
                 </tr>
@@ -233,16 +237,6 @@ export class OrderDocumentService {
     `;
   }
 
-  private getDoorTypeLabel(value: string): string {
-    if (value === 'Entrance') {
-      return 'Входная';
-    }
-    if (value === 'Interior') {
-      return 'Межкомнатная';
-    }
-    return value;
-  }
-
   private getLeafTypeLabel(value: string): string {
     if (value === 'Single') {
       return 'Одна створка';
@@ -251,6 +245,11 @@ export class OrderDocumentService {
       return 'Две створки';
     }
     return value;
+  }
+
+  private formatDoorSize(width: number, height: number, width2: number | null): string {
+    const widthValue = width2 === null ? `${width}` : `${width}+${width2}`;
+    return `${widthValue}x${height}`;
   }
 
   private escapeHtml(value: string): string {
