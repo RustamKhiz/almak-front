@@ -2,7 +2,14 @@ import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { BackendOrderStatus, InteriorDoorItem, OrderCreatePayload, OrderStatus } from '../types/order.types';
+import {
+  BackendOrderStatus,
+  DoorLeafType,
+  InteriorDoorCovering,
+  InteriorDoorItem,
+  OrderCreatePayload,
+  OrderStatus,
+} from '../types/order.types';
 import { CoreService } from './core.service';
 
 interface BackendOrder {
@@ -32,6 +39,7 @@ interface BackendInteriorDoor {
   hasGlass?: boolean;
   leafType: string;
   count: number;
+  covering?: string;
   comment?: string;
 }
 
@@ -58,6 +66,7 @@ interface BackendInteriorDoorPayload {
   hasGlass: boolean;
   leafType: string;
   count: number;
+  covering: string;
   comment: string;
 }
 
@@ -172,6 +181,7 @@ export class OrdersService {
         hasGlass: item.hasGlass,
         leafType: item.leafType,
         count: item.count,
+        covering: item.covering,
         comment: item.comment,
       })),
     };
@@ -186,10 +196,23 @@ export class OrdersService {
       width2: door.width2 ?? null,
       height: door.height,
       hasGlass: door.hasGlass ?? false,
-      leafType: door.leafType === 'Double' ? 'Double' : 'Single',
+      leafType: door.leafType === DoorLeafType.Double ? DoorLeafType.Double : DoorLeafType.Single,
       count: door.count,
+      covering: this.mapBackendCoveringToCovering(door.covering),
       comment: door.comment ?? '',
     };
+  }
+
+  private mapBackendCoveringToCovering(covering?: string): InteriorDoorCovering {
+    switch (covering) {
+      case InteriorDoorCovering.Enamel:
+      case InteriorDoorCovering.Veneer:
+      case InteriorDoorCovering.Embossing:
+      case InteriorDoorCovering.PVC:
+        return covering;
+      default:
+        return InteriorDoorCovering.PVC;
+    }
   }
 
   private mapBackendStatusToOrderStatus(status: BackendOrderStatus): OrderStatus {

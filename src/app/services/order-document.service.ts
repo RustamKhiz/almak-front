@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { OrderCreatePayload } from '../types/order.types';
+import { DoorLeafType, OrderCreatePayload } from '../types/order.types';
 
 @Injectable({
   providedIn: 'root',
@@ -238,12 +238,14 @@ export class OrderDocumentService {
   }
 
   private getLeafTypeLabel(value: string): string {
-    if (value === 'Single') {
+    if (value === DoorLeafType.Single) {
       return 'Одна створка';
     }
-    if (value === 'Double') {
+
+    if (value === DoorLeafType.Double) {
       return 'Две створки';
     }
+
     return value;
   }
 

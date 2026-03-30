@@ -127,8 +127,7 @@
               @if (door.width2 !== null) {
                 + {{ door.width2 }}
               }
-              × {{ door.height }} см ·
-              {{ doorLeafTypeLabels[door.leafType] }}
+              × {{ door.height }} см · {{ doorLeafTypeLabels[door.leafType] }} · {{ doorCoveringLabels[door.covering] }}
               @if (door.hasGlass) {
                 · со стеклом
               }

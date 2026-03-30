@@ -13,6 +13,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { Router } from '@angular/router';
 import { Observable, filter, switchMap } from 'rxjs';
 import { DOOR_LEAF_TYPE_LABELS } from '../../common/constants/door-catalog';
+import { INTERIOR_DOOR_COVERING_LABELS } from '../../common/constants/interior-door-covering';
 import { ORDER_STATUS_LABELS, ORDER_STATUS_OPTIONS } from '../../common/constants/order-status';
 import { ConfirmDialogComponent, ConfirmDialogData } from '../../common/confirm-dialog/confirm-dialog.component';
 import {
@@ -60,6 +61,7 @@ export class OrderCreateComponent implements OnInit {
   protected readonly statusOptions = ORDER_STATUS_OPTIONS;
   protected readonly statusLabels = ORDER_STATUS_LABELS;
   protected readonly doorLeafTypeLabels = DOOR_LEAF_TYPE_LABELS;
+  protected readonly doorCoveringLabels = INTERIOR_DOOR_COVERING_LABELS;
   protected readonly orderTotal = computed(() =>
     this.doors().reduce((total, item) => total + Number(item.price ?? 0) * Number(item.count ?? 0), 0),
   );
@@ -241,8 +243,8 @@ export class OrderCreateComponent implements OnInit {
         switchMap(() => this.saveOrder(payload)),
         takeUntilDestroyed(this.destroyRef),
       )
-      .subscribe((id) => {
-        void this.router.navigate(['/order', id]);
+      .subscribe((savedOrderId) => {
+        void this.router.navigate(['/order', savedOrderId]);
       });
   }
 

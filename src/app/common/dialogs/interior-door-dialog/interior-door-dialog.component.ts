@@ -10,12 +10,17 @@ import { MatRadioModule } from '@angular/material/radio';
 import { MatSelectModule } from '@angular/material/select';
 import { DOOR_LEAF_TYPE_LABELS, DOOR_LEAF_TYPE_OPTIONS } from '../../constants/door-catalog';
 import {
+  DEFAULT_INTERIOR_DOOR_COVERING,
+  INTERIOR_DOOR_COVERING_LABELS,
+  INTERIOR_DOOR_COVERING_OPTIONS,
+} from '../../constants/interior-door-covering';
+import {
   DEFAULT_INTERIOR_DOOR_HEIGHT,
   DEFAULT_INTERIOR_DOOR_WIDTH,
   INTERIOR_DOOR_HEIGHT_OPTIONS,
   INTERIOR_DOOR_WIDTH_OPTIONS,
 } from '../../constants/interior-door-catalog';
-import { InteriorDoorItem } from '../../../types/order.types';
+import { DoorLeafType, InteriorDoorItem } from '../../../types/order.types';
 
 export interface InteriorDoorDialogData {
   mode: 'create' | 'edit';
@@ -50,6 +55,8 @@ export class InteriorDoorDialogComponent {
   protected readonly doorLeafTypeLabels = DOOR_LEAF_TYPE_LABELS;
   protected readonly widthOptions = INTERIOR_DOOR_WIDTH_OPTIONS;
   protected readonly heightOptions = INTERIOR_DOOR_HEIGHT_OPTIONS;
+  protected readonly coveringOptions = INTERIOR_DOOR_COVERING_OPTIONS;
+  protected readonly coveringLabels = INTERIOR_DOOR_COVERING_LABELS;
 
   protected readonly form = this.fb.group({
     model: [this.data.door?.model ?? '', [Validators.required]],
@@ -58,8 +65,9 @@ export class InteriorDoorDialogComponent {
     width2: [this.data.door?.width2 ?? (null as number | null)],
     height: [this.data.door?.height ?? DEFAULT_INTERIOR_DOOR_HEIGHT, [Validators.required]],
     price: [this.data.door?.price ?? 0, [Validators.required, Validators.min(0)]],
-    leafType: [this.data.door?.leafType ?? DOOR_LEAF_TYPE_OPTIONS[0], [Validators.required]],
+    leafType: [this.data.door?.leafType ?? DoorLeafType.Single, [Validators.required]],
     count: [this.data.door?.count ?? 1, [Validators.required, Validators.min(1)]],
+    covering: [this.data.door?.covering ?? DEFAULT_INTERIOR_DOOR_COVERING, [Validators.required]],
     comment: [this.data.door?.comment ?? ''],
   });
 
@@ -69,7 +77,7 @@ export class InteriorDoorDialogComponent {
 
   constructor() {
     this.form.controls.leafType.valueChanges.subscribe((leafType) => {
-      if (leafType === 'Double') {
+      if (leafType === DoorLeafType.Double) {
         this.form.controls.width2.addValidators([Validators.required]);
       } else {
         this.form.controls.width2.removeValidators([Validators.required]);
@@ -79,7 +87,7 @@ export class InteriorDoorDialogComponent {
       this.form.controls.width2.updateValueAndValidity({ emitEvent: false });
     });
 
-    if (this.form.controls.leafType.value === 'Double') {
+    if (this.form.controls.leafType.value === DoorLeafType.Double) {
       this.form.controls.width2.addValidators([Validators.required]);
       this.form.controls.width2.updateValueAndValidity({ emitEvent: false });
     }
@@ -108,13 +116,14 @@ export class InteriorDoorDialogComponent {
     const value = this.form.getRawValue();
     this.dialogRef.close({
       model: value.model ?? '',
-      hasGlass: value.hasGlass,
+      hasGlass: value.hasGlass ?? false,
       width: value.width ?? DEFAULT_INTERIOR_DOOR_WIDTH,
-      width2: value.leafType === 'Double' ? (value.width2 ?? DEFAULT_INTERIOR_DOOR_WIDTH) : null,
+      width2: value.leafType === DoorLeafType.Double ? (value.width2 ?? DEFAULT_INTERIOR_DOOR_WIDTH) : null,
       height: value.height ?? DEFAULT_INTERIOR_DOOR_HEIGHT,
       price: value.price ?? 0,
-      leafType: value.leafType ?? DOOR_LEAF_TYPE_OPTIONS[0],
+      leafType: value.leafType ?? DoorLeafType.Single,
       count: Math.max(1, Number(value.count ?? 1)),
+      covering: value.covering ?? DEFAULT_INTERIOR_DOOR_COVERING,
       comment: value.comment?.trim() ?? '',
     });
   }

@@ -1,4 +1,15 @@
-export type DoorLeafType = 'Single' | 'Double';
+export enum DoorLeafType {
+  Single = 'Single',
+  Double = 'Double',
+}
+
+export enum InteriorDoorCovering {
+  Enamel = 'Enamel',
+  Veneer = 'Veneer',
+  Embossing = 'Embossing',
+  PVC = 'PVC',
+}
+
 export enum OrderStatus {
   Accepted = 1,
   Progress = 2,
@@ -21,6 +32,7 @@ export interface InteriorDoorItem {
   hasGlass: boolean;
   leafType: DoorLeafType;
   count: number;
+  covering: InteriorDoorCovering;
   comment: string;
 }
 
