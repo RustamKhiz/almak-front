@@ -23,8 +23,20 @@
   min-width: 0;
 }
 
+.order-create__title-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.order-create__back-button {
+  flex: 0 0 auto;
+}
+
 .order-create__header-actions {
   display: flex;
+  gap: 8px;
   align-items: center;
   justify-content: flex-end;
   flex: 0 0 auto;

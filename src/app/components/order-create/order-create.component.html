@@ -1,7 +1,14 @@
 <section class="order-create">
   <header class="order-create__header">
     <div class="order-create__header-content">
-      <h1>{{ isEditMode() ? 'Редактировать заказ' : 'Создать заказ' }}</h1>
+      <div class="order-create__title-row">
+        @if (isEditMode()) {
+          <button mat-icon-button type="button" class="order-create__back-button" (click)="onBackToOrderClick()">
+            <mat-icon>arrow_back</mat-icon>
+          </button>
+        }
+        <h1>{{ isEditMode() ? 'Редактировать заказ' : 'Создать заказ' }}</h1>
+      </div>
       <p>Добавьте двери и проверьте список перед сохранением заказа.</p>
     </div>
     <div class="order-create__header-actions">

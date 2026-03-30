@@ -246,6 +246,16 @@ export class OrderCreateComponent implements OnInit {
       });
   }
 
+  protected onBackToOrderClick(): void {
+    const orderId = this.orderId();
+
+    if (!this.isEditMode() || !orderId) {
+      return;
+    }
+
+    void this.router.navigate(['/order', orderId]);
+  }
+
   private nextId(current: readonly InteriorDoorItem[]): number {
     return current.length ? Math.max(...current.map((item) => item.id)) + 1 : 1;
   }
