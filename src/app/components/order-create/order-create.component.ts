@@ -3,6 +3,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DecimalPipe } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -28,6 +29,7 @@ import { DoorItem, OrderCreatePayload, OrderStatus } from '../../types/order.typ
     DecimalPipe,
     ReactiveFormsModule,
     MatButtonModule,
+    MatCheckboxModule,
     MatDialogModule,
     MatFormFieldModule,
     MatInputModule,
@@ -51,23 +53,52 @@ export class OrderCreateComponent implements OnInit {
   protected readonly doors = signal<readonly DoorItem[]>([]);
   protected readonly showOrdersError = signal(false);
   protected readonly isEditMode = signal(false);
+  protected readonly prepayment = signal(0);
+  protected readonly discount = signal(0);
   protected readonly statusOptions = ORDER_STATUS_OPTIONS;
   protected readonly statusLabels = ORDER_STATUS_LABELS;
   protected readonly doorTypeLabels = DOOR_TYPE_LABELS;
   protected readonly doorLeafTypeLabels = DOOR_LEAF_TYPE_LABELS;
-  protected readonly totalPrice = computed(() =>
+  protected readonly orderTotal = computed(() =>
     this.doors().reduce((total, item) => total + Number(item.price ?? 0) * Number(item.count ?? 0), 0),
   );
+  protected readonly totalToPay = computed(() => Math.max(this.orderTotal() - this.discount(), 0));
+  protected readonly customerDebt = computed(() => Math.max(this.totalToPay() - this.prepayment(), 0));
 
   protected readonly form = this.fb.group({
     name: ['', [Validators.required]],
     phone: ['', [Validators.required, Validators.pattern(/^7\d{10}$/)]],
     date: [this.todayIso(), [Validators.required]],
-    prepayment: [0, [Validators.required, Validators.min(1)]],
-    quantity: [{ value: 0, disabled: true }, [Validators.required, Validators.min(1)]],
+    prepayment: [0, [Validators.required, Validators.min(0)]],
+    discount: [0, [Validators.required, Validators.min(0)]],
+    needsDelivery: [false],
+    deliveryAddress: [''],
     comment: [''],
     status: [OrderStatus.Accepted, [Validators.required]],
   });
+
+  constructor() {
+    this.form.controls.prepayment.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((value) => {
+      this.prepayment.set(Number(value ?? 0));
+    });
+
+    this.form.controls.discount.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((value) => {
+      this.discount.set(Number(value ?? 0));
+    });
+
+    this.form.controls.needsDelivery.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((needsDelivery) => {
+        if (needsDelivery === true) {
+          this.form.controls.deliveryAddress.addValidators([Validators.required]);
+        } else {
+          this.form.controls.deliveryAddress.removeValidators([Validators.required]);
+          this.form.controls.deliveryAddress.setValue('', { emitEvent: false });
+        }
+
+        this.form.controls.deliveryAddress.updateValueAndValidity({ emitEvent: false });
+      });
+  }
 
   ngOnInit(): void {
     const orderId = this.orderId();
@@ -172,7 +203,9 @@ export class OrderCreateComponent implements OnInit {
       phone: value.phone ?? '',
       date: value.date ?? this.todayIso(),
       prepayment: Number(value.prepayment ?? 0),
-      quantity: this.totalQuantity(),
+      discount: Number(value.discount ?? 0),
+      needsDelivery: Boolean(value.needsDelivery),
+      deliveryAddress: value.deliveryAddress ?? '',
       comment: value.comment ?? '',
       status: Number(value.status ?? OrderStatus.Accepted) as OrderStatus,
       orders: this.doors(),
@@ -202,12 +235,7 @@ export class OrderCreateComponent implements OnInit {
     return current.length ? Math.max(...current.map((item) => item.id)) + 1 : 1;
   }
 
-  private totalQuantity(): number {
-    return this.doors().reduce((total, item) => total + Number(item.count ?? 0), 0);
-  }
-
   private syncQuantity(): void {
-    this.form.controls.quantity.setValue(this.totalQuantity(), { emitEvent: false });
     if (this.doors().length) {
       this.showOrdersError.set(false);
     }
@@ -230,9 +258,14 @@ export class OrderCreateComponent implements OnInit {
       phone: order.phone,
       date: order.date,
       prepayment: order.prepayment,
+      discount: order.discount,
+      needsDelivery: order.needsDelivery,
+      deliveryAddress: order.deliveryAddress,
       comment: order.comment,
       status: order.status,
     });
+    this.prepayment.set(Number(order.prepayment ?? 0));
+    this.discount.set(Number(order.discount ?? 0));
     this.syncQuantity();
   }
 

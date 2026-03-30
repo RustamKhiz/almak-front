@@ -13,7 +13,8 @@ export class OrderDocumentService {
   buildOrderHtml(orderId: number, order: OrderCreatePayload): string {
     const issueDate = this.escapeHtml(order.date);
     const totalAmount = order.orders.reduce((sum, item) => sum + item.price * item.count, 0);
-    const amountDue = Math.max(totalAmount - order.prepayment, 0);
+    const totalToPay = Math.max(totalAmount - order.discount, 0);
+    const customerDebt = Math.max(totalToPay - order.prepayment, 0);
     const rows = order.orders
       .map(
         (item, index) => `
@@ -24,7 +25,6 @@ export class OrderDocumentService {
             <td>${this.escapeHtml(item.color)}</td>
             <td class="num">${item.width}x${item.height}</td>
             <td>${this.escapeHtml(this.getLeafTypeLabel(item.leafType))}</td>
-            <td class="num">${item.count}</td>
             <td class="money">${item.price}</td>
             <td class="money">${item.price * item.count}</td>
           </tr>
@@ -182,7 +182,8 @@ export class OrderDocumentService {
               <div class="meta-line"><strong>ФИО:</strong> ${this.escapeHtml(order.name)}</div>
               <div class="meta-line"><strong>Телефон:</strong> ${this.escapeHtml(order.phone)}</div>
               <div class="meta-line"><strong>Дата заказа:</strong> ${issueDate}</div>
-              <div class="meta-line"><strong>Количество позиций:</strong> ${order.quantity}</div>
+              <div class="meta-line"><strong>Доставка:</strong> ${order.needsDelivery ? 'Да' : 'Нет'}</div>
+              <div class="meta-line"><strong>Адрес доставки:</strong> ${this.escapeHtml(order.deliveryAddress || '-')}</div>
             </div>
 
             <div class="section-title">Спецификация</div>
@@ -195,7 +196,6 @@ export class OrderDocumentService {
                   <th>Цвет</th>
                   <th style="width: 84px;">Размер</th>
                   <th style="width: 102px;">Створка</th>
-                  <th style="width: 62px;">Кол-во</th>
                   <th style="width: 76px;">Цена</th>
                   <th style="width: 86px;">Сумма</th>
                 </tr>
@@ -205,8 +205,10 @@ export class OrderDocumentService {
 
             <div class="totals">
               <div class="totals-row"><span>Общая сумма:</span><strong>${totalAmount}</strong></div>
+              <div class="totals-row"><span>Скидка:</span><strong>${order.discount}</strong></div>
+              <div class="totals-row"><span>Итого к оплате:</span><strong>${totalToPay}</strong></div>
               <div class="totals-row"><span>Предоплата:</span><strong>${order.prepayment}</strong></div>
-              <div class="totals-row"><span>К оплате:</span><strong>${amountDue}</strong></div>
+              <div class="totals-row"><span>Долг клиента:</span><strong>${customerDebt}</strong></div>
             </div>
 
             <div class="comment">

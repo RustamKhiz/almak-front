@@ -29,7 +29,9 @@ export interface OrderCustomerForm {
   phone: string;
   date: string;
   prepayment: number;
-  quantity: number;
+  discount: number;
+  needsDelivery: boolean;
+  deliveryAddress: string;
   comment: string;
   status: OrderStatus;
 }

@@ -43,7 +43,7 @@
   } @else {
     @if ($state) {
       <div class="order-view__card">
-        <h2>Клиент</h2>
+        <h2>Общие данные</h2>
         <div class="order-view__grid">
           <div>
             <div class="order-view__label">Имя</div>
@@ -59,15 +59,37 @@
           </div>
           <div>
             <div class="order-view__label">Предоплата</div>
-            <div class="order-view__value">{{ $state.data.prepayment }}</div>
+            <div class="order-view__value">{{ $state.data.prepayment | number: '1.0-0' }} ₽</div>
           </div>
           <div>
-            <div class="order-view__label">Количество</div>
-            <div class="order-view__value">{{ $state.data.quantity }}</div>
+            <div class="order-view__label">Скидка</div>
+            <div class="order-view__value">{{ $state.data.discount | number: '1.0-0' }} ₽</div>
           </div>
+          <div>
+            <div class="order-view__label">Доставка</div>
+            <div class="order-view__value">{{ $state.data.needsDelivery ? 'Нужна' : 'Не нужна' }}</div>
+          </div>
+          @if ($state.data.needsDelivery) {
+            <div>
+              <div class="order-view__label">Адрес доставки</div>
+              <div class="order-view__value">{{ $state.data.deliveryAddress }}</div>
+            </div>
+          }
           <div>
             <div class="order-view__label">Комментарий</div>
             <div class="order-view__value">{{ $state.data.comment }}</div>
+          </div>
+          <div>
+            <div class="order-view__label">Общая стоимость заказа</div>
+            <div class="order-view__value">{{ getOrderTotal($state.data) | number: '1.0-0' }} ₽</div>
+          </div>
+          <div>
+            <div class="order-view__label">Итого к оплате</div>
+            <div class="order-view__value">{{ getTotalToPay($state.data) | number: '1.0-0' }} ₽</div>
+          </div>
+          <div>
+            <div class="order-view__label">Долг клиента</div>
+            <div class="order-view__value">{{ getCustomerDebt($state.data) | number: '1.0-0' }} ₽</div>
           </div>
         </div>
       </div>
@@ -80,10 +102,7 @@
               <div class="order-view__item">
                 <div>
                   <div class="order-view__value">{{ door.type }} дверь · {{ door.model }}</div>
-                  <div class="order-view__meta">
-                    {{ door.width }}×{{ door.height }} см · {{ leafTypesLabels[door.leafType] }} · количество
-                    {{ door.count }}
-                  </div>
+                  <div class="order-view__meta">{{ door.width }}×{{ door.height }} см · {{ leafTypesLabels[door.leafType] }}</div>
                 </div>
                 <div class="order-view__price">{{ door.price | number }} ₽</div>
               </div>

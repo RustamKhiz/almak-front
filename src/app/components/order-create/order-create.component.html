@@ -19,7 +19,7 @@
   </header>
 
   <form class="order-create__form" [formGroup]="form">
-    <h2>Данные клиента</h2>
+    <h2>Общие данные</h2>
     <div class="order-create__form-grid">
       <mat-form-field appearance="outline">
         <mat-label>Имя</mat-label>
@@ -54,10 +54,10 @@
       </mat-form-field>
 
       <mat-form-field appearance="outline">
-        <mat-label>Количество</mat-label>
-        <input matInput type="number" formControlName="quantity" readonly />
-        @if (form.controls.quantity.touched && form.controls.quantity.invalid) {
-          <mat-error>Введите число >= 1</mat-error>
+        <mat-label>Скидка</mat-label>
+        <input matInput type="number" formControlName="discount" />
+        @if (form.controls.discount.touched && form.controls.discount.invalid) {
+          <mat-error>Введите число >= 0</mat-error>
         }
       </mat-form-field>
 
@@ -72,13 +72,38 @@
         </mat-form-field>
       }
 
-      <mat-form-field appearance="outline" class="order-create__comment">
-        <mat-label>Комментарий</mat-label>
-        <textarea matInput formControlName="comment" rows="3"></textarea>
-        @if (form.controls.comment.touched && form.controls.comment.invalid) {
-          <mat-error>Обязательное поле</mat-error>
-        }
-      </mat-form-field>
+      <div class="order-create__details-row">
+        <div class="order-create__details-card">
+          <mat-form-field appearance="outline" class="order-create__comment">
+            <mat-label>Комментарий</mat-label>
+            <textarea matInput formControlName="comment" rows="6"></textarea>
+            @if (form.controls.comment.touched && form.controls.comment.invalid) {
+              <mat-error>Обязательное поле</mat-error>
+            }
+          </mat-form-field>
+        </div>
+
+        <div class="order-create__details-card order-create__delivery-column">
+          <div class="order-create__delivery-header">
+            <mat-checkbox formControlName="needsDelivery">Нужна доставка</mat-checkbox>
+          </div>
+
+          @if (form.controls.needsDelivery.value) {
+            <mat-form-field appearance="outline" class="order-create__delivery-address">
+              <mat-label>Адрес доставки</mat-label>
+              <textarea matInput formControlName="deliveryAddress" rows="2"></textarea>
+              <mat-hint>Стоимость доставки рассчитывается по тарифу такси.</mat-hint>
+              @if (form.controls.deliveryAddress.touched && form.controls.deliveryAddress.invalid) {
+                <mat-error>Укажите адрес доставки</mat-error>
+              }
+            </mat-form-field>
+          } @else {
+            <div class="order-create__delivery-placeholder">
+              Укажите доставку, если заказ нужно отвезти клиенту. Стоимость считается по тарифу такси.
+            </div>
+          }
+        </div>
+      </div>
     </div>
   </form>
 
@@ -118,8 +143,18 @@
 
   <div class="order-create__actions">
     <div class="order-create__summary">
-      <div class="order-create__summary-label">Общая стоимость заказа</div>
-      <div class="order-create__summary-value">{{ totalPrice() | number: '1.0-0' }} ₽</div>
+      <div class="order-create__summary-row">
+        <div class="order-create__summary-label">Общая стоимость заказа</div>
+        <div class="order-create__summary-value">{{ orderTotal() | number: '1.0-0' }} ₽</div>
+      </div>
+      <div class="order-create__summary-row">
+        <div class="order-create__summary-label">Итого к оплате</div>
+        <div class="order-create__summary-value">{{ totalToPay() | number: '1.0-0' }} ₽</div>
+      </div>
+      <div class="order-create__summary-row">
+        <div class="order-create__summary-label">Долг клиента</div>
+        <div class="order-create__summary-value">{{ customerDebt() | number: '1.0-0' }} ₽</div>
+      </div>
     </div>
     <button mat-flat-button color="primary" (click)="onSaveClick()">Сохранить</button>
   </div>

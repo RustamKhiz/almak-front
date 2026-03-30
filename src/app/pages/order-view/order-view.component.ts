@@ -144,6 +144,18 @@ export class OrderViewComponent {
     return getOrderStatusLabel(status);
   }
 
+  protected getOrderTotal(order: OrderCreatePayload): number {
+    return order.orders.reduce((sum, item) => sum + item.price * item.count, 0);
+  }
+
+  protected getTotalToPay(order: OrderCreatePayload): number {
+    return Math.max(this.getOrderTotal(order) - order.discount, 0);
+  }
+
+  protected getCustomerDebt(order: OrderCreatePayload): number {
+    return Math.max(this.getTotalToPay(order) - order.prepayment, 0);
+  }
+
   private fetchOrder(id: number): void {
     this.isLoading.set(true);
     this.ordersService

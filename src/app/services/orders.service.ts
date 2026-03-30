@@ -10,9 +10,11 @@ interface BackendOrder {
   customer: string;
   phone: string;
   date: string;
-  count: number;
   price: number;
   prepayment: number;
+  discount: number;
+  needsDelivery: boolean;
+  deliveryAddress: string;
   comment: string;
   status: BackendOrderStatus;
   orders?: BackendDoor[];
@@ -36,9 +38,11 @@ interface BackendOrderPayload {
   customer: string;
   phone: string;
   date: string;
-  count: number;
   price: number;
   prepayment: number;
+  discount: number;
+  needsDelivery: boolean;
+  deliveryAddress: string;
   comment: string;
   status: BackendOrderStatus;
   orders: BackendDoorPayload[];
@@ -64,9 +68,9 @@ export interface OrderRecord {
   customer: string;
   phone: string;
   date: string;
-  count: number;
   price: number;
   prepayment: number;
+  discount: number;
   comment: string;
   status: OrderStatus;
 }
@@ -119,9 +123,9 @@ export class OrdersService {
       customer: order.customer,
       phone: order.phone,
       date: order.date,
-      count: order.count,
       price: order.price,
       prepayment: order.prepayment,
+      discount: order.discount ?? 0,
       comment: order.comment ?? '',
       status: this.mapBackendStatusToOrderStatus(order.status),
     };
@@ -135,7 +139,9 @@ export class OrdersService {
       phone: order.phone,
       date: order.date,
       prepayment: order.prepayment,
-      quantity: order.count,
+      discount: order.discount ?? 0,
+      needsDelivery: order.needsDelivery ?? false,
+      deliveryAddress: order.deliveryAddress ?? '',
       comment: order.comment ?? '',
       status: this.mapBackendStatusToOrderStatus(order.status),
       orders,
@@ -148,9 +154,11 @@ export class OrdersService {
       customer: payload.name,
       phone: payload.phone,
       date: payload.date,
-      count: payload.quantity,
       price: total,
       prepayment: payload.prepayment,
+      discount: payload.discount,
+      needsDelivery: payload.needsDelivery,
+      deliveryAddress: payload.deliveryAddress,
       comment: payload.comment,
       status: this.mapOrderStatusToBackendStatus(payload.status),
       orders: payload.orders.map((item) => ({

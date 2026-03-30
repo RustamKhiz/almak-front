@@ -42,7 +42,6 @@ export class OrdersTableComponent implements OnInit {
     'customer',
     'phone',
     'date',
-    'count',
     'price',
     'prepayment',
     'comment',
@@ -55,7 +54,6 @@ export class OrdersTableComponent implements OnInit {
   private readonly sortAccessors: Record<string, (item: OrderRecord) => string | number> = {
     id: (item) => item.id,
     date: (item) => new Date(item.date).getTime(),
-    count: (item) => item.count,
     price: (item) => item.price,
     prepayment: (item) => item.prepayment,
     customer: (item) => item.customer.toLocaleLowerCase(),
