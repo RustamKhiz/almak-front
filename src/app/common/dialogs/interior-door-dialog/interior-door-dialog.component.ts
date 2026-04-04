@@ -1,4 +1,5 @@
-﻿import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, DestroyRef, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCheckboxModule } from '@angular/material/checkbox';
@@ -50,6 +51,7 @@ export type InteriorDoorDialogResult = Omit<InteriorDoorItem, 'id'>;
 })
 export class InteriorDoorDialogComponent {
   private readonly fb = inject(FormBuilder);
+  private readonly destroyRef = inject(DestroyRef);
   private readonly dialogRef = inject(MatDialogRef<InteriorDoorDialogComponent, InteriorDoorDialogResult>);
   private readonly data = inject<InteriorDoorDialogData>(MAT_DIALOG_DATA);
 
@@ -79,7 +81,7 @@ export class InteriorDoorDialogComponent {
   );
 
   constructor() {
-    this.form.controls.leafType.valueChanges.subscribe((leafType) => {
+    this.form.controls.leafType.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((leafType) => {
       if (leafType === DoorLeafType.Double) {
         this.form.controls.width2.addValidators([Validators.required, Validators.min(1)]);
       } else {

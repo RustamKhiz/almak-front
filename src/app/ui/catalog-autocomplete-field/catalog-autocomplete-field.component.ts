@@ -1,5 +1,6 @@
-﻿import { AsyncPipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, forwardRef, input } from '@angular/core';
+import { AsyncPipe } from '@angular/common';
+import { ChangeDetectionStrategy, Component, DestroyRef, forwardRef, inject, input } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ControlValueAccessor, FormControl, FormsModule, NG_VALUE_ACCESSOR, ReactiveFormsModule } from '@angular/forms';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -24,6 +25,8 @@ type ValueMode = 'text' | 'number';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CatalogAutocompleteFieldComponent implements ControlValueAccessor {
+  private readonly destroyRef = inject(DestroyRef);
+
   readonly title = input.required<string>();
   readonly options = input.required<readonly CatalogOption[]>();
   readonly mode = input<ValueMode>('text');
@@ -46,7 +49,7 @@ export class CatalogAutocompleteFieldComponent implements ControlValueAccessor {
   };
 
   constructor() {
-    this.control.valueChanges.subscribe((value) => {
+    this.control.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((value) => {
       this.emitValue(value);
     });
   }

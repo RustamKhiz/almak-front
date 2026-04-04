@@ -1,4 +1,5 @@
-ï»¿import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, DestroyRef, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCheckboxModule } from '@angular/material/checkbox';
@@ -44,6 +45,7 @@ export type EntranceDoorDialogResult = Omit<EntranceDoorItem, 'id'>;
 })
 export class EntranceDoorDialogComponent {
   private readonly fb = inject(FormBuilder);
+  private readonly destroyRef = inject(DestroyRef);
   private readonly dialogRef = inject(MatDialogRef<EntranceDoorDialogComponent, EntranceDoorDialogResult>);
   private readonly data = inject<EntranceDoorDialogData>(MAT_DIALOG_DATA);
 
@@ -70,11 +72,11 @@ export class EntranceDoorDialogComponent {
   });
 
   protected readonly title = computed(() =>
-    this.data.mode === 'edit' ? 'Ð ÐµÐ´Ð°ÐºÑ‚Ð¸Ñ€Ð¾Ð²Ð°Ñ‚ÑŒ Ð²Ñ…Ð¾Ð´Ð½ÑƒÑŽ Ð´Ð²ÐµÑ€ÑŒ' : 'Ð”Ð¾Ð±Ð°Ð²Ð¸Ñ‚ÑŒ Ð²Ñ…Ð¾Ð´Ð½ÑƒÑŽ Ð´Ð²ÐµÑ€ÑŒ',
+    this.data.mode === 'edit' ? 'Ðåäàêòèðîâàòü âõîäíóþ äâåðü' : 'Äîáàâèòü âõîäíóþ äâåðü',
   );
 
   constructor() {
-    this.form.controls.kind.valueChanges.subscribe((kind) => {
+    this.form.controls.kind.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((kind) => {
       const isWelded = kind === EntranceDoorKind.Welded;
       this.isWelded.set(isWelded);
       this.syncWeldedState(isWelded);

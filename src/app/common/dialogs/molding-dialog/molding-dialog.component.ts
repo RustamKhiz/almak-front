@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, DestroyRef, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialogModule, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
@@ -42,6 +43,7 @@ export type MoldingDialogResult = Omit<MoldingItem, 'id'>;
 })
 export class MoldingDialogComponent {
   private readonly fb = inject(FormBuilder);
+  private readonly destroyRef = inject(DestroyRef);
   private readonly dialogRef = inject(MatDialogRef<MoldingDialogComponent, MoldingDialogResult>);
   private readonly data = inject<MoldingDialogData>(MAT_DIALOG_DATA);
 
@@ -70,7 +72,7 @@ export class MoldingDialogComponent {
   protected readonly title = computed(() => (this.data.mode === 'edit' ? 'Редактировать погонаж' : 'Добавить погонаж'));
 
   constructor() {
-    this.form.controls.platbandType.valueChanges.subscribe((value) => {
+    this.form.controls.platbandType.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((value) => {
       const isFigure = value === MoldingPlatbandType.Figure;
       this.isFigureType.set(isFigure);
       this.syncFigureState(isFigure);
