@@ -1,0 +1,20 @@
+﻿<div class="quantity-field">
+  <div class="quantity-field__label">{{ label() }}</div>
+  <div class="quantity-field__controls">
+    <button type="button" class="quantity-field__button" [disabled]="disabled || value <= min()" (click)="decrease()">
+      <mat-icon>remove</mat-icon>
+    </button>
+    <input
+      type="number"
+      class="quantity-field__input"
+      [min]="min()"
+      [ngModel]="value"
+      [disabled]="disabled"
+      (ngModelChange)="onInput($event)"
+      (blur)="markTouched()"
+    />
+    <button type="button" class="quantity-field__button" [disabled]="disabled" (click)="increase()">
+      <mat-icon>add</mat-icon>
+    </button>
+  </div>
+</div>

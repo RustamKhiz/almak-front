@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { DoorLeafType, OrderCreatePayload } from '../types/order.types';
+import { DoorLeafType, EntranceDoorKind, OrderCreatePayload } from '../types/order.types';
 
 @Injectable({
   providedIn: 'root',
@@ -12,10 +12,14 @@ export class OrderDocumentService {
 
   buildOrderHtml(orderId: number, order: OrderCreatePayload): string {
     const issueDate = this.escapeHtml(order.date);
-    const totalAmount = order.orders.reduce((sum, item) => sum + item.price * item.count, 0);
+    const totalAmount = [...order.interiorDoors, ...order.entranceDoors].reduce(
+      (sum, item) => sum + item.price * item.count,
+      0,
+    );
     const totalToPay = Math.max(totalAmount - order.discount, 0);
     const customerDebt = Math.max(totalToPay - order.prepayment, 0);
-    const rows = order.orders
+
+    const interiorRows = order.interiorDoors
       .map(
         (item, index) => `
           <tr>
@@ -33,6 +37,27 @@ export class OrderDocumentService {
         `,
       )
       .join('');
+
+    const entranceRows = order.entranceDoors
+      .map(
+        (item, index) => `
+          <tr>
+            <td class="num">${order.interiorDoors.length + index + 1}</td>
+            <td>Входная</td>
+            <td>${this.escapeHtml(item.model)}</td>
+            <td>${this.escapeHtml(this.getEntranceExecutionLabel(item.kind, item.painting, item.panelColor, item.hasPeephole))}</td>
+            <td class="num">${this.escapeHtml(this.formatDoorSize(item.width, item.height, null))}</td>
+            <td>${this.escapeHtml(item.color)}</td>
+            <td>${this.escapeHtml(item.comment || '-')}</td>
+            <td class="num">${item.count}</td>
+            <td class="money">${item.price}</td>
+            <td class="money">${item.price * item.count}</td>
+          </tr>
+        `,
+      )
+      .join('');
+
+    const rows = `${interiorRows}${entranceRows}`;
 
     return `
       <html>
@@ -197,7 +222,7 @@ export class OrderDocumentService {
                   <th>Модель</th>
                   <th>Исполнение</th>
                   <th style="width: 84px;">Размер</th>
-                  <th style="width: 102px;">Створка</th>
+                  <th style="width: 102px;">Цвет / створка</th>
                   <th>Комментарий</th>
                   <th style="width: 62px;">Кол-во</th>
                   <th style="width: 76px;">Цена</th>
@@ -238,15 +263,37 @@ export class OrderDocumentService {
   }
 
   private getLeafTypeLabel(value: string): string {
-    if (value === DoorLeafType.Single) {
-      return 'Одна створка';
+    switch (value) {
+      case DoorLeafType.Single:
+        return 'Одна створка';
+      case DoorLeafType.Double:
+        return 'Две створки';
+      default:
+        return value;
+    }
+  }
+
+  private getEntranceExecutionLabel(
+    kind: EntranceDoorKind,
+    painting: string | null,
+    panelColor: string | null,
+    hasPeephole: boolean | null,
+  ): string {
+    const details = [kind === EntranceDoorKind.Welded ? 'Сварочная' : 'Фабричная'];
+
+    if (painting) {
+      details.push(`покраска: ${painting}`);
     }
 
-    if (value === DoorLeafType.Double) {
-      return 'Две створки';
+    if (panelColor) {
+      details.push(`обшивка: ${panelColor}`);
     }
 
-    return value;
+    if (hasPeephole !== null) {
+      details.push(`глазок: ${hasPeephole ? 'есть' : 'нет'}`);
+    }
+
+    return details.join(', ');
   }
 
   private formatDoorSize(width: number, height: number, width2: number | null): string {

@@ -145,7 +145,7 @@ export class OrderViewComponent {
   }
 
   protected getOrderTotal(order: OrderCreatePayload): number {
-    return order.orders.reduce((sum, item) => sum + item.price * item.count, 0);
+    return [...order.interiorDoors, ...order.entranceDoors].reduce((sum, item) => sum + item.price * item.count, 0);
   }
 
   protected getTotalToPay(order: OrderCreatePayload): number {

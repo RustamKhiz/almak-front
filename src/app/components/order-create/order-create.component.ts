@@ -17,13 +17,24 @@ import { INTERIOR_DOOR_COVERING_LABELS } from '../../common/constants/interior-d
 import { ORDER_STATUS_LABELS, ORDER_STATUS_OPTIONS } from '../../common/constants/order-status';
 import { ConfirmDialogComponent, ConfirmDialogData } from '../../common/confirm-dialog/confirm-dialog.component';
 import {
+  EntranceDoorDialogComponent,
+  EntranceDoorDialogData,
+  EntranceDoorDialogResult,
+} from '../../common/dialogs/entrance-door-dialog/entrance-door-dialog.component';
+import {
   InteriorDoorDialogComponent,
   InteriorDoorDialogData,
   InteriorDoorDialogResult,
 } from '../../common/dialogs/interior-door-dialog/interior-door-dialog.component';
 import { PhoneMaskDirective } from '../../common/directives/phone-mask.directive';
 import { OrdersService } from '../../services/orders.service';
-import { InteriorDoorItem, OrderCreatePayload, OrderStatus } from '../../types/order.types';
+import {
+  EntranceDoorItem,
+  InteriorDoorItem,
+  OrderCreatePayload,
+  OrderItemType,
+  OrderStatus,
+} from '../../types/order.types';
 
 @Component({
   selector: 'app-order-create',
@@ -53,7 +64,8 @@ export class OrderCreateComponent implements OnInit {
 
   readonly orderId = input.required<number>();
 
-  protected readonly doors = signal<readonly InteriorDoorItem[]>([]);
+  protected readonly interiorDoors = signal<readonly InteriorDoorItem[]>([]);
+  protected readonly entranceDoors = signal<readonly EntranceDoorItem[]>([]);
   protected readonly showOrdersError = signal(false);
   protected readonly isEditMode = signal(false);
   protected readonly prepayment = signal(0);
@@ -63,7 +75,10 @@ export class OrderCreateComponent implements OnInit {
   protected readonly doorLeafTypeLabels = DOOR_LEAF_TYPE_LABELS;
   protected readonly doorCoveringLabels = INTERIOR_DOOR_COVERING_LABELS;
   protected readonly orderTotal = computed(() =>
-    this.doors().reduce((total, item) => total + Number(item.price ?? 0) * Number(item.count ?? 0), 0),
+    [...this.interiorDoors(), ...this.entranceDoors()].reduce(
+      (total, item) => total + Number(item.price ?? 0) * Number(item.count ?? 0),
+      0,
+    ),
   );
   protected readonly totalToPay = computed(() => Math.max(this.orderTotal() - this.discount(), 0));
   protected readonly customerDebt = computed(() => Math.max(this.totalToPay() - this.prepayment(), 0));
@@ -128,14 +143,32 @@ export class OrderCreateComponent implements OnInit {
           return;
         }
 
-        const current = this.doors();
-        this.doors.set([...current, { ...result, id: this.nextId(current) }]);
+        const current = this.interiorDoors();
+        this.interiorDoors.set([...current, { ...result, type: OrderItemType.InteriorDoor, id: this.nextId(current) }]);
         this.syncQuantity();
       });
   }
 
   protected onAddEntranceDoorClick(): void {
-    /* empty */
+    const dialogRef = this.dialog.open(EntranceDoorDialogComponent, {
+      width: '640px',
+      data: {
+        mode: 'create',
+      } as EntranceDoorDialogData,
+    });
+
+    dialogRef
+      .afterClosed()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((result: EntranceDoorDialogResult) => {
+        if (!result) {
+          return;
+        }
+
+        const current = this.entranceDoors();
+        this.entranceDoors.set([...current, { ...result, type: OrderItemType.EntranceDoor, id: this.nextId(current) }]);
+        this.syncQuantity();
+      });
   }
 
   protected onAddMoldingClick(): void {
@@ -155,7 +188,7 @@ export class OrderCreateComponent implements OnInit {
   }
 
   protected onEditInteriorDoorClick(id: number): void {
-    const current = this.doors();
+    const current = this.interiorDoors();
     const door = current.find((item) => item.id === id);
     if (!door) {
       return;
@@ -177,19 +210,19 @@ export class OrderCreateComponent implements OnInit {
           return;
         }
 
-        this.doors.set(current.map((item) => (item.id === id ? { ...item, ...result } : item)));
+        this.interiorDoors.set(current.map((item) => (item.id === id ? { ...item, ...result } : item)));
         this.syncQuantity();
       });
   }
 
   protected onRemoveInteriorDoorClick(id: number): void {
-    const current = this.doors();
-    this.doors.set(current.filter((item) => item.id !== id));
+    const current = this.interiorDoors();
+    this.interiorDoors.set(current.filter((item) => item.id !== id));
     this.syncQuantity();
   }
 
   protected onDuplicateInteriorDoorClick(id: number): void {
-    const current = this.doors();
+    const current = this.interiorDoors();
     const sourceIndex = current.findIndex((item) => item.id === id);
 
     if (sourceIndex === -1) {
@@ -201,12 +234,63 @@ export class OrderCreateComponent implements OnInit {
       id: this.nextId(current),
     };
 
-    this.doors.set([...current.slice(0, sourceIndex + 1), duplicatedDoor, ...current.slice(sourceIndex + 1)]);
+    this.interiorDoors.set([...current.slice(0, sourceIndex + 1), duplicatedDoor, ...current.slice(sourceIndex + 1)]);
+    this.syncQuantity();
+  }
+
+  protected onEditEntranceDoorClick(id: number): void {
+    const current = this.entranceDoors();
+    const door = current.find((item) => item.id === id);
+    if (!door) {
+      return;
+    }
+
+    const dialogRef = this.dialog.open(EntranceDoorDialogComponent, {
+      width: '640px',
+      data: {
+        mode: 'edit',
+        door,
+      } as EntranceDoorDialogData,
+    });
+
+    dialogRef
+      .afterClosed()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((result: EntranceDoorDialogResult) => {
+        if (!result) {
+          return;
+        }
+
+        this.entranceDoors.set(current.map((item) => (item.id === id ? { ...item, ...result } : item)));
+        this.syncQuantity();
+      });
+  }
+
+  protected onRemoveEntranceDoorClick(id: number): void {
+    const current = this.entranceDoors();
+    this.entranceDoors.set(current.filter((item) => item.id !== id));
+    this.syncQuantity();
+  }
+
+  protected onDuplicateEntranceDoorClick(id: number): void {
+    const current = this.entranceDoors();
+    const sourceIndex = current.findIndex((item) => item.id === id);
+
+    if (sourceIndex === -1) {
+      return;
+    }
+
+    const duplicatedDoor = {
+      ...current[sourceIndex],
+      id: this.nextId(current),
+    };
+
+    this.entranceDoors.set([...current.slice(0, sourceIndex + 1), duplicatedDoor, ...current.slice(sourceIndex + 1)]);
     this.syncQuantity();
   }
 
   protected onSaveClick(): void {
-    const hasOrders = this.doors().length > 0;
+    const hasOrders = this.interiorDoors().length > 0 || this.entranceDoors().length > 0;
     this.showOrdersError.set(!hasOrders);
 
     if (this.form.invalid || !hasOrders) {
@@ -225,7 +309,8 @@ export class OrderCreateComponent implements OnInit {
       deliveryAddress: value.deliveryAddress ?? '',
       comment: value.comment ?? '',
       status: Number(value.status ?? OrderStatus.Accepted) as OrderStatus,
-      orders: this.doors(),
+      interiorDoors: this.interiorDoors(),
+      entranceDoors: this.entranceDoors(),
     };
 
     const dialogData: ConfirmDialogData = {
@@ -258,12 +343,12 @@ export class OrderCreateComponent implements OnInit {
     this.router.navigate(['/order', orderId]);
   }
 
-  private nextId(current: readonly InteriorDoorItem[]): number {
+  private nextId(current: readonly { id: number }[]): number {
     return current.length ? Math.max(...current.map((item) => item.id)) + 1 : 1;
   }
 
   private syncQuantity(): void {
-    if (this.doors().length) {
+    if (this.interiorDoors().length || this.entranceDoors().length) {
       this.showOrdersError.set(false);
     }
   }
@@ -279,7 +364,8 @@ export class OrderCreateComponent implements OnInit {
   }
 
   private applyOrder(order: OrderCreatePayload): void {
-    this.doors.set(order.orders);
+    this.interiorDoors.set(order.interiorDoors);
+    this.entranceDoors.set(order.entranceDoors);
     this.form.patchValue(
       {
         name: order.name,

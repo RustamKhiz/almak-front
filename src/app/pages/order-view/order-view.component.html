@@ -96,9 +96,9 @@
 
       <div class="order-view__card">
         <h2>Товары</h2>
-        @if ($state.data.orders.length) {
+        @if ($state.data.interiorDoors.length || $state.data.entranceDoors.length) {
           <div class="order-view__list">
-            @for (door of $state.data.orders; track door.id) {
+            @for (door of $state.data.interiorDoors; track door.id) {
               <div class="order-view__item">
                 <div>
                   <div class="order-view__value">Межкомнатная дверь · {{ door.model }}</div>
@@ -113,6 +113,32 @@
                       · со стеклом
                     }
                     · количество {{ door.count }}
+                    @if (door.comment) {
+                      · {{ door.comment }}
+                    }
+                  </div>
+                </div>
+                <div class="order-view__price">{{ door.price | number }} ₽</div>
+              </div>
+            }
+
+            @for (door of $state.data.entranceDoors; track door.id) {
+              <div class="order-view__item">
+                <div>
+                  <div class="order-view__value">
+                    Входная дверь · {{ door.kind === 'welded' ? 'сварочная' : 'фабричная' }} · {{ door.model }}
+                  </div>
+                  <div class="order-view__meta">
+                    {{ door.width }} × {{ door.height }} см · цвет {{ door.color }} · количество {{ door.count }}
+                    @if (door.painting) {
+                      · покраска {{ door.painting }}
+                    }
+                    @if (door.panelColor) {
+                      · обшивка {{ door.panelColor }}
+                    }
+                    @if (door.hasPeephole !== null) {
+                      · глазок {{ door.hasPeephole ? 'есть' : 'нет' }}
+                    }
                     @if (door.comment) {
                       · {{ door.comment }}
                     }

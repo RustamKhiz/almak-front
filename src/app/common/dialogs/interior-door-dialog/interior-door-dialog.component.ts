@@ -1,10 +1,9 @@
-import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+﻿import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCheckboxModule } from '@angular/material/checkbox';
-import { MatDialogModule, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
+import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatRadioModule } from '@angular/material/radio';
 import { MatSelectModule } from '@angular/material/select';
@@ -20,7 +19,9 @@ import {
   INTERIOR_DOOR_HEIGHT_OPTIONS,
   INTERIOR_DOOR_WIDTH_OPTIONS,
 } from '../../constants/interior-door-catalog';
-import { DoorLeafType, InteriorDoorItem } from '../../../types/order.types';
+import { DoorLeafType, InteriorDoorItem, OrderItemType } from '../../../types/order.types';
+import { CatalogAutocompleteFieldComponent } from '../../../ui/catalog-autocomplete-field/catalog-autocomplete-field.component';
+import { QuantityFieldComponent } from '../../../ui/quantity-field/quantity-field.component';
 
 export interface InteriorDoorDialogData {
   mode: 'create' | 'edit';
@@ -37,10 +38,11 @@ export type InteriorDoorDialogResult = Omit<InteriorDoorItem, 'id'>;
     MatCheckboxModule,
     MatDialogModule,
     MatFormFieldModule,
-    MatIconModule,
     MatInputModule,
     MatRadioModule,
     MatSelectModule,
+    CatalogAutocompleteFieldComponent,
+    QuantityFieldComponent,
   ],
   templateUrl: './interior-door-dialog.component.html',
   styleUrl: './interior-door-dialog.component.scss',
@@ -57,13 +59,14 @@ export class InteriorDoorDialogComponent {
   protected readonly heightOptions = INTERIOR_DOOR_HEIGHT_OPTIONS;
   protected readonly coveringOptions = INTERIOR_DOOR_COVERING_OPTIONS;
   protected readonly coveringLabels = INTERIOR_DOOR_COVERING_LABELS;
+  protected readonly doorLeafType = DoorLeafType;
 
   protected readonly form = this.fb.group({
     model: [this.data.door?.model ?? '', [Validators.required]],
     hasGlass: [this.data.door?.hasGlass ?? false],
-    width: [this.data.door?.width ?? DEFAULT_INTERIOR_DOOR_WIDTH, [Validators.required]],
+    width: [this.data.door?.width ?? DEFAULT_INTERIOR_DOOR_WIDTH, [Validators.required, Validators.min(1)]],
     width2: [this.data.door?.width2 ?? (null as number | null)],
-    height: [this.data.door?.height ?? DEFAULT_INTERIOR_DOOR_HEIGHT, [Validators.required]],
+    height: [this.data.door?.height ?? DEFAULT_INTERIOR_DOOR_HEIGHT, [Validators.required, Validators.min(1)]],
     price: [this.data.door?.price ?? 0, [Validators.required, Validators.min(0)]],
     leafType: [this.data.door?.leafType ?? DoorLeafType.Single, [Validators.required]],
     count: [this.data.door?.count ?? 1, [Validators.required, Validators.min(1)]],
@@ -78,9 +81,9 @@ export class InteriorDoorDialogComponent {
   constructor() {
     this.form.controls.leafType.valueChanges.subscribe((leafType) => {
       if (leafType === DoorLeafType.Double) {
-        this.form.controls.width2.addValidators([Validators.required]);
+        this.form.controls.width2.addValidators([Validators.required, Validators.min(1)]);
       } else {
-        this.form.controls.width2.removeValidators([Validators.required]);
+        this.form.controls.width2.removeValidators([Validators.required, Validators.min(1)]);
         this.form.controls.width2.setValue(null, { emitEvent: false });
       }
 
@@ -88,19 +91,9 @@ export class InteriorDoorDialogComponent {
     });
 
     if (this.form.controls.leafType.value === DoorLeafType.Double) {
-      this.form.controls.width2.addValidators([Validators.required]);
+      this.form.controls.width2.addValidators([Validators.required, Validators.min(1)]);
       this.form.controls.width2.updateValueAndValidity({ emitEvent: false });
     }
-  }
-
-  protected onDecreaseCountClick(): void {
-    const currentValue = Number(this.form.controls.count.value ?? 1);
-    this.form.controls.count.setValue(Math.max(1, currentValue - 1));
-  }
-
-  protected onIncreaseCountClick(): void {
-    const currentValue = Number(this.form.controls.count.value ?? 1);
-    this.form.controls.count.setValue(currentValue + 1);
   }
 
   protected onCancelClick(): void {
@@ -115,6 +108,7 @@ export class InteriorDoorDialogComponent {
 
     const value = this.form.getRawValue();
     this.dialogRef.close({
+      type: OrderItemType.InteriorDoor,
       model: value.model ?? '',
       hasGlass: value.hasGlass ?? false,
       width: value.width ?? DEFAULT_INTERIOR_DOOR_WIDTH,

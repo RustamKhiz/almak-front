@@ -1,0 +1,21 @@
+﻿<mat-form-field appearance="outline">
+  <mat-label>{{ title() }}</mat-label>
+  <input
+    type="text"
+    inputmode="numeric"
+    matInput
+    [formControl]="control"
+    [matAutocomplete]="auto"
+    [disabled]="disabled"
+    (blur)="markTouched()"
+  />
+  <mat-autocomplete
+    autoActiveFirstOption
+    #auto="matAutocomplete"
+    (optionSelected)="onOptionSelected($event.option.value)"
+  >
+    @for (option of filteredOptions | async; track option) {
+      <mat-option [value]="option">{{ option }}</mat-option>
+    }
+  </mat-autocomplete>
+</mat-form-field>

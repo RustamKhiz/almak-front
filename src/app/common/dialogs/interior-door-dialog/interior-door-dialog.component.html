@@ -1,92 +1,57 @@
-<h2 mat-dialog-title>{{ title() }}</h2>
+﻿<h2 mat-dialog-title>{{ title() }}</h2>
 
-<form class="dialog-form" [formGroup]="form">
-  <mat-form-field appearance="outline">
-    <mat-label>Модель двери</mat-label>
-    <input matInput formControlName="model" />
-  </mat-form-field>
+<mat-dialog-content>
+  <form class="dialog-form" [formGroup]="form">
+    <mat-form-field appearance="outline">
+      <mat-label>Модель двери</mat-label>
+      <input matInput formControlName="model" />
+    </mat-form-field>
 
-  <mat-checkbox formControlName="hasGlass">Со стеклом</mat-checkbox>
+    <mat-checkbox formControlName="hasGlass">Со стеклом</mat-checkbox>
 
-  <div class="dialog-row dialog-row--sizes">
-    <div class="dialog-column">
-      <mat-form-field appearance="outline">
-        <mat-label>Ширина (см)</mat-label>
-        <mat-select formControlName="width">
-          @for (width of widthOptions; track width) {
-            <mat-option [value]="width">{{ width }}</mat-option>
-          }
-        </mat-select>
-      </mat-form-field>
+    <div class="dialog-row dialog-row--sizes">
+      <div class="dialog-column">
+        <app-catalog-autocomplete-field title="Ширина (см)" [options]="widthOptions" formControlName="width" />
 
-      @if (form.controls.leafType.value === 'Double') {
-        <mat-form-field appearance="outline">
-          <mat-label>Ширина 2 (см)</mat-label>
-          <mat-select formControlName="width2">
-            @for (width of widthOptions; track width) {
-              <mat-option [value]="width">{{ width }}</mat-option>
-            }
-          </mat-select>
-        </mat-form-field>
-      }
+        @if (form.controls.leafType.value === doorLeafType.Double) {
+          <app-catalog-autocomplete-field title="Ширина 2 (см)" [options]="widthOptions" formControlName="width2" />
+        }
+      </div>
+
+      <app-catalog-autocomplete-field title="Высота (см)" [options]="heightOptions" formControlName="height" />
+    </div>
+
+    <div class="leaf-type">
+      <div class="leaf-type__label">Тип створки</div>
+      <mat-radio-group formControlName="leafType">
+        @for (leafType of doorLeafTypeOptions; track leafType) {
+          <mat-radio-button [value]="leafType">{{ doorLeafTypeLabels[leafType] }}</mat-radio-button>
+        }
+      </mat-radio-group>
     </div>
 
     <mat-form-field appearance="outline">
-      <mat-label>Высота (см)</mat-label>
-      <mat-select formControlName="height">
-        @for (height of heightOptions; track height) {
-          <mat-option [value]="height">{{ height }}</mat-option>
+      <mat-label>Цена</mat-label>
+      <input matInput type="number" formControlName="price" />
+    </mat-form-field>
+
+    <app-quantity-field formControlName="count" />
+
+    <mat-form-field appearance="outline">
+      <mat-label>Покрытие</mat-label>
+      <mat-select formControlName="covering">
+        @for (covering of coveringOptions; track covering) {
+          <mat-option [value]="covering">{{ coveringLabels[covering] }}</mat-option>
         }
       </mat-select>
     </mat-form-field>
-  </div>
 
-  <div class="leaf-type">
-    <div class="leaf-type__label">Тип створки</div>
-    <mat-radio-group formControlName="leafType">
-      @for (leafType of doorLeafTypeOptions; track leafType) {
-        <mat-radio-button [value]="leafType">{{ doorLeafTypeLabels[leafType] }}</mat-radio-button>
-      }
-    </mat-radio-group>
-  </div>
-
-  <mat-form-field appearance="outline">
-    <mat-label>Цена</mat-label>
-    <input matInput type="number" formControlName="price" />
-  </mat-form-field>
-
-  <div class="count-field">
-    <div class="count-field__label">Количество</div>
-    <div class="count-field__controls">
-      <button
-        mat-icon-button
-        type="button"
-        (click)="onDecreaseCountClick()"
-        [disabled]="form.controls.count.value <= 1"
-      >
-        <mat-icon>remove</mat-icon>
-      </button>
-      <input matInput type="number" min="1" formControlName="count" />
-      <button mat-icon-button type="button" (click)="onIncreaseCountClick()">
-        <mat-icon>add</mat-icon>
-      </button>
-    </div>
-  </div>
-
-  <mat-form-field appearance="outline">
-    <mat-label>Покрытие</mat-label>
-    <mat-select formControlName="covering">
-      @for (covering of coveringOptions; track covering) {
-        <mat-option [value]="covering">{{ coveringLabels[covering] }}</mat-option>
-      }
-    </mat-select>
-  </mat-form-field>
-
-  <mat-form-field appearance="outline">
-    <mat-label>Комментарий</mat-label>
-    <textarea matInput rows="3" formControlName="comment"></textarea>
-  </mat-form-field>
-</form>
+    <mat-form-field appearance="outline">
+      <mat-label>Комментарий</mat-label>
+      <textarea matInput rows="3" formControlName="comment"></textarea>
+    </mat-form-field>
+  </form>
+</mat-dialog-content>
 
 <div mat-dialog-actions align="end">
   <button mat-stroked-button type="button" (click)="onCancelClick()">Отмена</button>

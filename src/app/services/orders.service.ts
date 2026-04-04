@@ -5,9 +5,12 @@ import { map } from 'rxjs/operators';
 import {
   BackendOrderStatus,
   DoorLeafType,
+  EntranceDoorItem,
+  EntranceDoorKind,
   InteriorDoorCovering,
   InteriorDoorItem,
   OrderCreatePayload,
+  OrderItemType,
   OrderStatus,
 } from '../types/order.types';
 import { CoreService } from './core.service';
@@ -24,7 +27,8 @@ interface BackendOrder {
   deliveryAddress: string;
   comment: string;
   status: BackendOrderStatus;
-  orders?: BackendInteriorDoor[];
+  interiorDoors?: BackendInteriorDoor[];
+  entranceDoors?: BackendEntranceDoor[];
   created_at?: string;
 }
 
@@ -43,6 +47,22 @@ interface BackendInteriorDoor {
   comment?: string;
 }
 
+interface BackendEntranceDoor {
+  id: number;
+  order_id: number;
+  kind: string;
+  model: string;
+  width: number;
+  height: number;
+  color: string;
+  painting?: string | null;
+  panelColor?: string | null;
+  hasPeephole?: boolean | null;
+  count: number;
+  price: number;
+  comment?: string;
+}
+
 interface BackendOrderPayload {
   customer: string;
   phone: string;
@@ -54,7 +74,8 @@ interface BackendOrderPayload {
   deliveryAddress: string;
   comment: string;
   status: BackendOrderStatus;
-  orders: BackendInteriorDoorPayload[];
+  interiorDoors: BackendInteriorDoorPayload[];
+  entranceDoors: BackendEntranceDoorPayload[];
 }
 
 interface BackendInteriorDoorPayload {
@@ -67,6 +88,20 @@ interface BackendInteriorDoorPayload {
   leafType: string;
   count: number;
   covering: string;
+  comment: string;
+}
+
+interface BackendEntranceDoorPayload {
+  kind: string;
+  model: string;
+  width: number;
+  height: number;
+  color: string;
+  painting?: string | null;
+  panelColor?: string | null;
+  hasPeephole?: boolean | null;
+  count: number;
+  price: number;
   comment: string;
 }
 
@@ -143,7 +178,8 @@ export class OrdersService {
   }
 
   private mapBackendOrderToCreatePayload(order: BackendOrder): OrderCreatePayload {
-    const orders = (order.orders ?? []).map((item) => this.mapBackendDoorToDoorItem(item));
+    const interiorDoors = (order.interiorDoors ?? []).map((item) => this.mapBackendDoorToDoorItem(item));
+    const entranceDoors = (order.entranceDoors ?? []).map((item) => this.mapBackendEntranceDoorToDoorItem(item));
 
     return {
       name: order.customer,
@@ -155,12 +191,16 @@ export class OrdersService {
       deliveryAddress: order.deliveryAddress ?? '',
       comment: order.comment ?? '',
       status: this.mapBackendStatusToOrderStatus(order.status),
-      orders,
+      interiorDoors,
+      entranceDoors,
     };
   }
 
   private mapCreatePayloadToBackend(payload: OrderCreatePayload): BackendOrderPayload {
-    const total = payload.orders.reduce((sum, item) => sum + item.price * item.count, 0);
+    const total =
+      payload.interiorDoors.reduce((sum, item) => sum + item.price * item.count, 0) +
+      payload.entranceDoors.reduce((sum, item) => sum + item.price * item.count, 0);
+
     return {
       customer: payload.name,
       phone: payload.phone,
@@ -172,7 +212,7 @@ export class OrdersService {
       deliveryAddress: payload.deliveryAddress,
       comment: payload.comment,
       status: this.mapOrderStatusToBackendStatus(payload.status),
-      orders: payload.orders.map((item) => ({
+      interiorDoors: payload.interiorDoors.map((item) => ({
         model: item.model,
         price: item.price,
         width: item.width,
@@ -184,12 +224,26 @@ export class OrdersService {
         covering: item.covering,
         comment: item.comment,
       })),
+      entranceDoors: payload.entranceDoors.map((item) => ({
+        kind: item.kind,
+        model: item.model,
+        width: item.width,
+        height: item.height,
+        color: item.color,
+        painting: item.painting,
+        panelColor: item.panelColor,
+        hasPeephole: item.hasPeephole,
+        count: item.count,
+        price: item.price,
+        comment: item.comment,
+      })),
     };
   }
 
   private mapBackendDoorToDoorItem(door: BackendInteriorDoor): InteriorDoorItem {
     return {
       id: door.id,
+      type: OrderItemType.InteriorDoor,
       model: door.model,
       price: door.price,
       width: door.width,
@@ -199,6 +253,24 @@ export class OrdersService {
       leafType: door.leafType === DoorLeafType.Double ? DoorLeafType.Double : DoorLeafType.Single,
       count: door.count,
       covering: this.mapBackendCoveringToCovering(door.covering),
+      comment: door.comment ?? '',
+    };
+  }
+
+  private mapBackendEntranceDoorToDoorItem(door: BackendEntranceDoor): EntranceDoorItem {
+    return {
+      id: door.id,
+      type: OrderItemType.EntranceDoor,
+      kind: door.kind === EntranceDoorKind.Welded ? EntranceDoorKind.Welded : EntranceDoorKind.Factory,
+      model: door.model,
+      width: door.width,
+      height: door.height,
+      color: door.color,
+      painting: door.painting ?? null,
+      panelColor: door.panelColor ?? null,
+      hasPeephole: door.hasPeephole ?? null,
+      count: door.count,
+      price: door.price,
       comment: door.comment ?? '',
     };
   }

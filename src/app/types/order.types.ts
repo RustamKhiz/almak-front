@@ -3,11 +3,21 @@ export enum DoorLeafType {
   Double = 'Double',
 }
 
+export enum OrderItemType {
+  InteriorDoor = 'interiorDoor',
+  EntranceDoor = 'entranceDoor',
+}
+
 export enum InteriorDoorCovering {
   Enamel = 'Enamel',
   Veneer = 'Veneer',
   Embossing = 'Embossing',
   PVC = 'PVC',
+}
+
+export enum EntranceDoorKind {
+  Factory = 'factory',
+  Welded = 'welded',
 }
 
 export enum OrderStatus {
@@ -24,6 +34,7 @@ export enum BackendOrderStatus {
 
 export interface InteriorDoorItem {
   id: number;
+  type: OrderItemType.InteriorDoor;
   model: string;
   price: number;
   width: number;
@@ -33,6 +44,22 @@ export interface InteriorDoorItem {
   leafType: DoorLeafType;
   count: number;
   covering: InteriorDoorCovering;
+  comment: string;
+}
+
+export interface EntranceDoorItem {
+  id: number;
+  type: OrderItemType.EntranceDoor;
+  kind: EntranceDoorKind;
+  model: string;
+  width: number;
+  height: number;
+  color: string;
+  painting: string | null;
+  panelColor: string | null;
+  hasPeephole: boolean | null;
+  count: number;
+  price: number;
   comment: string;
 }
 
@@ -49,5 +76,6 @@ export interface OrderCustomerForm {
 }
 
 export interface OrderCreatePayload extends OrderCustomerForm {
-  orders: readonly InteriorDoorItem[];
+  interiorDoors: readonly InteriorDoorItem[];
+  entranceDoors: readonly EntranceDoorItem[];
 }
