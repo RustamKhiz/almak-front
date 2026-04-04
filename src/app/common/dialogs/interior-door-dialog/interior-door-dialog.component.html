@@ -11,14 +11,14 @@
 
     <div class="dialog-row dialog-row--sizes">
       <div class="dialog-column">
-        <app-catalog-autocomplete-field title="Ширина (см)" [options]="widthOptions" formControlName="width" />
+        <app-catalog-autocomplete-field title="Ширина (см)" formControlName="width" [options]="widthOptions" />
 
         @if (form.controls.leafType.value === doorLeafType.Double) {
-          <app-catalog-autocomplete-field title="Ширина 2 (см)" [options]="widthOptions" formControlName="width2" />
+          <app-catalog-autocomplete-field title="Ширина 2 (см)" formControlName="width2" [options]="widthOptions" />
         }
       </div>
 
-      <app-catalog-autocomplete-field title="Высота (см)" [options]="heightOptions" formControlName="height" />
+      <app-catalog-autocomplete-field title="Высота (см)" formControlName="height" [options]="heightOptions" />
     </div>
 
     <div class="leaf-type">

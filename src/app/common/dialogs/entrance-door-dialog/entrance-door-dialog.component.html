@@ -19,15 +19,15 @@
     <div class="dialog-row dialog-row--sizes">
       <app-catalog-autocomplete-field
         title="Ширина (см)"
-        [options]="widthOptions"
         mode="number"
         formControlName="width"
+        [options]="widthOptions"
       />
       <app-catalog-autocomplete-field
         title="Высота (см)"
-        [options]="heightOptions"
         mode="number"
         formControlName="height"
+        [options]="heightOptions"
       />
     </div>
 
@@ -38,11 +38,11 @@
 
     @if (isWelded()) {
       <div class="dialog-row dialog-row--sizes">
-        <app-catalog-autocomplete-field title="Покраска" [options]="paintingOptions" formControlName="painting" />
+        <app-catalog-autocomplete-field title="Покраска" formControlName="painting" [options]="paintingOptions" />
         <app-catalog-autocomplete-field
           title="Обшивка цвет"
-          [options]="panelColorOptions"
           formControlName="panelColor"
+          [options]="panelColorOptions"
         />
       </div>
 
