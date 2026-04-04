@@ -1,59 +1,257 @@
-# Almak
+# Almak Frontend
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 20.3.9.
+Angular-приложение для работы с заказами: авторизация, список заказов, создание/редактирование, просмотр, печать и выгрузка документа.
 
-## Development server
+Этот README написан как рабочая памятка: чтобы можно было быстро открыть его и вспомнить, где в проекте находится нужная логика и как проходит сценарий создания заказа.
 
-To start a local development server, run:
+## Что делает фронт
+
+Фронт решает 4 основные задачи:
+
+1. Логинит пользователя и хранит JWT в `localStorage`.
+2. Показывает список заказов и экран отдельного заказа.
+3. Собирает форму заказа и преобразует её в payload для API.
+4. Дает дополнительные действия над заказом: редактирование, смена статуса, удаление, печать, выгрузка `.doc`.
+
+## Основные маршруты
+
+- `/auth` - экран авторизации.
+- `/orders` - список всех заказов.
+- `/order` - создание нового заказа.
+- `/order/:id` - просмотр существующего заказа.
+- `/order/:id/edit` - редактирование существующего заказа.
+- `/orders-charts` - графики по заказам.
+
+Маршруты описаны в `src/app/app.routes.ts`.
+
+## Как устроено приложение
+
+### Точка входа
+
+- `src/main.ts` - bootstrap Angular.
+- `src/app/app.config.ts` - провайдеры приложения.
+- `src/app/app.component.*` - корневой layout.
+
+### Инфраструктура
+
+- `src/app/services/core.service.ts` - отдает `apiBaseUrl` из environment.
+- `src/app/services/auth.service.ts` - логин, сохранение и чтение токена.
+- `src/app/interceptor/interceptor.ts` - автоматически добавляет `Authorization: Bearer <token>` ко всем HTTP-запросам и при `401` выкидывает пользователя на `/auth`.
+- `src/app/guard/auth.guard.ts` - закрывает внутренние маршруты без токена.
+
+### Страницы и крупные компоненты
+
+- `src/app/pages/auth` - форма логина.
+- `src/app/pages/orders` - список заказов.
+- `src/app/components/orders-table` - таблица заказов.
+- `src/app/pages/order` - оболочка для create/edit; просто читает `id` из URL и передает его в форму.
+- `src/app/components/order-create` - главный компонент создания и редактирования заказа.
+- `src/app/pages/order-view` - просмотр заказа, печать, скачивание документа, смена статуса, удаление.
+
+### Типы и константы
+
+- `src/app/types/order.types.ts` - основные TS-типы заказа и enum-ы статусов/типов дверей.
+- `src/app/common/constants/*` - каталоги и словари отображения.
+
+## Поток данных по заказу
+
+Во фронте есть два главных представления заказа:
+
+1. `OrderCreatePayload` - внутренний формат формы.
+2. `BackendOrder` / `BackendOrderPayload` - формат API.
+
+Преобразование между ними делает `src/app/services/orders.service.ts`.
+
+Это важно помнить:
+
+- В форме имя клиента называется `name`, а на бэке поле называется `customer`.
+- Статус во фронте хранится как число (`1 | 2 | 3`), а на бэке как строка (`accepted | progress | completed`).
+- Фронт сам считает итоговую сумму для UI и для отправки payload, но бэк всё равно пересчитывает `price` заново и не доверяет клиенту.
+
+## Как работает создание заказа
+
+### 1. Открытие экрана
+
+Маршрут `/order` загружает `OrderComponent`, а тот рендерит `OrderCreateComponent`.
+
+Если `id` в URL нет, компонент работает в режиме создания.
+Если `id` есть, то это уже режим редактирования:
+
+- включается `isEditMode`;
+- вызывается `ordersService.getOrder(orderId)`;
+- полученный заказ подставляется в форму через `applyOrder()`.
+
+### 2. Состояние формы
+
+`OrderCreateComponent` хранит данные в двух местах:
+
+- `Reactive Form` для общих полей заказа;
+- `signal`-состояние для товарных позиций:
+  - `interiorDoors`
+  - `entranceDoors`
+
+Поля формы:
+
+- `name`
+- `phone`
+- `date`
+- `prepayment`
+- `discount`
+- `needsDelivery`
+- `deliveryAddress`
+- `comment`
+- `status`
+
+Отдельно считаются производные значения:
+
+- `orderTotal` - сумма всех позиций.
+- `totalToPay` - `orderTotal - discount`, но не меньше 0.
+- `customerDebt` - `totalToPay - prepayment`, но не меньше 0.
+
+### 3. Добавление товаров
+
+Кнопка "Добавить" открывает меню, из которого сейчас реально работают:
+
+- межкомнатная дверь;
+- входная дверь.
+
+Пункты для погонажа, доборов, капители, фурнитуры и обшивки пока заглушены: методы есть, но в них нет логики.
+
+#### Межкомнатная дверь
+
+Сценарий:
+
+1. `onAddInteriorDoorClick()`
+2. открывается `InteriorDoorDialogComponent`
+3. после закрытия диалога результат добавляется в `interiorDoors`
+4. элементу присваивается локальный `id` через `nextId()`
+
+#### Входная дверь
+
+Сценарий аналогичный:
+
+1. `onAddEntranceDoorClick()`
+2. открывается `EntranceDoorDialogComponent`
+3. результат добавляется в `entranceDoors`
+4. элемент получает локальный `id`
+
+После любого добавления/удаления/дублирования вызывается `syncQuantity()`, чтобы снять ошибку "в заказе нет товаров".
+
+### 4. Валидация перед сохранением
+
+Перед отправкой `onSaveClick()` проверяет:
+
+- валидность формы;
+- наличие хотя бы одной товарной позиции;
+- если включена доставка, то адрес обязателен.
+
+Часть проверки выполняется на уровне Angular-валидаторов, а часть логикой компонента:
+
+- `phone` должен соответствовать паттерну `^7\\d{10}$`;
+- `prepayment` и `discount` не могут быть меньше 0;
+- `deliveryAddress` становится обязательным только когда `needsDelivery = true`.
+
+### 5. Сборка payload
+
+Если форма валидна, компонент собирает `OrderCreatePayload`:
+
+- общие поля берутся из `form.getRawValue()`;
+- товары берутся из `interiorDoors()` и `entranceDoors()`;
+- `status` по умолчанию для нового заказа = `OrderStatus.Accepted`.
+
+Далее показывается confirm-диалог, и только после подтверждения вызывается `saveOrder(payload)`.
+
+### 6. Отправка на бэк
+
+`saveOrder(payload)` выбирает метод по режиму:
+
+- create: `ordersService.createOrder(payload)`
+- edit: `ordersService.updateOrder(orderId, payload)`
+
+Внутри `OrdersService` происходит маппинг в backend-формат:
+
+- `name -> customer`
+- enum статуса переводится в строку
+- поля дверей приводятся к JSON-схеме API
+- дополнительно считается `price` как сумма `price * count` по всем позициям
+
+Запросы:
+
+- `POST /orders` - создание
+- `PUT /orders/:id` - полное обновление
+
+Базовый URL берется из environment:
+
+- `src/environments/environment.ts` - удаленный API `http://5.42.120.239/api`
+- `src/environments/environment.local.ts` - локальный API `http://localhost:8081/api`
+
+### 7. Что происходит после успешного сохранения
+
+Бэк возвращает созданный/обновленный заказ.
+`OrdersService` вытаскивает `order.id`, и компонент делает переход на `/order/:id`, то есть на экран просмотра заказа.
+
+## Как работает просмотр заказа
+
+`src/app/pages/order-view/order-view.component.ts`:
+
+- загружает заказ через `ordersService.getOrder(id)`;
+- показывает состав заказа и сводные суммы;
+- умеет удалять заказ;
+- умеет менять статус через `PATCH /orders/:id/status`;
+- умеет формировать HTML/`.doc` через `OrderDocumentService`, `OrderPrintService`, `FileDownloadService`.
+
+Важно: просмотр заказа использует тот же `OrderCreatePayload`, что и форма создания. Это упрощает повторное использование логики и формат данных между экранами.
+
+## OrdersService как центральная точка интеграции
+
+`src/app/services/orders.service.ts` - главный файл, если нужно понять интеграцию фронта с API.
+
+В нём собраны:
+
+- загрузка списка заказов;
+- загрузка одного заказа;
+- создание;
+- обновление;
+- удаление;
+- смена статуса;
+- маппинг API <-> UI.
+
+Если что-то "ломается между фронтом и бэком", в первую очередь смотреть нужно сюда.
+
+## Что полезно помнить при доработках
+
+- На экране создания сейчас поддерживаются только `interiorDoors` и `entranceDoors`.
+- Стоимость доставки в заказ не включается автоматически, в UI только есть подсказка, что она считается по тарифу такси.
+- Для новых заказов статус в форме не показывается, он выставляется программно как `Accepted`.
+- При редактировании заказ загружается целиком и потом сохраняется тоже целиком.
+- В `README` бэка отдельно описано, что сервер при update удаляет старые дочерние записи дверей и создает новые заново.
+
+## Запуск
+
+### Локальный фронт против локального бэка
 
 ```bash
-ng serve
+npm install
+npm run start:local
 ```
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+Конфигурация `start:local` использует `src/environments/environment.local.ts`.
 
-## Code scaffolding
-
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
+### Обычный dev-запуск
 
 ```bash
-ng generate component component-name
+npm install
+npm start
 ```
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+По умолчанию фронт смотрит на удаленный API.
+
+## Полезные команды
 
 ```bash
-ng generate --help
+npm start
+npm run start:local
+npm run build
+npm run lint
+npm run check
 ```
-
-## Building
-
-To build the project run:
-
-```bash
-ng build
-```
-
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
-
-## Running unit tests
-
-To execute unit tests with the [Karma](https://karma-runner.github.io) test runner, use the following command:
-
-```bash
-ng test
-```
-
-## Running end-to-end tests
-
-For end-to-end (e2e) testing, run:
-
-```bash
-ng e2e
-```
-
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
-
-## Additional Resources
-
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
