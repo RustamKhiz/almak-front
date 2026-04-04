@@ -9,6 +9,9 @@ import {
   EntranceDoorKind,
   InteriorDoorCovering,
   InteriorDoorItem,
+  MoldingCovering,
+  MoldingItem,
+  MoldingPlatbandType,
   OrderCreatePayload,
   OrderItemType,
   OrderStatus,
@@ -29,6 +32,7 @@ interface BackendOrder {
   status: BackendOrderStatus;
   interiorDoors?: BackendInteriorDoor[];
   entranceDoors?: BackendEntranceDoor[];
+  moldings?: BackendMolding[];
   created_at?: string;
 }
 
@@ -63,6 +67,23 @@ interface BackendEntranceDoor {
   comment?: string;
 }
 
+interface BackendMolding {
+  id: number;
+  order_id: number;
+  frameLength?: number | null;
+  framePrice: number;
+  frameCount: number;
+  platbandType: string;
+  platbandFigure?: string | null;
+  platbandLength?: number | null;
+  platbandPrice: number;
+  platbandCount: number;
+  rebateBarCount: number;
+  color: string;
+  covering?: string;
+  comment?: string;
+}
+
 interface BackendOrderPayload {
   customer: string;
   phone: string;
@@ -76,6 +97,7 @@ interface BackendOrderPayload {
   status: BackendOrderStatus;
   interiorDoors: BackendInteriorDoorPayload[];
   entranceDoors: BackendEntranceDoorPayload[];
+  moldings: BackendMoldingPayload[];
 }
 
 interface BackendInteriorDoorPayload {
@@ -102,6 +124,21 @@ interface BackendEntranceDoorPayload {
   hasPeephole?: boolean | null;
   count: number;
   price: number;
+  comment: string;
+}
+
+interface BackendMoldingPayload {
+  frameLength?: number | null;
+  framePrice: number;
+  frameCount: number;
+  platbandType: string;
+  platbandFigure?: string | null;
+  platbandLength?: number | null;
+  platbandPrice: number;
+  platbandCount: number;
+  rebateBarCount: number;
+  color: string;
+  covering: string;
   comment: string;
 }
 
@@ -180,6 +217,7 @@ export class OrdersService {
   private mapBackendOrderToCreatePayload(order: BackendOrder): OrderCreatePayload {
     const interiorDoors = (order.interiorDoors ?? []).map((item) => this.mapBackendDoorToDoorItem(item));
     const entranceDoors = (order.entranceDoors ?? []).map((item) => this.mapBackendEntranceDoorToDoorItem(item));
+    const moldings = (order.moldings ?? []).map((item) => this.mapBackendMoldingToItem(item));
 
     return {
       name: order.customer,
@@ -193,13 +231,15 @@ export class OrdersService {
       status: this.mapBackendStatusToOrderStatus(order.status),
       interiorDoors,
       entranceDoors,
+      moldings,
     };
   }
 
   private mapCreatePayloadToBackend(payload: OrderCreatePayload): BackendOrderPayload {
     const total =
       payload.interiorDoors.reduce((sum, item) => sum + item.price * item.count, 0) +
-      payload.entranceDoors.reduce((sum, item) => sum + item.price * item.count, 0);
+      payload.entranceDoors.reduce((sum, item) => sum + item.price * item.count, 0) +
+      payload.moldings.reduce((sum, item) => sum + item.framePrice * item.frameCount + item.platbandPrice * item.platbandCount, 0);
 
     return {
       customer: payload.name,
@@ -235,6 +275,20 @@ export class OrdersService {
         hasPeephole: item.hasPeephole,
         count: item.count,
         price: item.price,
+        comment: item.comment,
+      })),
+      moldings: payload.moldings.map((item) => ({
+        frameLength: item.frameLength,
+        framePrice: item.framePrice,
+        frameCount: item.frameCount,
+        platbandType: item.platbandType,
+        platbandFigure: item.platbandFigure,
+        platbandLength: item.platbandLength,
+        platbandPrice: item.platbandPrice,
+        platbandCount: item.platbandCount,
+        rebateBarCount: item.rebateBarCount,
+        color: item.color,
+        covering: item.covering,
         comment: item.comment,
       })),
     };
@@ -275,6 +329,25 @@ export class OrdersService {
     };
   }
 
+  private mapBackendMoldingToItem(item: BackendMolding): MoldingItem {
+    return {
+      id: item.id,
+      type: OrderItemType.Molding,
+      frameLength: item.frameLength ?? null,
+      framePrice: item.framePrice,
+      frameCount: item.frameCount,
+      platbandType: this.mapBackendPlatbandType(item.platbandType),
+      platbandFigure: item.platbandFigure ?? null,
+      platbandLength: item.platbandLength ?? null,
+      platbandPrice: item.platbandPrice,
+      platbandCount: item.platbandCount,
+      rebateBarCount: item.rebateBarCount ?? 0,
+      color: item.color ?? '',
+      covering: this.mapBackendMoldingCovering(item.covering),
+      comment: item.comment ?? '',
+    };
+  }
+
   private mapBackendCoveringToCovering(covering?: string): InteriorDoorCovering {
     switch (covering) {
       case InteriorDoorCovering.Enamel:
@@ -284,6 +357,29 @@ export class OrdersService {
         return covering;
       default:
         return InteriorDoorCovering.PVC;
+    }
+  }
+
+  private mapBackendMoldingCovering(covering?: string): MoldingCovering {
+    switch (covering) {
+      case MoldingCovering.Enamel:
+      case MoldingCovering.Veneer:
+      case MoldingCovering.Embossing:
+      case MoldingCovering.PVC:
+        return covering;
+      default:
+        return MoldingCovering.Enamel;
+    }
+  }
+
+  private mapBackendPlatbandType(type?: string): MoldingPlatbandType {
+    switch (type) {
+      case MoldingPlatbandType.Smooth:
+      case MoldingPlatbandType.Figure:
+      case MoldingPlatbandType.Oval:
+        return type;
+      default:
+        return MoldingPlatbandType.Oval;
     }
   }
 

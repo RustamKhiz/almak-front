@@ -14,7 +14,14 @@ import { FileDownloadService } from '../../services/file-download.service';
 import { OrderDocumentService } from '../../services/order-document.service';
 import { OrderPrintService } from '../../services/order-print.service';
 import { OrdersService } from '../../services/orders.service';
-import { DoorLeafType, OrderCreatePayload, OrderStatus } from '../../types/order.types';
+import {
+  DoorLeafType,
+  MoldingCovering,
+  MoldingItem,
+  MoldingPlatbandType,
+  OrderCreatePayload,
+  OrderStatus,
+} from '../../types/order.types';
 
 interface OrderViewState {
   id: number;
@@ -54,6 +61,17 @@ export class OrderViewComponent {
   protected readonly leafTypesLabels: Record<DoorLeafType, string> = {
     Single: 'Одностворчатая',
     Double: 'Двустворчатая',
+  };
+  protected readonly moldingPlatbandTypeLabels: Record<MoldingPlatbandType, string> = {
+    [MoldingPlatbandType.Oval]: 'овальный',
+    [MoldingPlatbandType.Smooth]: 'гладкий',
+    [MoldingPlatbandType.Figure]: 'фигурный',
+  };
+  protected readonly moldingCoveringLabels: Record<MoldingCovering, string> = {
+    [MoldingCovering.Enamel]: 'Эмаль',
+    [MoldingCovering.Veneer]: 'Шпон',
+    [MoldingCovering.Embossing]: 'Тиснение',
+    [MoldingCovering.PVC]: 'ПВХ',
   };
 
   constructor() {
@@ -145,7 +163,11 @@ export class OrderViewComponent {
   }
 
   protected getOrderTotal(order: OrderCreatePayload): number {
-    return [...order.interiorDoors, ...order.entranceDoors].reduce((sum, item) => sum + item.price * item.count, 0);
+    return (
+      order.interiorDoors.reduce((sum, item) => sum + item.price * item.count, 0) +
+      order.entranceDoors.reduce((sum, item) => sum + item.price * item.count, 0) +
+      order.moldings.reduce((sum, item) => sum + this.getMoldingTotal(item), 0)
+    );
   }
 
   protected getTotalToPay(order: OrderCreatePayload): number {
@@ -154,6 +176,10 @@ export class OrderViewComponent {
 
   protected getCustomerDebt(order: OrderCreatePayload): number {
     return Math.max(this.getTotalToPay(order) - order.prepayment, 0);
+  }
+
+  protected getMoldingTotal(item: MoldingItem): number {
+    return item.framePrice * item.frameCount + item.platbandPrice * item.platbandCount;
   }
 
   private fetchOrder(id: number): void {

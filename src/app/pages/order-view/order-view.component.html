@@ -96,7 +96,7 @@
 
       <div class="order-view__card">
         <h2>Товары</h2>
-        @if ($state.data.interiorDoors.length || $state.data.entranceDoors.length) {
+        @if ($state.data.interiorDoors.length || $state.data.entranceDoors.length || $state.data.moldings.length) {
           <div class="order-view__list">
             @for (door of $state.data.interiorDoors; track door.id) {
               <div class="order-view__item">
@@ -145,6 +145,37 @@
                   </div>
                 </div>
                 <div class="order-view__price">{{ door.price | number }} ₽</div>
+              </div>
+            }
+
+            @for (molding of $state.data.moldings; track molding.id) {
+              <div class="order-view__item">
+                <div>
+                  <div class="order-view__value">
+                    Погонаж · {{ molding.color }} · {{ moldingCoveringLabels[molding.covering] }}
+                  </div>
+                  <div class="order-view__meta">
+                    Коробка:
+                    @if (molding.frameLength !== null) {
+                      {{ molding.frameLength }} см,
+                    }
+                    цена {{ molding.framePrice | number: '1.0-0' }} ₽, количество {{ molding.frameCount }} · Наличник
+                    {{ moldingPlatbandTypeLabels[molding.platbandType] }}
+                    @if (molding.platbandFigure) {
+                      ({{ molding.platbandFigure }})
+                    }
+                    :
+                    @if (molding.platbandLength !== null) {
+                      {{ molding.platbandLength }} см,
+                    }
+                    цена {{ molding.platbandPrice | number: '1.0-0' }} ₽, количество {{ molding.platbandCount }} ·
+                    Притворная планка {{ molding.rebateBarCount }}
+                    @if (molding.comment) {
+                      · {{ molding.comment }}
+                    }
+                  </div>
+                </div>
+                <div class="order-view__price">{{ getMoldingTotal(molding) | number: '1.0-0' }} ₽</div>
               </div>
             }
           </div>

@@ -113,8 +113,9 @@
 
   @let interiorDoorItems = interiorDoors();
   @let entranceDoorItems = entranceDoors();
+  @let moldingItems = moldings();
 
-  @if (interiorDoorItems.length || entranceDoorItems.length) {
+  @if (interiorDoorItems.length || entranceDoorItems.length || moldingItems.length) {
     <div class="door-list">
       @if (interiorDoorItems.length) {
         <div class="door-section">
@@ -233,6 +234,71 @@
           }
         </div>
       }
+
+      @if (moldingItems.length) {
+        <div class="door-section">
+          <div class="door-section__title">Погонаж</div>
+          @for (molding of moldingItems; track molding.id) {
+            <div class="door-item">
+              <div class="door-item__main">
+                <div class="door-item__title">
+                  Погонаж · {{ molding.color }} · {{ moldingCoveringLabels[molding.covering] }}
+                </div>
+                <div class="door-item__meta">
+                  Коробка:
+                  @if (molding.frameLength !== null) {
+                    {{ molding.frameLength }} см,
+                  }
+                  цена {{ molding.framePrice | number: '1.0-0' }} ₽, количество {{ molding.frameCount }} · Наличник
+                  {{ moldingPlatbandTypeLabels[molding.platbandType] }}
+                  @if (molding.platbandFigure) {
+                    ({{ molding.platbandFigure }})
+                  }
+                  :
+                  @if (molding.platbandLength !== null) {
+                    {{ molding.platbandLength }} см,
+                  }
+                  цена {{ molding.platbandPrice | number: '1.0-0' }} ₽, количество {{ molding.platbandCount }} ·
+                  Притворная планка {{ molding.rebateBarCount }}
+                  @if (molding.comment) {
+                    · {{ molding.comment }}
+                  }
+                </div>
+              </div>
+              <div class="door-item__aside">
+                <div class="door-item__price">{{ getMoldingTotal(molding) | number: '1.0-0' }} ₽</div>
+                <div class="door-item__actions">
+                  <button
+                    mat-icon-button
+                    type="button"
+                    aria-label="Дублировать"
+                    (click)="onDuplicateMoldingClick(molding.id)"
+                  >
+                    <mat-icon>content_copy</mat-icon>
+                  </button>
+                  <button
+                    mat-icon-button
+                    type="button"
+                    aria-label="Редактировать"
+                    (click)="onEditMoldingClick(molding.id)"
+                  >
+                    <mat-icon>edit</mat-icon>
+                  </button>
+                  <button
+                    mat-icon-button
+                    type="button"
+                    color="warn"
+                    aria-label="Удалить"
+                    (click)="onRemoveMoldingClick(molding.id)"
+                  >
+                    <mat-icon>delete</mat-icon>
+                  </button>
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+      }
     </div>
   } @else {
     <div class="empty">
@@ -241,7 +307,7 @@
     </div>
   }
 
-  @if (showOrdersError() && !interiorDoorItems.length && !entranceDoorItems.length) {
+  @if (showOrdersError() && !interiorDoorItems.length && !entranceDoorItems.length && !moldingItems.length) {
     <div class="order-create__error">Добавьте хотя бы один товар.</div>
   }
 

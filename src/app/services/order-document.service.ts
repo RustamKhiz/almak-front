@@ -1,5 +1,12 @@
 import { Injectable } from '@angular/core';
-import { DoorLeafType, EntranceDoorKind, OrderCreatePayload } from '../types/order.types';
+import {
+  DoorLeafType,
+  EntranceDoorKind,
+  MoldingCovering,
+  MoldingItem,
+  MoldingPlatbandType,
+  OrderCreatePayload,
+} from '../types/order.types';
 
 @Injectable({
   providedIn: 'root',
@@ -12,10 +19,10 @@ export class OrderDocumentService {
 
   buildOrderHtml(orderId: number, order: OrderCreatePayload): string {
     const issueDate = this.escapeHtml(order.date);
-    const totalAmount = [...order.interiorDoors, ...order.entranceDoors].reduce(
-      (sum, item) => sum + item.price * item.count,
-      0,
-    );
+    const totalAmount =
+      order.interiorDoors.reduce((sum, item) => sum + item.price * item.count, 0) +
+      order.entranceDoors.reduce((sum, item) => sum + item.price * item.count, 0) +
+      order.moldings.reduce((sum, item) => sum + this.getMoldingTotal(item), 0);
     const totalToPay = Math.max(totalAmount - order.discount, 0);
     const customerDebt = Math.max(totalToPay - order.prepayment, 0);
 
@@ -57,7 +64,26 @@ export class OrderDocumentService {
       )
       .join('');
 
-    const rows = `${interiorRows}${entranceRows}`;
+    const moldingRows = order.moldings
+      .map(
+        (item, index) => `
+          <tr>
+            <td class="num">${order.interiorDoors.length + order.entranceDoors.length + index + 1}</td>
+            <td>Погонаж</td>
+            <td>${this.escapeHtml(this.getMoldingTitle(item))}</td>
+            <td>${this.escapeHtml(this.getMoldingExecutionLabel(item))}</td>
+            <td class="num">${this.escapeHtml(this.getMoldingSizeLabel(item))}</td>
+            <td>${this.escapeHtml(this.getMoldingCoveringLabel(item.covering))}</td>
+            <td>${this.escapeHtml(item.comment || '-')}</td>
+            <td class="num">${item.frameCount + item.platbandCount}</td>
+            <td class="money">${this.getMoldingTotal(item)}</td>
+            <td class="money">${this.getMoldingTotal(item)}</td>
+          </tr>
+        `,
+      )
+      .join('');
+
+    const rows = `${interiorRows}${entranceRows}${moldingRows}`;
 
     return `
       <html>
@@ -196,7 +222,7 @@ export class OrderDocumentService {
             <div class="doc-header">
               <div class="company">
                 <div><strong>ООО "АЛМАК"</strong></div>
-                <div>Заказ-наряд на поставку дверей</div>
+                <div>Заказ-наряд на поставку дверей и комплектующих</div>
               </div>
               <div class="order-title">
                 <h1>ЗАКАЗ-НАРЯД</h1>
@@ -218,11 +244,11 @@ export class OrderDocumentService {
               <thead>
                 <tr>
                   <th style="width: 34px;">№</th>
-                  <th>Тип двери</th>
-                  <th>Модель</th>
+                  <th>Тип</th>
+                  <th>Модель / позиция</th>
                   <th>Исполнение</th>
                   <th style="width: 84px;">Размер</th>
-                  <th style="width: 102px;">Цвет / створка</th>
+                  <th style="width: 102px;">Цвет / покрытие</th>
                   <th>Комментарий</th>
                   <th style="width: 62px;">Кол-во</th>
                   <th style="width: 76px;">Цена</th>
@@ -294,6 +320,53 @@ export class OrderDocumentService {
     }
 
     return details.join(', ');
+  }
+
+  private getMoldingTitle(item: MoldingItem): string {
+    const figure = item.platbandFigure ? ` (${item.platbandFigure})` : '';
+    return `Коробка + наличник ${this.getMoldingPlatbandTypeLabel(item.platbandType)}${figure}`;
+  }
+
+  private getMoldingExecutionLabel(item: MoldingItem): string {
+    return `Цвет ${item.color}, притворная планка ${item.rebateBarCount}`;
+  }
+
+  private getMoldingSizeLabel(item: MoldingItem): string {
+    const frame = item.frameLength !== null ? `коробка ${item.frameLength}` : 'коробка -';
+    const platband = item.platbandLength !== null ? `наличник ${item.platbandLength}` : 'наличник -';
+    return `${frame}; ${platband}`;
+  }
+
+  private getMoldingCoveringLabel(value: MoldingCovering): string {
+    switch (value) {
+      case MoldingCovering.Enamel:
+        return 'Эмаль';
+      case MoldingCovering.Veneer:
+        return 'Шпон';
+      case MoldingCovering.Embossing:
+        return 'Тиснение';
+      case MoldingCovering.PVC:
+        return 'ПВХ';
+      default:
+        return value;
+    }
+  }
+
+  private getMoldingPlatbandTypeLabel(value: MoldingPlatbandType): string {
+    switch (value) {
+      case MoldingPlatbandType.Oval:
+        return 'овальный';
+      case MoldingPlatbandType.Smooth:
+        return 'гладкий';
+      case MoldingPlatbandType.Figure:
+        return 'фигурный';
+      default:
+        return value;
+    }
+  }
+
+  private getMoldingTotal(item: MoldingItem): number {
+    return item.framePrice * item.frameCount + item.platbandPrice * item.platbandCount;
   }
 
   private formatDoorSize(width: number, height: number, width2: number | null): string {

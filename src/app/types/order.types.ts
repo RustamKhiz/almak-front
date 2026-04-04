@@ -6,6 +6,7 @@ export enum DoorLeafType {
 export enum OrderItemType {
   InteriorDoor = 'interiorDoor',
   EntranceDoor = 'entranceDoor',
+  Molding = 'molding',
 }
 
 export enum InteriorDoorCovering {
@@ -18,6 +19,19 @@ export enum InteriorDoorCovering {
 export enum EntranceDoorKind {
   Factory = 'factory',
   Welded = 'welded',
+}
+
+export enum MoldingPlatbandType {
+  Oval = 'oval',
+  Smooth = 'smooth',
+  Figure = 'figure',
+}
+
+export enum MoldingCovering {
+  Enamel = 'Enamel',
+  Veneer = 'Veneer',
+  Embossing = 'Embossing',
+  PVC = 'PVC',
 }
 
 export enum OrderStatus {
@@ -63,6 +77,23 @@ export interface EntranceDoorItem {
   comment: string;
 }
 
+export interface MoldingItem {
+  id: number;
+  type: OrderItemType.Molding;
+  frameLength: number | null;
+  framePrice: number;
+  frameCount: number;
+  platbandType: MoldingPlatbandType;
+  platbandFigure: string | null;
+  platbandLength: number | null;
+  platbandPrice: number;
+  platbandCount: number;
+  rebateBarCount: number;
+  color: string;
+  covering: MoldingCovering;
+  comment: string;
+}
+
 export interface OrderCustomerForm {
   name: string;
   phone: string;
@@ -78,4 +109,5 @@ export interface OrderCustomerForm {
 export interface OrderCreatePayload extends OrderCustomerForm {
   interiorDoors: readonly InteriorDoorItem[];
   entranceDoors: readonly EntranceDoorItem[];
+  moldings: readonly MoldingItem[];
 }

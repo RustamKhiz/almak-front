@@ -26,11 +26,19 @@ import {
   InteriorDoorDialogData,
   InteriorDoorDialogResult,
 } from '../../common/dialogs/interior-door-dialog/interior-door-dialog.component';
+import {
+  MoldingDialogComponent,
+  MoldingDialogData,
+  MoldingDialogResult,
+} from '../../common/dialogs/molding-dialog/molding-dialog.component';
 import { PhoneMaskDirective } from '../../common/directives/phone-mask.directive';
 import { OrdersService } from '../../services/orders.service';
 import {
   EntranceDoorItem,
   InteriorDoorItem,
+  MoldingCovering,
+  MoldingItem,
+  MoldingPlatbandType,
   OrderCreatePayload,
   OrderItemType,
   OrderStatus,
@@ -66,6 +74,7 @@ export class OrderCreateComponent implements OnInit {
 
   protected readonly interiorDoors = signal<readonly InteriorDoorItem[]>([]);
   protected readonly entranceDoors = signal<readonly EntranceDoorItem[]>([]);
+  protected readonly moldings = signal<readonly MoldingItem[]>([]);
   protected readonly showOrdersError = signal(false);
   protected readonly isEditMode = signal(false);
   protected readonly prepayment = signal(0);
@@ -74,11 +83,22 @@ export class OrderCreateComponent implements OnInit {
   protected readonly statusLabels = ORDER_STATUS_LABELS;
   protected readonly doorLeafTypeLabels = DOOR_LEAF_TYPE_LABELS;
   protected readonly doorCoveringLabels = INTERIOR_DOOR_COVERING_LABELS;
-  protected readonly orderTotal = computed(() =>
-    [...this.interiorDoors(), ...this.entranceDoors()].reduce(
-      (total, item) => total + Number(item.price ?? 0) * Number(item.count ?? 0),
-      0,
-    ),
+  protected readonly moldingPlatbandTypeLabels: Record<MoldingPlatbandType, string> = {
+    [MoldingPlatbandType.Oval]: 'овальный',
+    [MoldingPlatbandType.Smooth]: 'гладкий',
+    [MoldingPlatbandType.Figure]: 'фигурный',
+  };
+  protected readonly moldingCoveringLabels: Record<MoldingCovering, string> = {
+    [MoldingCovering.Enamel]: 'Эмаль',
+    [MoldingCovering.Veneer]: 'Шпон',
+    [MoldingCovering.Embossing]: 'Тиснение',
+    [MoldingCovering.PVC]: 'ПВХ',
+  };
+  protected readonly orderTotal = computed(
+    () =>
+      this.interiorDoors().reduce((total, item) => total + item.price * item.count, 0) +
+      this.entranceDoors().reduce((total, item) => total + item.price * item.count, 0) +
+      this.moldings().reduce((total, item) => total + this.getMoldingTotal(item), 0),
   );
   protected readonly totalToPay = computed(() => Math.max(this.orderTotal() - this.discount(), 0));
   protected readonly customerDebt = computed(() => Math.max(this.totalToPay() - this.prepayment(), 0));
@@ -172,7 +192,25 @@ export class OrderCreateComponent implements OnInit {
   }
 
   protected onAddMoldingClick(): void {
-    /* empty */
+    const dialogRef = this.dialog.open(MoldingDialogComponent, {
+      width: '640px',
+      data: {
+        mode: 'create',
+      } as MoldingDialogData,
+    });
+
+    dialogRef
+      .afterClosed()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((result: MoldingDialogResult) => {
+        if (!result) {
+          return;
+        }
+
+        const current = this.moldings();
+        this.moldings.set([...current, { ...result, type: OrderItemType.Molding, id: this.nextId(current) }]);
+        this.syncQuantity();
+      });
   }
 
   protected onAddExtensionClick(): void {
@@ -289,8 +327,59 @@ export class OrderCreateComponent implements OnInit {
     this.syncQuantity();
   }
 
+  protected onEditMoldingClick(id: number): void {
+    const current = this.moldings();
+    const molding = current.find((item) => item.id === id);
+    if (!molding) {
+      return;
+    }
+
+    const dialogRef = this.dialog.open(MoldingDialogComponent, {
+      width: '640px',
+      data: {
+        mode: 'edit',
+        molding,
+      } as MoldingDialogData,
+    });
+
+    dialogRef
+      .afterClosed()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((result: MoldingDialogResult) => {
+        if (!result) {
+          return;
+        }
+
+        this.moldings.set(current.map((item) => (item.id === id ? { ...item, ...result } : item)));
+        this.syncQuantity();
+      });
+  }
+
+  protected onRemoveMoldingClick(id: number): void {
+    const current = this.moldings();
+    this.moldings.set(current.filter((item) => item.id !== id));
+    this.syncQuantity();
+  }
+
+  protected onDuplicateMoldingClick(id: number): void {
+    const current = this.moldings();
+    const sourceIndex = current.findIndex((item) => item.id === id);
+
+    if (sourceIndex === -1) {
+      return;
+    }
+
+    const duplicatedMolding = {
+      ...current[sourceIndex],
+      id: this.nextId(current),
+    };
+
+    this.moldings.set([...current.slice(0, sourceIndex + 1), duplicatedMolding, ...current.slice(sourceIndex + 1)]);
+    this.syncQuantity();
+  }
+
   protected onSaveClick(): void {
-    const hasOrders = this.interiorDoors().length > 0 || this.entranceDoors().length > 0;
+    const hasOrders = this.interiorDoors().length > 0 || this.entranceDoors().length > 0 || this.moldings().length > 0;
     this.showOrdersError.set(!hasOrders);
 
     if (this.form.invalid || !hasOrders) {
@@ -311,6 +400,7 @@ export class OrderCreateComponent implements OnInit {
       status: Number(value.status ?? OrderStatus.Accepted) as OrderStatus,
       interiorDoors: this.interiorDoors(),
       entranceDoors: this.entranceDoors(),
+      moldings: this.moldings(),
     };
 
     const dialogData: ConfirmDialogData = {
@@ -348,7 +438,7 @@ export class OrderCreateComponent implements OnInit {
   }
 
   private syncQuantity(): void {
-    if (this.interiorDoors().length || this.entranceDoors().length) {
+    if (this.interiorDoors().length || this.entranceDoors().length || this.moldings().length) {
       this.showOrdersError.set(false);
     }
   }
@@ -366,6 +456,7 @@ export class OrderCreateComponent implements OnInit {
   private applyOrder(order: OrderCreatePayload): void {
     this.interiorDoors.set(order.interiorDoors);
     this.entranceDoors.set(order.entranceDoors);
+    this.moldings.set(order.moldings);
     this.form.patchValue(
       {
         name: order.name,
@@ -384,6 +475,13 @@ export class OrderCreateComponent implements OnInit {
     this.prepayment.set(Number(order.prepayment ?? 0));
     this.discount.set(Number(order.discount ?? 0));
     this.syncQuantity();
+  }
+
+  protected getMoldingTotal(item: MoldingItem): number {
+    return (
+      Number(item.framePrice ?? 0) * Number(item.frameCount ?? 0) +
+      Number(item.platbandPrice ?? 0) * Number(item.platbandCount ?? 0)
+    );
   }
 
   private syncDeliveryState(
