@@ -7,14 +7,40 @@ import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatMenuModule } from '@angular/material/menu';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { filter, switchMap } from 'rxjs';
-import { getOrderStatusLabel, ORDER_STATUS_LABELS, ORDER_STATUS_OPTIONS } from '../../common/constants/order-status';
+import { DOOR_LEAF_TYPE_LABELS } from '../../common/constants/door-catalog';
+import {
+  CAPITAL_COVERING_LABELS,
+  EXTENSION_COVERING_LABELS,
+  MOLDING_COVERING_LABELS,
+  MOLDING_PLATBAND_TYPE_LABELS,
+  PANELING_COVERING_LABELS,
+} from '../../common/constants/molding-catalog';
+import { ORDER_STATUS_OPTIONS, getOrderStatusLabel } from '../../common/constants/order-status';
 import { ConfirmDialogComponent, ConfirmDialogData } from '../../common/confirm-dialog/confirm-dialog.component';
 import { PhoneFormatPipe } from '../../common/pipes/phone-format.pipe';
+import {
+  getCapitalTotal,
+  getCustomerDebt,
+  getExtensionTotal,
+  getHardwareTotal,
+  getMoldingTotal,
+  getOrderTotal,
+  getPanelingTotal,
+  getTotalToPay,
+} from '../../common/utils/order-calculations';
 import { FileDownloadService } from '../../services/file-download.service';
 import { OrderDocumentService } from '../../services/order-document.service';
 import { OrderPrintService } from '../../services/order-print.service';
 import { OrdersService } from '../../services/orders.service';
-import { DoorLeafType, OrderCreatePayload, OrderStatus } from '../../types/order.types';
+import {
+  CapitalItem,
+  ExtensionItem,
+  HardwareItem,
+  MoldingItem,
+  OrderCreatePayload,
+  OrderStatus,
+  PanelingItem,
+} from '../../types/order.types';
 
 interface OrderViewState {
   id: number;
@@ -48,28 +74,30 @@ export class OrderViewComponent {
   private readonly destroyRef = inject(DestroyRef);
 
   protected readonly isLoading = signal(true);
+  protected readonly errorMessage = signal<string | null>(null);
   protected readonly state = signal<OrderViewState | null>(null);
   protected readonly statusOptions = ORDER_STATUS_OPTIONS;
-  protected readonly statusLabels = ORDER_STATUS_LABELS;
-  protected readonly leafTypesLabels: Record<DoorLeafType, string> = {
-    Single: 'Одностворчатая',
-    Double: 'Двустворчатая',
-  };
+  protected readonly leafTypesLabels = DOOR_LEAF_TYPE_LABELS;
+  protected readonly moldingPlatbandTypeLabels = MOLDING_PLATBAND_TYPE_LABELS;
+  protected readonly moldingCoveringLabels = MOLDING_COVERING_LABELS;
+  protected readonly extensionCoveringLabels = EXTENSION_COVERING_LABELS;
+  protected readonly capitalCoveringLabels = CAPITAL_COVERING_LABELS;
+  protected readonly panelingCoveringLabels = PANELING_COVERING_LABELS;
 
   constructor() {
-    const id = Number(this.route.snapshot.paramMap.get('id') ?? 0);
-    this.fetchOrder(id);
+    this.fetchOrder(Number(this.route.snapshot.paramMap.get('id') ?? 0));
   }
 
   protected onDeleteClick(): void {
     const current = this.state();
+
     if (!current) {
       return;
     }
 
     const dialogData: ConfirmDialogData = {
       title: 'Удаление заказа',
-      message: 'Вы уверены что хотите удалить заказ?',
+      message: 'Вы уверены, что хотите удалить заказ?',
       confirmText: 'Да, удалить',
       cancelText: 'Нет',
     };
@@ -78,18 +106,18 @@ export class OrderViewComponent {
       .open(ConfirmDialogComponent, { data: dialogData })
       .afterClosed()
       .pipe(
-        filter((isConfirmed) => isConfirmed === true),
+        filter((ok) => ok === true),
         switchMap(() => {
           this.isLoading.set(true);
+          this.errorMessage.set(null);
           return this.ordersService.deleteOrder(current.id);
         }),
         takeUntilDestroyed(this.destroyRef),
       )
       .subscribe({
-        next: () => {
-          void this.router.navigate(['/orders']);
-        },
+        next: () => this.router.navigate(['/orders']),
         error: () => {
+          this.errorMessage.set('Не удалось удалить заказ.');
           this.isLoading.set(false);
         },
       });
@@ -97,26 +125,25 @@ export class OrderViewComponent {
 
   protected onDownloadClick(): void {
     const current = this.state();
-    if (!current) {
-      return;
+    if (current) {
+      this.fileDownloadService.download(
+        this.orderDocumentService.createDocBlob(current.id, current.data),
+        `order-${current.id}.doc`,
+      );
     }
-
-    const blob = this.orderDocumentService.createDocBlob(current.id, current.data);
-    this.fileDownloadService.download(blob, `order-${current.id}.doc`);
   }
 
   protected onPrintClick(): void {
     const current = this.state();
-    if (!current) {
-      return;
-    }
 
-    const html = this.orderDocumentService.buildOrderHtml(current.id, current.data);
-    this.orderPrintService.printHtml(html);
+    if (current) {
+      this.orderPrintService.printHtml(this.orderDocumentService.buildOrderHtml(current.id, current.data));
+    }
   }
 
   protected onStatusChange(status: OrderStatus): void {
     const current = this.state();
+
     if (!current || current.data.status === status) {
       return;
     }
@@ -124,19 +151,18 @@ export class OrderViewComponent {
     this.ordersService
       .updateOrderStatus(current.id, status)
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((nextStatus) => {
-        const state = this.state();
-        if (!state) {
-          return;
-        }
-
-        this.state.set({
-          ...state,
-          data: {
-            ...state.data,
-            status: nextStatus,
-          },
-        });
+      .subscribe({
+        next: (nextStatus) => {
+          const state = this.state();
+          if (!state) {
+            return;
+          }
+          this.errorMessage.set(null);
+          this.state.set({ ...state, data: { ...state.data, status: nextStatus } });
+        },
+        error: () => {
+          this.errorMessage.set('Не удалось обновить статус заказа.');
+        },
       });
   }
 
@@ -144,14 +170,53 @@ export class OrderViewComponent {
     return getOrderStatusLabel(status);
   }
 
+  protected getOrderTotal(order: OrderCreatePayload): number {
+    return getOrderTotal(order);
+  }
+
+  protected getTotalToPay(order: OrderCreatePayload): number {
+    return getTotalToPay(order);
+  }
+
+  protected getCustomerDebt(order: OrderCreatePayload): number {
+    return getCustomerDebt(order);
+  }
+
+  protected getMoldingTotal(item: MoldingItem): number {
+    return getMoldingTotal(item);
+  }
+
+  protected getExtensionTotal(item: ExtensionItem): number {
+    return getExtensionTotal(item);
+  }
+
+  protected getPanelingTotal(item: PanelingItem): number {
+    return getPanelingTotal(item);
+  }
+
+  protected getHardwareTotal(item: HardwareItem): number {
+    return getHardwareTotal(item);
+  }
+
+  protected getCapitalTotal(item: CapitalItem): number {
+    return getCapitalTotal(item);
+  }
+
   private fetchOrder(id: number): void {
     this.isLoading.set(true);
+    this.errorMessage.set(null);
     this.ordersService
       .getOrder(id)
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((data) => {
-        this.state.set({ id, data });
-        this.isLoading.set(false);
+      .subscribe({
+        next: (data) => {
+          this.state.set({ id, data });
+          this.isLoading.set(false);
+        },
+        error: () => {
+          this.errorMessage.set('Не удалось загрузить заказ.');
+          this.isLoading.set(false);
+        },
       });
   }
 }

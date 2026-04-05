@@ -1,60 +1,265 @@
-﻿import { HttpClient } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
+import {
+  BackendOrderStatus,
+  CapitalCovering,
+  CapitalItem,
+  DoorLeafType,
+  EntranceDoorItem,
+  EntranceDoorKind,
+  ExtensionCovering,
+  ExtensionItem,
+  HardwareItem,
+  HardwareMechanismType,
+  InteriorDoorCovering,
+  InteriorDoorItem,
+  MoldingCovering,
+  MoldingItem,
+  MoldingPlatbandType,
+  OrderCreatePayload,
+  OrderItemType,
+  OrderStatus,
+  PanelingCovering,
+  PanelingItem,
+} from '../types/order.types';
+import { getOrderTotal } from '../common/utils/order-calculations';
 import { CoreService } from './core.service';
-import { BackendOrderStatus, DoorItem, OrderCreatePayload, OrderStatus } from '../types/order.types';
 
 interface BackendOrder {
   id: number;
   customer: string;
   phone: string;
   date: string;
-  count: number;
   price: number;
   prepayment: number;
+  discount: number;
+  needsDelivery: boolean;
+  deliveryAddress: string;
   comment: string;
   status: BackendOrderStatus;
-  orders?: BackendDoor[];
+  interiorDoors?: BackendInteriorDoor[];
+  entranceDoors?: BackendEntranceDoor[];
+  moldings?: BackendMolding[];
+  extensions?: BackendExtension[];
+  capitals?: BackendCapital[];
+  hardwares?: BackendHardware[];
+  panelings?: BackendPaneling[];
   created_at?: string;
 }
 
-interface BackendDoor {
+interface BackendInteriorDoor {
   id: number;
   order_id: number;
-  type: string;
   model: string;
   price: number;
-  color: string;
   width: number;
+  width2?: number | null;
   height: number;
+  hasGlass?: boolean;
   leafType: string;
   count: number;
+  covering?: string;
+  comment?: string;
+}
+interface BackendEntranceDoor {
+  id: number;
+  order_id: number;
+  kind: string;
+  model: string;
+  width: number;
+  height: number;
+  color: string;
+  painting?: string | null;
+  panelColor?: string | null;
+  hasPeephole?: boolean | null;
+  count: number;
+  price: number;
+  comment?: string;
+}
+interface BackendMolding {
+  id: number;
+  order_id: number;
+  frameLength?: number | null;
+  framePrice: number;
+  frameCount: number;
+  platbandType: string;
+  platbandFigure?: string | null;
+  platbandLength?: number | null;
+  platbandPrice: number;
+  platbandCount: number;
+  rebateBarCount: number;
+  color: string;
+  covering?: string;
+  comment?: string;
+}
+interface BackendExtension {
+  id: number;
+  order_id: number;
+  color: string;
+  covering?: string;
+  width: number;
+  height: number;
+  comment?: string;
+  count: number;
+  price: number;
+}
+interface BackendCapital {
+  id: number;
+  order_id: number;
+  name: string;
+  color: string;
+  covering?: string;
+  width: number;
+  height: number;
+  price: number;
+  comment?: string;
+  count: number;
+}
+interface BackendHardware {
+  id: number;
+  order_id: number;
+  handleModel?: string | null;
+  handleColor?: string | null;
+  handleCount?: number | null;
+  handlePrice?: number | null;
+  mechanismType?: string | null;
+  mechanismCount?: number | null;
+  mechanismPrice?: number | null;
+  thumbturnCount?: number | null;
+  thumbturnPrice?: number | null;
+  escutcheonCount?: number | null;
+  escutcheonPrice?: number | null;
+  cylinderCount?: number | null;
+  cylinderPrice?: number | null;
+  boltCount?: number | null;
+  boltPrice?: number | null;
+  hingeCount?: number | null;
+  hingePrice?: number | null;
+  doorStopCount?: number | null;
+  doorStopPrice?: number | null;
+  comment?: string;
+}
+interface BackendPaneling {
+  id: number;
+  order_id: number;
+  color: string;
+  size: string;
+  covering?: string;
+  count: number;
+  price: number;
+  comment?: string;
 }
 
 interface BackendOrderPayload {
   customer: string;
   phone: string;
   date: string;
-  count: number;
   price: number;
   prepayment: number;
+  discount: number;
+  needsDelivery: boolean;
+  deliveryAddress: string;
   comment: string;
   status: BackendOrderStatus;
-  orders: BackendDoorPayload[];
+  interiorDoors: BackendInteriorDoorPayload[];
+  entranceDoors: BackendEntranceDoorPayload[];
+  moldings: BackendMoldingPayload[];
+  extensions: BackendExtensionPayload[];
+  capitals: BackendCapitalPayload[];
+  hardwares: BackendHardwarePayload[];
+  panelings: BackendPanelingPayload[];
 }
 
-interface BackendDoorPayload {
-  type: string;
+interface BackendInteriorDoorPayload {
   model: string;
   price: number;
-  color: string;
   width: number;
+  width2?: number | null;
   height: number;
+  hasGlass: boolean;
   leafType: string;
   count: number;
+  covering: string;
+  comment: string;
 }
-
+interface BackendEntranceDoorPayload {
+  kind: string;
+  model: string;
+  width: number;
+  height: number;
+  color: string;
+  painting?: string | null;
+  panelColor?: string | null;
+  hasPeephole?: boolean | null;
+  count: number;
+  price: number;
+  comment: string;
+}
+interface BackendMoldingPayload {
+  frameLength?: number | null;
+  framePrice: number;
+  frameCount: number;
+  platbandType: string;
+  platbandFigure?: string | null;
+  platbandLength?: number | null;
+  platbandPrice: number;
+  platbandCount: number;
+  rebateBarCount: number;
+  color: string;
+  covering: string;
+  comment: string;
+}
+interface BackendExtensionPayload {
+  color: string;
+  covering: string;
+  width: number;
+  height: number;
+  comment: string;
+  count: number;
+  price: number;
+}
+interface BackendCapitalPayload {
+  name: string;
+  color: string;
+  covering: string;
+  width: number;
+  height: number;
+  price: number;
+  comment: string;
+  count: number;
+}
+interface BackendHardwarePayload {
+  handleModel?: string | null;
+  handleColor?: string | null;
+  handleCount?: number | null;
+  handlePrice?: number | null;
+  mechanismType?: string | null;
+  mechanismCount?: number | null;
+  mechanismPrice?: number | null;
+  thumbturnCount?: number | null;
+  thumbturnPrice?: number | null;
+  escutcheonCount?: number | null;
+  escutcheonPrice?: number | null;
+  cylinderCount?: number | null;
+  cylinderPrice?: number | null;
+  boltCount?: number | null;
+  boltPrice?: number | null;
+  hingeCount?: number | null;
+  hingePrice?: number | null;
+  doorStopCount?: number | null;
+  doorStopPrice?: number | null;
+  comment: string;
+}
+interface BackendPanelingPayload {
+  color: string;
+  size: string;
+  covering: string;
+  count: number;
+  price: number;
+  comment: string;
+}
 interface BackendOrderStatusPayload {
   status: number;
 }
@@ -64,51 +269,45 @@ export interface OrderRecord {
   customer: string;
   phone: string;
   date: string;
-  count: number;
   price: number;
   prepayment: number;
+  discount: number;
   comment: string;
   status: OrderStatus;
 }
 
-@Injectable({
-  providedIn: 'root',
-})
+@Injectable({ providedIn: 'root' })
 export class OrdersService {
-  private readonly http: HttpClient = inject(HttpClient);
-  private readonly coreService: CoreService = inject(CoreService);
+  private readonly http = inject(HttpClient);
+  private readonly coreService = inject(CoreService);
 
   getOrders(): Observable<readonly OrderRecord[]> {
     return this.http
       .get<BackendOrder[]>(`${this.coreService.apiBaseUrl}/orders`)
       .pipe(map((orders) => orders.map((item) => this.mapBackendOrderToRecord(item))));
   }
-
   getOrder(id: number): Observable<OrderCreatePayload> {
     return this.http
       .get<BackendOrder>(`${this.coreService.apiBaseUrl}/orders/${id}`)
       .pipe(map((order) => this.mapBackendOrderToCreatePayload(order)));
   }
-
   createOrder(payload: OrderCreatePayload): Observable<number> {
     return this.http
       .post<BackendOrder>(`${this.coreService.apiBaseUrl}/orders`, this.mapCreatePayloadToBackend(payload))
       .pipe(map((order) => order.id));
   }
-
   updateOrder(id: number, payload: OrderCreatePayload): Observable<number> {
     return this.http
       .put<BackendOrder>(`${this.coreService.apiBaseUrl}/orders/${id}`, this.mapCreatePayloadToBackend(payload))
       .pipe(map((order) => order.id));
   }
-
   updateOrderStatus(id: number, status: OrderStatus): Observable<OrderStatus> {
-    const payload: BackendOrderStatusPayload = { status };
     return this.http
-      .patch<BackendOrder>(`${this.coreService.apiBaseUrl}/orders/${id}/status`, payload)
+      .patch<BackendOrder>(`${this.coreService.apiBaseUrl}/orders/${id}/status`, {
+        status,
+      } as BackendOrderStatusPayload)
       .pipe(map((order) => this.mapBackendStatusToOrderStatus(order.status)));
   }
-
   deleteOrder(id: number): Observable<void> {
     return this.http.delete<void>(`${this.coreService.apiBaseUrl}/orders/${id}`);
   }
@@ -119,65 +318,326 @@ export class OrdersService {
       customer: order.customer,
       phone: order.phone,
       date: order.date,
-      count: order.count,
       price: order.price,
       prepayment: order.prepayment,
+      discount: order.discount ?? 0,
       comment: order.comment ?? '',
       status: this.mapBackendStatusToOrderStatus(order.status),
     };
   }
 
   private mapBackendOrderToCreatePayload(order: BackendOrder): OrderCreatePayload {
-    const orders = (order.orders ?? []).map((item) => this.mapBackendDoorToDoorItem(item));
-
     return {
       name: order.customer,
       phone: order.phone,
       date: order.date,
       prepayment: order.prepayment,
-      quantity: order.count,
+      discount: order.discount ?? 0,
+      needsDelivery: order.needsDelivery ?? false,
+      deliveryAddress: order.deliveryAddress ?? '',
       comment: order.comment ?? '',
       status: this.mapBackendStatusToOrderStatus(order.status),
-      orders,
+      interiorDoors: (order.interiorDoors ?? []).map((item) => this.mapBackendDoorToDoorItem(item)),
+      entranceDoors: (order.entranceDoors ?? []).map((item) => this.mapBackendEntranceDoorToDoorItem(item)),
+      moldings: (order.moldings ?? []).map((item) => this.mapBackendMoldingToItem(item)),
+      extensions: (order.extensions ?? []).map((item) => this.mapBackendExtensionToItem(item)),
+      capitals: (order.capitals ?? []).map((item) => this.mapBackendCapitalToItem(item)),
+      hardwares: (order.hardwares ?? []).map((item) => this.mapBackendHardwareToItem(item)),
+      panelings: (order.panelings ?? []).map((item) => this.mapBackendPanelingToItem(item)),
     };
   }
 
   private mapCreatePayloadToBackend(payload: OrderCreatePayload): BackendOrderPayload {
-    const total = payload.orders.reduce((sum, item) => sum + item.price * item.count, 0);
     return {
       customer: payload.name,
       phone: payload.phone,
       date: payload.date,
-      count: payload.quantity,
-      price: total,
+      price: getOrderTotal(payload),
       prepayment: payload.prepayment,
+      discount: payload.discount,
+      needsDelivery: payload.needsDelivery,
+      deliveryAddress: payload.deliveryAddress,
       comment: payload.comment,
       status: this.mapOrderStatusToBackendStatus(payload.status),
-      orders: payload.orders.map((item) => ({
-        type: item.type,
+      interiorDoors: payload.interiorDoors.map((item) => ({
         model: item.model,
         price: item.price,
-        color: item.color,
         width: item.width,
+        width2: item.width2,
         height: item.height,
+        hasGlass: item.hasGlass,
         leafType: item.leafType,
         count: item.count,
+        covering: item.covering,
+        comment: item.comment,
+      })),
+      entranceDoors: payload.entranceDoors.map((item) => ({
+        kind: item.kind,
+        model: item.model,
+        width: item.width,
+        height: item.height,
+        color: item.color,
+        painting: item.painting,
+        panelColor: item.panelColor,
+        hasPeephole: item.hasPeephole,
+        count: item.count,
+        price: item.price,
+        comment: item.comment,
+      })),
+      moldings: payload.moldings.map((item) => ({
+        frameLength: item.frameLength,
+        framePrice: item.framePrice,
+        frameCount: item.frameCount,
+        platbandType: item.platbandType,
+        platbandFigure: item.platbandFigure,
+        platbandLength: item.platbandLength,
+        platbandPrice: item.platbandPrice,
+        platbandCount: item.platbandCount,
+        rebateBarCount: item.rebateBarCount,
+        color: item.color,
+        covering: item.covering,
+        comment: item.comment,
+      })),
+      extensions: payload.extensions.map((item) => ({
+        color: item.color,
+        covering: item.covering,
+        width: item.width,
+        height: item.height,
+        comment: item.comment,
+        count: item.count,
+        price: item.price,
+      })),
+      capitals: payload.capitals.map((item) => ({
+        name: item.name,
+        color: item.color,
+        covering: item.covering,
+        width: item.width,
+        height: item.height,
+        price: item.price,
+        comment: item.comment,
+        count: item.count,
+      })),
+      hardwares: payload.hardwares.map((item) => ({
+        handleModel: item.handleModel || null,
+        handleColor: item.handleColor || null,
+        handleCount: item.handleCount,
+        handlePrice: item.handlePrice,
+        mechanismType: item.mechanismType,
+        mechanismCount: item.mechanismCount,
+        mechanismPrice: item.mechanismPrice,
+        thumbturnCount: item.thumbturnCount,
+        thumbturnPrice: item.thumbturnPrice,
+        escutcheonCount: item.escutcheonCount,
+        escutcheonPrice: item.escutcheonPrice,
+        cylinderCount: item.cylinderCount,
+        cylinderPrice: item.cylinderPrice,
+        boltCount: item.boltCount,
+        boltPrice: item.boltPrice,
+        hingeCount: item.hingeCount,
+        hingePrice: item.hingePrice,
+        doorStopCount: item.doorStopCount,
+        doorStopPrice: item.doorStopPrice,
+        comment: item.comment,
+      })),
+      panelings: payload.panelings.map((item) => ({
+        color: item.color,
+        size: item.size,
+        covering: item.covering,
+        count: item.count,
+        price: item.price,
+        comment: item.comment,
       })),
     };
   }
 
-  private mapBackendDoorToDoorItem(door: BackendDoor): DoorItem {
+  private mapBackendDoorToDoorItem(door: BackendInteriorDoor): InteriorDoorItem {
     return {
       id: door.id,
-      type: door.type === 'Interior' ? 'Interior' : 'Entrance',
+      type: OrderItemType.InteriorDoor,
       model: door.model,
       price: door.price,
-      color: door.color,
+      width: door.width,
+      width2: door.width2 ?? null,
+      height: door.height,
+      hasGlass: door.hasGlass ?? false,
+      leafType: door.leafType === DoorLeafType.Double ? DoorLeafType.Double : DoorLeafType.Single,
+      count: door.count,
+      covering: this.mapInteriorCovering(door.covering),
+      comment: door.comment ?? '',
+    };
+  }
+  private mapBackendEntranceDoorToDoorItem(door: BackendEntranceDoor): EntranceDoorItem {
+    return {
+      id: door.id,
+      type: OrderItemType.EntranceDoor,
+      kind: door.kind === EntranceDoorKind.Welded ? EntranceDoorKind.Welded : EntranceDoorKind.Factory,
+      model: door.model,
       width: door.width,
       height: door.height,
-      leafType: door.leafType === 'Double' ? 'Double' : 'Single',
+      color: door.color,
+      painting: door.painting ?? null,
+      panelColor: door.panelColor ?? null,
+      hasPeephole: door.hasPeephole ?? null,
       count: door.count,
+      price: door.price,
+      comment: door.comment ?? '',
     };
+  }
+  private mapBackendMoldingToItem(item: BackendMolding): MoldingItem {
+    return {
+      id: item.id,
+      type: OrderItemType.Molding,
+      frameLength: item.frameLength ?? null,
+      framePrice: item.framePrice,
+      frameCount: item.frameCount,
+      platbandType: this.mapMoldingPlatbandType(item.platbandType),
+      platbandFigure: item.platbandFigure ?? null,
+      platbandLength: item.platbandLength ?? null,
+      platbandPrice: item.platbandPrice,
+      platbandCount: item.platbandCount,
+      rebateBarCount: item.rebateBarCount ?? 0,
+      color: item.color ?? '',
+      covering: this.mapMoldingCovering(item.covering),
+      comment: item.comment ?? '',
+    };
+  }
+  private mapBackendExtensionToItem(item: BackendExtension): ExtensionItem {
+    return {
+      id: item.id,
+      type: OrderItemType.Extension,
+      color: item.color ?? '',
+      covering: this.mapExtensionCovering(item.covering),
+      width: item.width,
+      height: item.height,
+      comment: item.comment ?? '',
+      count: item.count,
+      price: item.price,
+    };
+  }
+  private mapBackendCapitalToItem(item: BackendCapital): CapitalItem {
+    return {
+      id: item.id,
+      type: OrderItemType.Capital,
+      name: item.name ?? '',
+      color: item.color ?? '',
+      covering: this.mapCapitalCovering(item.covering),
+      width: item.width,
+      height: item.height,
+      price: item.price,
+      comment: item.comment ?? '',
+      count: item.count,
+    };
+  }
+  private mapBackendHardwareToItem(item: BackendHardware): HardwareItem {
+    return {
+      id: item.id,
+      type: OrderItemType.Hardware,
+      handleModel: item.handleModel ?? '',
+      handleColor: item.handleColor ?? '',
+      handleCount: item.handleCount ?? null,
+      handlePrice: item.handlePrice ?? null,
+      mechanismType: this.mapHardwareMechanismType(item.mechanismType),
+      mechanismCount: item.mechanismCount ?? null,
+      mechanismPrice: item.mechanismPrice ?? null,
+      thumbturnCount: item.thumbturnCount ?? null,
+      thumbturnPrice: item.thumbturnPrice ?? null,
+      escutcheonCount: item.escutcheonCount ?? null,
+      escutcheonPrice: item.escutcheonPrice ?? null,
+      cylinderCount: item.cylinderCount ?? null,
+      cylinderPrice: item.cylinderPrice ?? null,
+      boltCount: item.boltCount ?? null,
+      boltPrice: item.boltPrice ?? null,
+      hingeCount: item.hingeCount ?? null,
+      hingePrice: item.hingePrice ?? null,
+      doorStopCount: item.doorStopCount ?? null,
+      doorStopPrice: item.doorStopPrice ?? null,
+      comment: item.comment ?? '',
+    };
+  }
+  private mapBackendPanelingToItem(item: BackendPaneling): PanelingItem {
+    return {
+      id: item.id,
+      type: OrderItemType.Paneling,
+      color: item.color ?? '',
+      size: item.size ?? '',
+      covering: this.mapPanelingCovering(item.covering),
+      count: item.count,
+      price: item.price,
+      comment: item.comment ?? '',
+    };
+  }
+
+  private mapInteriorCovering(value?: string): InteriorDoorCovering {
+    switch (value) {
+      case InteriorDoorCovering.Enamel:
+      case InteriorDoorCovering.Veneer:
+      case InteriorDoorCovering.Embossing:
+      case InteriorDoorCovering.PVC:
+        return value;
+      default:
+        return InteriorDoorCovering.PVC;
+    }
+  }
+  private mapMoldingCovering(value?: string): MoldingCovering {
+    switch (value) {
+      case MoldingCovering.Enamel:
+      case MoldingCovering.Veneer:
+      case MoldingCovering.Embossing:
+      case MoldingCovering.PVC:
+        return value;
+      default:
+        return MoldingCovering.Enamel;
+    }
+  }
+  private mapExtensionCovering(value?: string): ExtensionCovering {
+    switch (value) {
+      case ExtensionCovering.Enamel:
+      case ExtensionCovering.Veneer:
+      case ExtensionCovering.Embossing:
+        return value;
+      default:
+        return ExtensionCovering.Enamel;
+    }
+  }
+  private mapCapitalCovering(value?: string): CapitalCovering {
+    switch (value) {
+      case CapitalCovering.Enamel:
+      case CapitalCovering.Veneer:
+      case CapitalCovering.Embossing:
+        return value;
+      default:
+        return CapitalCovering.Enamel;
+    }
+  }
+  private mapPanelingCovering(value?: string): PanelingCovering {
+    switch (value) {
+      case PanelingCovering.Enamel:
+      case PanelingCovering.Veneer:
+      case PanelingCovering.Embossing:
+      case PanelingCovering.PVC:
+        return value;
+      default:
+        return PanelingCovering.Enamel;
+    }
+  }
+  private mapMoldingPlatbandType(value?: string): MoldingPlatbandType {
+    switch (value) {
+      case MoldingPlatbandType.Oval:
+      case MoldingPlatbandType.Smooth:
+      case MoldingPlatbandType.Figure:
+        return value;
+      default:
+        return MoldingPlatbandType.Oval;
+    }
+  }
+  private mapHardwareMechanismType(value?: string | null): HardwareMechanismType | null {
+    switch (value) {
+      case HardwareMechanismType.Lock:
+      case HardwareMechanismType.Fixator:
+        return value;
+      default:
+        return null;
+    }
   }
 
   private mapBackendStatusToOrderStatus(status: BackendOrderStatus): OrderStatus {
@@ -186,19 +646,16 @@ export class OrdersService {
         return OrderStatus.Progress;
       case BackendOrderStatus.Completed:
         return OrderStatus.Completed;
-      case BackendOrderStatus.Accepted:
       default:
         return OrderStatus.Accepted;
     }
   }
-
   private mapOrderStatusToBackendStatus(status: OrderStatus): BackendOrderStatus {
     switch (status) {
       case OrderStatus.Progress:
         return BackendOrderStatus.Progress;
       case OrderStatus.Completed:
         return BackendOrderStatus.Completed;
-      case OrderStatus.Accepted:
       default:
         return BackendOrderStatus.Accepted;
     }

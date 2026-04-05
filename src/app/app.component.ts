@@ -5,6 +5,7 @@ import { filter } from 'rxjs/operators';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { NavigationMenuComponent } from './components/navigation-menu/navigation-menu.component';
+import { AuthService } from './services/auth.service';
 
 @Component({
   selector: 'app-root',
@@ -16,6 +17,7 @@ import { NavigationMenuComponent } from './components/navigation-menu/navigation
 export class AppComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly authService = inject(AuthService);
 
   protected readonly title = signal<string>('Almak');
   protected readonly isAuthPage = signal<boolean>(false);
@@ -34,7 +36,7 @@ export class AppComponent implements OnInit {
   }
 
   protected onLogoutClick(): void {
-    localStorage.clear();
-    void this.router.navigate(['/auth']);
+    this.authService.logout();
+    this.router.navigate(['/auth']);
   }
 }

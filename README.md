@@ -1,59 +1,162 @@
-# Almak
+# Almak Frontend
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 20.3.9.
+Angular-приложение для работы с заказами: авторизация, список заказов, создание и редактирование, просмотр, печать и выгрузка `.doc`.
 
-## Development server
+## Что умеет фронт
 
-To start a local development server, run:
+- логин по JWT и защита внутренних маршрутов;
+- список заказов и экран просмотра заказа;
+- создание и редактирование заказа;
+- смена статуса заказа;
+- удаление заказа;
+- печать и скачивание документа;
+- работа с несколькими типами товарных позиций в одном заказе.
+
+## Поддерживаемые позиции заказа
+
+Сейчас фронт поддерживает:
+
+- межкомнатные двери;
+- входные двери;
+- погонаж;
+- доборы;
+- капитель;
+- обшивку.
+
+Для каждого типа есть своя модель, своя модалка и свой mapping в API.
+
+## Основные маршруты
+
+- `/auth` — авторизация;
+- `/orders` — список заказов;
+- `/order` — создание заказа;
+- `/order/:id` — просмотр заказа;
+- `/order/:id/edit` — редактирование заказа;
+- `/orders-charts` — графики по заказам.
+
+Маршруты описаны в [src/app/app.routes.ts](/c:/main/projects/diplom/almak-front/src/app/app.routes.ts).
+
+## Ключевые части приложения
+
+- [src/app/components/order-create](/c:/main/projects/diplom/almak-front/src/app/components/order-create) — главный экран создания и редактирования заказа.
+- [src/app/pages/order-view](/c:/main/projects/diplom/almak-front/src/app/pages/order-view) — просмотр заказа, смена статуса, печать, скачивание, удаление.
+- [src/app/services/orders.service.ts](/c:/main/projects/diplom/almak-front/src/app/services/orders.service.ts) — центральный mapping между UI и backend API.
+- [src/app/services/order-document.service.ts](/c:/main/projects/diplom/almak-front/src/app/services/order-document.service.ts) — генерация HTML и `.doc`.
+- [src/app/types/order.types.ts](/c:/main/projects/diplom/almak-front/src/app/types/order.types.ts) — основные типы заказа.
+- [src/app/common/dialogs](/c:/main/projects/diplom/almak-front/src/app/common/dialogs) — модалки товарных позиций.
+- [src/app/common/constants](/c:/main/projects/diplom/almak-front/src/app/common/constants) — словари и подписи.
+
+## Структура данных на фронте
+
+Главный формат формы — `OrderCreatePayload`.
+
+В нём есть:
+
+- шапка заказа: `name`, `phone`, `date`, `prepayment`, `discount`, `needsDelivery`, `deliveryAddress`, `comment`, `status`;
+- массивы позиций:
+  - `interiorDoors`
+  - `entranceDoors`
+  - `moldings`
+  - `extensions`
+  - `capitals`
+  - `panelings`
+
+На фронте сумма заказа считается локально:
+
+- `orderTotal` — сумма всех товарных позиций;
+- `totalToPay` — `orderTotal - discount`;
+- `customerDebt` — `totalToPay - prepayment`.
+
+Важно: в текущей логике в итог входят:
+
+- межкомнатные двери;
+- входные двери;
+- погонаж;
+- доборы;
+- обшивка.
+
+Капитель цены не имеет и в итог не входит.
+
+## Как работает создание и редактирование
+
+Экран [order-create.component.ts](/c:/main/projects/diplom/almak-front/src/app/components/order-create/order-create.component.ts):
+
+- работает и в create, и в edit режиме;
+- в edit режиме загружает заказ через `ordersService.getOrder(id)`;
+- хранит шапку заказа в `Reactive Form`;
+- хранит товарные позиции в `signal`;
+- для каждой позиции умеет `add/edit/duplicate/remove`;
+- перед сохранением проверяет:
+  - валидность формы;
+  - что в заказе есть хотя бы одна позиция;
+  - что при `needsDelivery = true` заполнен `deliveryAddress`.
+
+Сохранение идёт через confirm-диалог, затем:
+
+- create: `ordersService.createOrder(payload)`
+- edit: `ordersService.updateOrder(id, payload)`
+
+## Как работает просмотр заказа
+
+Экран [order-view.component.ts](/c:/main/projects/diplom/almak-front/src/app/pages/order-view/order-view.component.ts):
+
+- загружает заказ по `id`;
+- показывает все типы товарных позиций;
+- позволяет сменить статус;
+- умеет удалить заказ;
+- умеет распечатать и скачать документ.
+
+Документ строится в [order-document.service.ts](/c:/main/projects/diplom/almak-front/src/app/services/order-document.service.ts).
+
+## Mapping в API
+
+[orders.service.ts](/c:/main/projects/diplom/almak-front/src/app/services/orders.service.ts) отвечает за:
+
+- загрузку списка заказов;
+- загрузку одного заказа;
+- создание;
+- обновление;
+- удаление;
+- смену статуса;
+- преобразование backend JSON в `OrderCreatePayload` и обратно.
+
+Здесь важно помнить:
+
+- на фронте поле клиента называется `name`, на бэке — `customer`;
+- статус на фронте — число (`1 | 2 | 3`), на бэке — строка (`accepted | progress | completed`);
+- фронт передаёт все массивы позиций целиком;
+- бэк при `PUT /orders/:id` пересоздаёт дочерние записи заново.
+
+## Локальный запуск
+
+### Обычный dev-режим
 
 ```bash
-ng serve
+npm install
+npm start
 ```
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
-
-## Code scaffolding
-
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
+### Локальный фронт против локального бэка
 
 ```bash
-ng generate component component-name
+npm install
+npm run start:local
 ```
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+Локальный API берётся из [src/environments/environment.local.ts](/c:/main/projects/diplom/almak-front/src/environments/environment.local.ts).
+
+## Полезные команды
 
 ```bash
-ng generate --help
+npm start
+npm run start:local
+npm run build
+npx tsc -p tsconfig.json --noEmit
 ```
 
-## Building
+## Правило по кодировке
 
-To build the project run:
-
-```bash
-ng build
-```
-
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
-
-## Running unit tests
-
-To execute unit tests with the [Karma](https://karma-runner.github.io) test runner, use the following command:
-
-```bash
-ng test
-```
-
-## Running end-to-end tests
-
-For end-to-end (e2e) testing, run:
-
-```bash
-ng e2e
-```
-
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
-
-## Additional Resources
-
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+- Все текстовые исходники фронта (`src/**/*.ts`, `src/**/*.html`, `src/**/*.scss`, `README.md`) должны храниться в `UTF-8` без BOM.
+- Нельзя сохранять файлы в `ANSI`, `Windows-1251`, `CP1251` или другой локальной кодировке.
+- После массовых правок нужно проверять, что в проект не попали `�`, `Ð`, `Ñ`, `Р`/`С`-кракозябры или сломанная кириллица.
+- Если файл уже повреждён по кодировке, его нужно сначала перекодировать в `UTF-8`, и только потом продолжать правки.

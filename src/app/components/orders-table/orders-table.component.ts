@@ -1,10 +1,11 @@
-﻿import {
+import {
   ChangeDetectionStrategy,
   Component,
   DestroyRef,
   OnInit,
-  AfterViewInit,
+  effect,
   inject,
+  signal,
   viewChild,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
@@ -37,7 +38,7 @@ import { OrdersTableFilters, OrdersTableFiltersComponent } from './orders-table-
   styleUrl: './orders-table.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class OrdersTableComponent implements OnInit, AfterViewInit {
+export class OrdersTableComponent implements OnInit {
   private readonly ordersService = inject(OrdersService);
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
@@ -45,12 +46,13 @@ export class OrdersTableComponent implements OnInit, AfterViewInit {
   private readonly paginator = viewChild(MatPaginator);
 
   protected readonly dataSource = new MatTableDataSource<OrderRecord>([]);
+  protected readonly isLoading = signal(true);
+  protected readonly loadError = signal<string | null>(null);
   protected readonly displayedColumns = [
     'id',
     'customer',
     'phone',
     'date',
-    'count',
     'price',
     'prepayment',
     'comment',
@@ -63,7 +65,6 @@ export class OrdersTableComponent implements OnInit, AfterViewInit {
   private readonly sortAccessors: Record<string, (item: OrderRecord) => string | number> = {
     id: (item) => item.id,
     date: (item) => new Date(item.date).getTime(),
-    count: (item) => item.count,
     price: (item) => item.price,
     prepayment: (item) => item.prepayment,
     customer: (item) => item.customer.toLocaleLowerCase(),
@@ -72,37 +73,52 @@ export class OrdersTableComponent implements OnInit, AfterViewInit {
     status: (item) => item.status,
   };
 
+  constructor() {
+    effect(() => {
+      const sort = this.sort();
+      if (!sort) {
+        return;
+      }
+
+      this.dataSource.sort = sort;
+      sort.active = 'date';
+      sort.direction = 'desc';
+      sort.disableClear = true;
+      sort.sortChange.emit({ active: 'date', direction: 'desc' });
+    });
+
+    effect(() => {
+      const paginator = this.paginator();
+      if (!paginator) {
+        return;
+      }
+
+      this.dataSource.paginator = paginator;
+    });
+  }
+
   ngOnInit(): void {
     this.dataSource.sortingDataAccessor = (item, property) => this.sortAccessors[property]?.(item) ?? '';
 
     this.ordersService
       .getOrders()
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((orders) => {
-        this.allOrders = [...orders];
-        this.applyFilters();
+      .subscribe({
+        next: (orders) => {
+          this.allOrders = [...orders];
+          this.applyFilters();
+          this.loadError.set(null);
+          this.isLoading.set(false);
+        },
+        error: () => {
+          this.loadError.set('Не удалось загрузить список заказов.');
+          this.isLoading.set(false);
+        },
       });
   }
 
-  ngAfterViewInit(): void {
-    const sort = this.sort();
-    const paginator = this.paginator();
-
-    if (sort) {
-      this.dataSource.sort = sort;
-      sort.active = 'date';
-      sort.direction = 'asc';
-      sort.disableClear = true;
-      sort.sortChange.emit({ active: 'date', direction: 'asc' });
-    }
-
-    if (paginator) {
-      this.dataSource.paginator = paginator;
-    }
-  }
-
   protected onRowClick(row: OrderRecord): void {
-    void this.router.navigate(['/order', row.id]);
+    this.router.navigate(['/order', row.id]);
   }
 
   protected onStatusClick(event: MouseEvent): void {
@@ -113,11 +129,16 @@ export class OrdersTableComponent implements OnInit, AfterViewInit {
     this.ordersService
       .updateOrderStatus(orderId, status)
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((nextStatus) => {
-        this.allOrders = this.allOrders.map((order) =>
-          order.id === orderId ? { ...order, status: nextStatus } : order,
-        );
-        this.applyFilters();
+      .subscribe({
+        next: (nextStatus) => {
+          this.allOrders = this.allOrders.map((order) =>
+            order.id === orderId ? { ...order, status: nextStatus } : order,
+          );
+          this.applyFilters();
+        },
+        error: () => {
+          this.loadError.set('Не удалось обновить статус заказа.');
+        },
       });
   }
 
@@ -145,19 +166,19 @@ export class OrdersTableComponent implements OnInit, AfterViewInit {
       return;
     }
 
-    const normalizedCustomer = filters.customer.toLocaleLowerCase();
-    const normalizedPhone = filters.phone;
+    const customerQuery = filters.customer.toLocaleLowerCase();
+    const phoneQuery = filters.phone;
 
     this.dataSource.data = this.allOrders.filter((order) => {
       if (filters.orderId && order.id !== filters.orderId) {
         return false;
       }
 
-      if (normalizedCustomer && !order.customer.toLocaleLowerCase().includes(normalizedCustomer)) {
+      if (customerQuery && !order.customer.toLocaleLowerCase().includes(customerQuery)) {
         return false;
       }
 
-      if (normalizedPhone && !order.phone.includes(normalizedPhone)) {
+      if (phoneQuery && !order.phone.includes(phoneQuery)) {
         return false;
       }
 

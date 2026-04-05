@@ -20,7 +20,7 @@ export class AuthComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly authService = inject(AuthService);
   private readonly destroyRef = inject(DestroyRef);
-  protected readonly authError = signal<string>(null);
+  protected readonly authError = signal<string | null>(null);
   protected readonly isSubmitting = signal<boolean>(false);
 
   protected readonly form = this.fb.group({
@@ -30,7 +30,7 @@ export class AuthComponent implements OnInit {
 
   ngOnInit(): void {
     if (this.authService.hasToken()) {
-      void this.router.navigateByUrl('/orders');
+      this.router.navigateByUrl('/orders');
     }
   }
 
@@ -52,7 +52,7 @@ export class AuthComponent implements OnInit {
       .subscribe({
         next: () => {
           this.isSubmitting.set(false);
-          void this.router.navigateByUrl('/orders');
+          this.router.navigateByUrl('/orders');
         },
         error: () => {
           this.isSubmitting.set(false);

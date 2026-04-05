@@ -1,33 +1,42 @@
-﻿import { Routes } from '@angular/router';
-import { OrdersComponent } from './pages/orders/orders.component';
-import { OrderComponent } from './pages/order/order.component';
-import { OrderViewComponent } from './pages/order-view/order-view.component';
-import { AuthComponent } from './pages/auth/auth.component';
-import { OrdersChartsComponent } from './pages/orders-charts/orders-charts.component';
+import { Routes } from '@angular/router';
 import { authGuard } from './guard/auth.guard';
 
 export const routes: Routes = [
   { path: '', pathMatch: 'full', redirectTo: 'orders' },
-  { path: 'orders', component: OrdersComponent, title: 'Все заказы', canActivate: [authGuard] },
-  { path: 'order', component: OrderComponent, title: 'Заказ', canActivate: [authGuard] },
+  {
+    path: 'orders',
+    loadComponent: () => import('./pages/orders/orders.component').then((m) => m.OrdersComponent),
+    title: 'Все заказы',
+    canActivate: [authGuard],
+  },
+  {
+    path: 'order',
+    loadComponent: () => import('./pages/order/order.component').then((m) => m.OrderComponent),
+    title: 'Заказ',
+    canActivate: [authGuard],
+  },
   {
     path: 'order/:id',
-    component: OrderViewComponent,
+    loadComponent: () => import('./pages/order-view/order-view.component').then((m) => m.OrderViewComponent),
     title: 'Просмотр заказа',
     canActivate: [authGuard],
   },
   {
     path: 'order/:id/edit',
-    component: OrderComponent,
+    loadComponent: () => import('./pages/order/order.component').then((m) => m.OrderComponent),
     title: 'Редактирование заказа',
     canActivate: [authGuard],
   },
   {
     path: 'orders-charts',
-    component: OrdersChartsComponent,
+    loadComponent: () => import('./pages/orders-charts/orders-charts.component').then((m) => m.OrdersChartsComponent),
     title: 'График',
     canActivate: [authGuard],
   },
-  { path: 'auth', component: AuthComponent, title: 'Авторизация' },
+  {
+    path: 'auth',
+    loadComponent: () => import('./pages/auth/auth.component').then((m) => m.AuthComponent),
+    title: 'Авторизация',
+  },
   { path: '**', redirectTo: 'orders' },
 ];

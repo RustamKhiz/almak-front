@@ -1,0 +1,31 @@
+.dialog-form {
+  display: grid;
+  gap: 16px;
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+mat-dialog-content {
+  display: block;
+  max-height: min(70vh, 720px);
+  margin: 0;
+  padding: 0 12px;
+  box-sizing: border-box;
+  overflow: auto;
+  scrollbar-gutter: stable;
+}
+.dialog-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+mat-form-field {
+  width: 100%;
+}
+@media (max-width: 640px) {
+  .dialog-row {
+    grid-template-columns: 1fr;
+  }
+  mat-dialog-content {
+    padding: 0 8px;
+  }
+}

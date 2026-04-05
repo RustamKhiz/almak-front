@@ -1,5 +1,67 @@
-export type DoorType = 'Entrance' | 'Interior';
-export type DoorLeafType = 'Single' | 'Double';
+export enum DoorLeafType {
+  Single = 'Single',
+  Double = 'Double',
+}
+
+export enum OrderItemType {
+  InteriorDoor = 'interiorDoor',
+  EntranceDoor = 'entranceDoor',
+  Molding = 'molding',
+  Extension = 'extension',
+  Capital = 'capital',
+  Hardware = 'hardware',
+  Paneling = 'paneling',
+}
+
+export enum InteriorDoorCovering {
+  Enamel = 'Enamel',
+  Veneer = 'Veneer',
+  Embossing = 'Embossing',
+  PVC = 'PVC',
+}
+
+export enum EntranceDoorKind {
+  Factory = 'factory',
+  Welded = 'welded',
+}
+
+export enum MoldingPlatbandType {
+  Oval = 'oval',
+  Smooth = 'smooth',
+  Figure = 'figure',
+}
+
+export enum MoldingCovering {
+  Enamel = 'Enamel',
+  Veneer = 'Veneer',
+  Embossing = 'Embossing',
+  PVC = 'PVC',
+}
+
+export enum ExtensionCovering {
+  Enamel = 'Enamel',
+  Veneer = 'Veneer',
+  Embossing = 'Embossing',
+}
+
+export enum CapitalCovering {
+  Enamel = 'Enamel',
+  Veneer = 'Veneer',
+  Embossing = 'Embossing',
+}
+
+export enum PanelingCovering {
+  Enamel = 'Enamel',
+  Veneer = 'Veneer',
+  Embossing = 'Embossing',
+  PVC = 'PVC',
+}
+
+export enum HardwareMechanismType {
+  Lock = 'lock',
+  Fixator = 'fixator',
+}
+
 export enum OrderStatus {
   Accepted = 1,
   Progress = 2,
@@ -12,16 +74,113 @@ export enum BackendOrderStatus {
   Completed = 'completed',
 }
 
-export interface DoorItem {
+export interface InteriorDoorItem {
   id: number;
-  type: DoorType;
+  type: OrderItemType.InteriorDoor;
   model: string;
   price: number;
-  color: string;
   width: number;
+  width2: number | null;
   height: number;
+  hasGlass: boolean;
   leafType: DoorLeafType;
   count: number;
+  covering: InteriorDoorCovering;
+  comment: string;
+}
+
+export interface EntranceDoorItem {
+  id: number;
+  type: OrderItemType.EntranceDoor;
+  kind: EntranceDoorKind;
+  model: string;
+  width: number;
+  height: number;
+  color: string;
+  painting: string | null;
+  panelColor: string | null;
+  hasPeephole: boolean | null;
+  count: number;
+  price: number;
+  comment: string;
+}
+
+export interface MoldingItem {
+  id: number;
+  type: OrderItemType.Molding;
+  frameLength: number | null;
+  framePrice: number;
+  frameCount: number;
+  platbandType: MoldingPlatbandType;
+  platbandFigure: string | null;
+  platbandLength: number | null;
+  platbandPrice: number;
+  platbandCount: number;
+  rebateBarCount: number;
+  color: string;
+  covering: MoldingCovering;
+  comment: string;
+}
+
+export interface ExtensionItem {
+  id: number;
+  type: OrderItemType.Extension;
+  color: string;
+  covering: ExtensionCovering;
+  width: number;
+  height: number;
+  comment: string;
+  count: number;
+  price: number;
+}
+
+export interface CapitalItem {
+  id: number;
+  type: OrderItemType.Capital;
+  name: string;
+  color: string;
+  covering: CapitalCovering;
+  width: number;
+  height: number;
+  price: number;
+  comment: string;
+  count: number;
+}
+
+export interface PanelingItem {
+  id: number;
+  type: OrderItemType.Paneling;
+  color: string;
+  size: string;
+  covering: PanelingCovering;
+  count: number;
+  price: number;
+  comment: string;
+}
+
+export interface HardwareItem {
+  id: number;
+  type: OrderItemType.Hardware;
+  handleModel: string;
+  handleColor: string;
+  handleCount: number | null;
+  handlePrice: number | null;
+  mechanismType: HardwareMechanismType | null;
+  mechanismCount: number | null;
+  mechanismPrice: number | null;
+  thumbturnCount: number | null;
+  thumbturnPrice: number | null;
+  escutcheonCount: number | null;
+  escutcheonPrice: number | null;
+  cylinderCount: number | null;
+  cylinderPrice: number | null;
+  boltCount: number | null;
+  boltPrice: number | null;
+  hingeCount: number | null;
+  hingePrice: number | null;
+  doorStopCount: number | null;
+  doorStopPrice: number | null;
+  comment: string;
 }
 
 export interface OrderCustomerForm {
@@ -29,11 +188,19 @@ export interface OrderCustomerForm {
   phone: string;
   date: string;
   prepayment: number;
-  quantity: number;
+  discount: number;
+  needsDelivery: boolean;
+  deliveryAddress: string;
   comment: string;
   status: OrderStatus;
 }
 
 export interface OrderCreatePayload extends OrderCustomerForm {
-  orders: readonly DoorItem[];
+  interiorDoors: readonly InteriorDoorItem[];
+  entranceDoors: readonly EntranceDoorItem[];
+  moldings: readonly MoldingItem[];
+  extensions: readonly ExtensionItem[];
+  capitals: readonly CapitalItem[];
+  hardwares: readonly HardwareItem[];
+  panelings: readonly PanelingItem[];
 }

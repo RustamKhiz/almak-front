@@ -1,0 +1,59 @@
+.dialog-form {
+  display: grid;
+  gap: 16px;
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+
+mat-dialog-content {
+  display: block;
+  max-height: min(70vh, 720px);
+  margin: 0;
+  padding: 0 12px;
+  box-sizing: border-box;
+  overflow: auto;
+  scrollbar-gutter: stable;
+}
+
+.dialog-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.dialog-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.dialog-section {
+  border: 1px solid #e0e0e0;
+  border-radius: 12px;
+  padding: 12px;
+}
+
+.dialog-section__title {
+  margin-bottom: 12px;
+  font-weight: 600;
+}
+
+.dialog-error {
+  color: #b00020;
+  font-size: 14px;
+}
+
+mat-form-field {
+  width: 100%;
+}
+
+@media (max-width: 640px) {
+  .dialog-row,
+  .dialog-grid {
+    grid-template-columns: 1fr;
+  }
+
+  mat-dialog-content {
+    padding: 0 8px;
+  }
+}

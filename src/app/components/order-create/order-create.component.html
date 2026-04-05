@@ -1,118 +1,134 @@
-﻿<section class="order-create">
+<section class="order-create">
   <header class="order-create__header">
-    <div>
-      <h1>{{ isEditMode() ? 'Редактировать заказ' : 'Создать заказ' }}</h1>
-      <p>Добавьте двери и проверьте список перед сохранением заказа.</p>
+    <div class="order-create__header-content">
+      <div class="order-create__title-row">
+        @if (isEditMode()) {
+          <button mat-icon-button type="button" class="order-create__back-button" (click)="onBackToOrderClick()">
+            <mat-icon>arrow_back</mat-icon>
+          </button>
+        }
+        <h1>{{ isEditMode() ? 'Редактировать заказ' : 'Создать заказ' }}</h1>
+      </div>
+      <p>Добавьте товары и проверьте список перед сохранением заказа.</p>
     </div>
-    <button mat-flat-button color="primary" (click)="onAddDoorClick()">Добавить дверь</button>
-    <button mat-flat-button color="primary" (click)="onAddMoldingClick()">Добавить погонаж</button>
-    <button mat-flat-button color="primary" (click)="onAddExtensionClick()">Добавить доборы</button>
-    <button mat-flat-button color="primary" (click)="onAddCapitalClick()">Добавить капитель</button>
-    <button mat-flat-button color="primary" (click)="onAddHardwareClick()">Добавить фурнитуру</button>
+    <div class="order-create__header-actions">
+      <button mat-flat-button color="primary" [matMenuTriggerFor]="addItemMenu">Добавить</button>
+      <mat-menu #addItemMenu="matMenu">
+        <button mat-menu-item type="button" (click)="onAddItemClick(orderItemEntity.InteriorDoor)">
+          Межкомнатная дверь
+        </button>
+        <button mat-menu-item type="button" (click)="onAddItemClick(orderItemEntity.EntranceDoor)">
+          Входная дверь
+        </button>
+        <button mat-menu-item type="button" (click)="onAddItemClick(orderItemEntity.Molding)">Погонаж</button>
+        <button mat-menu-item type="button" (click)="onAddItemClick(orderItemEntity.Extension)">Доборы</button>
+        <button mat-menu-item type="button" (click)="onAddItemClick(orderItemEntity.Capital)">Капитель</button>
+        <button mat-menu-item type="button" (click)="onAddItemClick(orderItemEntity.Hardware)">Фурнитура</button>
+        <button mat-menu-item type="button" (click)="onAddItemClick(orderItemEntity.Paneling)">Обшивка</button>
+      </mat-menu>
+    </div>
   </header>
 
   <form class="order-create__form" [formGroup]="form">
-    <h2>Данные клиента</h2>
+    <h2>Общие данные</h2>
     <div class="order-create__form-grid">
-      <mat-form-field appearance="outline">
-        <mat-label>Имя</mat-label>
-        <input matInput formControlName="name" />
+      <mat-form-field appearance="outline"
+        ><mat-label>Имя</mat-label><input matInput formControlName="name" />
         @if (form.controls.name.touched && form.controls.name.invalid) {
           <mat-error>Обязательное поле</mat-error>
         }
       </mat-form-field>
-
-      <mat-form-field appearance="outline">
-        <mat-label>Телефон</mat-label>
-        <input matInput formControlName="phone" appPhoneMask autocomplete="tel" />
+      <mat-form-field appearance="outline"
+        ><mat-label>Телефон</mat-label><input matInput formControlName="phone" appPhoneMask autocomplete="tel" />
         @if (form.controls.phone.touched && form.controls.phone.invalid) {
           <mat-error>Введите телефон в формате +7 (999) 123-45-67</mat-error>
         }
       </mat-form-field>
-
-      <mat-form-field appearance="outline">
-        <mat-label>Дата</mat-label>
-        <input matInput type="date" formControlName="date" />
+      <mat-form-field appearance="outline"
+        ><mat-label>Дата</mat-label><input matInput type="date" formControlName="date" />
         @if (form.controls.date.touched && form.controls.date.invalid) {
           <mat-error>Обязательное поле</mat-error>
         }
       </mat-form-field>
-
-      <mat-form-field appearance="outline">
-        <mat-label>Аванс</mat-label>
-        <input matInput type="number" formControlName="prepayment" />
+      <mat-form-field appearance="outline"
+        ><mat-label>Аванс</mat-label><input matInput type="number" formControlName="prepayment" />
         @if (form.controls.prepayment.touched && form.controls.prepayment.invalid) {
           <mat-error>Введите число >= 0</mat-error>
         }
       </mat-form-field>
-
-      <mat-form-field appearance="outline">
-        <mat-label>Количество</mat-label>
-        <input matInput type="number" formControlName="quantity" readonly />
-        @if (form.controls.quantity.touched && form.controls.quantity.invalid) {
-          <mat-error>Введите число >= 1</mat-error>
+      <mat-form-field appearance="outline"
+        ><mat-label>Скидка</mat-label><input matInput type="number" formControlName="discount" />
+        @if (form.controls.discount.touched && form.controls.discount.invalid) {
+          <mat-error>Введите число >= 0</mat-error>
         }
       </mat-form-field>
-
       @if (isEditMode()) {
-        <mat-form-field appearance="outline">
-          <mat-label>Статус</mat-label>
-          <mat-select formControlName="status">
+        <mat-form-field appearance="outline"
+          ><mat-label>Статус</mat-label
+          ><mat-select formControlName="status">
             @for (status of statusOptions; track status) {
               <mat-option [value]="status">{{ statusLabels[status] }}</mat-option>
             }
-          </mat-select>
-        </mat-form-field>
+          </mat-select></mat-form-field
+        >
       }
-
-      <mat-form-field appearance="outline" class="order-create__comment">
-        <mat-label>Комментарий</mat-label>
-        <textarea matInput formControlName="comment" rows="3"></textarea>
-        @if (form.controls.comment.touched && form.controls.comment.invalid) {
-          <mat-error>Обязательное поле</mat-error>
-        }
-      </mat-form-field>
+      <div class="order-create__details-row">
+        <div class="order-create__details-card">
+          <mat-form-field appearance="outline" class="order-create__comment"
+            ><mat-label>Комментарий</mat-label><textarea matInput formControlName="comment" rows="6"></textarea>
+          </mat-form-field>
+        </div>
+        <div class="order-create__details-card order-create__delivery-column">
+          <div class="order-create__delivery-header">
+            <mat-checkbox formControlName="needsDelivery">Нужна доставка</mat-checkbox>
+          </div>
+          @if (form.controls.needsDelivery.value) {
+            <mat-form-field appearance="outline" class="order-create__delivery-address"
+              ><mat-label>Адрес доставки</mat-label
+              ><textarea matInput formControlName="deliveryAddress" rows="2"></textarea
+              ><mat-hint>Стоимость доставки рассчитывается по тарифу такси.</mat-hint>
+              @if (form.controls.deliveryAddress.touched && form.controls.deliveryAddress.invalid) {
+                <mat-error>Укажите адрес доставки</mat-error>
+              }
+            </mat-form-field>
+          } @else {
+            <div class="order-create__delivery-placeholder">
+              Укажите доставку, если заказ нужно отвезти клиенту. Стоимость считается по тарифу такси.
+            </div>
+          }
+        </div>
+      </div>
     </div>
   </form>
 
-  @let $doors = doors();
-
-  @if ($doors.length) {
-    <div class="door-list">
-      @for (door of $doors; track $index) {
-        <div class="door-item">
-          <div class="door-item__main">
-            <div class="door-item__title">{{ doorTypeLabels[door.type] }} · {{ door.model }}</div>
-            <div class="door-item__meta">
-              {{ door.width }}×{{ door.height }} см · {{ doorLeafTypeLabels[door.leafType] }} · количество
-              {{ door.count }}
-            </div>
-          </div>
-          <div class="door-item__aside">
-            <div class="door-item__price">{{ door.price | number: '1.0-0' }} ₽</div>
-            <div class="door-item__actions">
-              <button mat-stroked-button color="primary" (click)="onEditDoorClick(door.id)">Редактировать</button>
-              <button mat-stroked-button color="warn" (click)="onRemoveDoorClick(door.id)">Удалить</button>
-            </div>
-          </div>
-        </div>
-      }
-    </div>
-  } @else {
-    <div class="empty">
-      <div class="empty__title">Двери пока не добавлены.</div>
-      <div class="empty__text">Нажмите «Добавить дверь», чтобы начать формирование заказа.</div>
-    </div>
-  }
-
-  @if (showOrdersError() && !$doors.length) {
-    <div class="order-create__error">Добавьте хотя бы одну дверь.</div>
-  }
+  <app-order-items-list
+    [interiorDoors]="interiorDoors()"
+    [entranceDoors]="entranceDoors()"
+    [moldings]="moldings()"
+    [extensions]="extensions()"
+    [capitals]="capitals()"
+    [hardwares]="hardwares()"
+    [panelings]="panelings()"
+    [showOrdersError]="showOrdersError()"
+    (editClick)="onItemEditClick($event)"
+    (duplicateClick)="onItemDuplicateClick($event)"
+    (removeClick)="onItemRemoveClick($event)"
+  />
 
   <div class="order-create__actions">
     <div class="order-create__summary">
-      <div class="order-create__summary-label">Общая стоимость заказа</div>
-      <div class="order-create__summary-value">{{ totalPrice() | number: '1.0-0' }} ₽</div>
+      <div class="order-create__summary-row">
+        <div class="order-create__summary-label">Общая стоимость заказа</div>
+        <div class="order-create__summary-value">{{ orderTotal() | number: '1.0-0' }} ₽</div>
+      </div>
+      <div class="order-create__summary-row">
+        <div class="order-create__summary-label">Итого к оплате</div>
+        <div class="order-create__summary-value">{{ totalToPay() | number: '1.0-0' }} ₽</div>
+      </div>
+      <div class="order-create__summary-row">
+        <div class="order-create__summary-label">Долг клиента</div>
+        <div class="order-create__summary-value">{{ customerDebt() | number: '1.0-0' }} ₽</div>
+      </div>
     </div>
     <button mat-flat-button color="primary" (click)="onSaveClick()">Сохранить</button>
   </div>
