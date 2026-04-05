@@ -1,232 +1,140 @@
 # Almak Frontend
 
-Angular-приложение для работы с заказами: авторизация, список заказов, создание/редактирование, просмотр, печать и выгрузка документа.
+Angular-приложение для работы с заказами: авторизация, список заказов, создание и редактирование, просмотр, печать и выгрузка `.doc`.
 
-Этот README написан как рабочая памятка: чтобы можно было быстро открыть его и вспомнить, где в проекте находится нужная логика и как проходит сценарий создания заказа.
+## Что умеет фронт
 
-## Что делает фронт
+- логин по JWT и защита внутренних маршрутов;
+- список заказов и экран просмотра заказа;
+- создание и редактирование заказа;
+- смена статуса заказа;
+- удаление заказа;
+- печать и скачивание документа;
+- работа с несколькими типами товарных позиций в одном заказе.
 
-Фронт решает 4 основные задачи:
+## Поддерживаемые позиции заказа
 
-1. Логинит пользователя и хранит JWT в `localStorage`.
-2. Показывает список заказов и экран отдельного заказа.
-3. Собирает форму заказа и преобразует её в payload для API.
-4. Дает дополнительные действия над заказом: редактирование, смена статуса, удаление, печать, выгрузка `.doc`.
+Сейчас фронт поддерживает:
+
+- межкомнатные двери;
+- входные двери;
+- погонаж;
+- доборы;
+- капитель;
+- обшивку.
+
+Для каждого типа есть своя модель, своя модалка и свой mapping в API.
 
 ## Основные маршруты
 
-- `/auth` - экран авторизации.
-- `/orders` - список всех заказов.
-- `/order` - создание нового заказа.
-- `/order/:id` - просмотр существующего заказа.
-- `/order/:id/edit` - редактирование существующего заказа.
-- `/orders-charts` - графики по заказам.
+- `/auth` — авторизация;
+- `/orders` — список заказов;
+- `/order` — создание заказа;
+- `/order/:id` — просмотр заказа;
+- `/order/:id/edit` — редактирование заказа;
+- `/orders-charts` — графики по заказам.
 
-Маршруты описаны в `src/app/app.routes.ts`.
+Маршруты описаны в [src/app/app.routes.ts](/c:/main/projects/diplom/almak-front/src/app/app.routes.ts).
 
-## Как устроено приложение
+## Ключевые части приложения
 
-### Точка входа
+- [src/app/components/order-create](/c:/main/projects/diplom/almak-front/src/app/components/order-create) — главный экран создания и редактирования заказа.
+- [src/app/pages/order-view](/c:/main/projects/diplom/almak-front/src/app/pages/order-view) — просмотр заказа, смена статуса, печать, скачивание, удаление.
+- [src/app/services/orders.service.ts](/c:/main/projects/diplom/almak-front/src/app/services/orders.service.ts) — центральный mapping между UI и backend API.
+- [src/app/services/order-document.service.ts](/c:/main/projects/diplom/almak-front/src/app/services/order-document.service.ts) — генерация HTML и `.doc`.
+- [src/app/types/order.types.ts](/c:/main/projects/diplom/almak-front/src/app/types/order.types.ts) — основные типы заказа.
+- [src/app/common/dialogs](/c:/main/projects/diplom/almak-front/src/app/common/dialogs) — модалки товарных позиций.
+- [src/app/common/constants](/c:/main/projects/diplom/almak-front/src/app/common/constants) — словари и подписи.
 
-- `src/main.ts` - bootstrap Angular.
-- `src/app/app.config.ts` - провайдеры приложения.
-- `src/app/app.component.*` - корневой layout.
+## Структура данных на фронте
 
-### Инфраструктура
+Главный формат формы — `OrderCreatePayload`.
 
-- `src/app/services/core.service.ts` - отдает `apiBaseUrl` из environment.
-- `src/app/services/auth.service.ts` - логин, сохранение и чтение токена.
-- `src/app/interceptor/interceptor.ts` - автоматически добавляет `Authorization: Bearer <token>` ко всем HTTP-запросам и при `401` выкидывает пользователя на `/auth`.
-- `src/app/guard/auth.guard.ts` - закрывает внутренние маршруты без токена.
+В нём есть:
 
-### Страницы и крупные компоненты
-
-- `src/app/pages/auth` - форма логина.
-- `src/app/pages/orders` - список заказов.
-- `src/app/components/orders-table` - таблица заказов.
-- `src/app/pages/order` - оболочка для create/edit; просто читает `id` из URL и передает его в форму.
-- `src/app/components/order-create` - главный компонент создания и редактирования заказа.
-- `src/app/pages/order-view` - просмотр заказа, печать, скачивание документа, смена статуса, удаление.
-
-### Типы и константы
-
-- `src/app/types/order.types.ts` - основные TS-типы заказа и enum-ы статусов/типов дверей.
-- `src/app/common/constants/*` - каталоги и словари отображения.
-
-## Поток данных по заказу
-
-Во фронте есть два главных представления заказа:
-
-1. `OrderCreatePayload` - внутренний формат формы.
-2. `BackendOrder` / `BackendOrderPayload` - формат API.
-
-Преобразование между ними делает `src/app/services/orders.service.ts`.
-
-Это важно помнить:
-
-- В форме имя клиента называется `name`, а на бэке поле называется `customer`.
-- Статус во фронте хранится как число (`1 | 2 | 3`), а на бэке как строка (`accepted | progress | completed`).
-- Фронт сам считает итоговую сумму для UI и для отправки payload, но бэк всё равно пересчитывает `price` заново и не доверяет клиенту.
-
-## Как работает создание заказа
-
-### 1. Открытие экрана
-
-Маршрут `/order` загружает `OrderComponent`, а тот рендерит `OrderCreateComponent`.
-
-Если `id` в URL нет, компонент работает в режиме создания.
-Если `id` есть, то это уже режим редактирования:
-
-- включается `isEditMode`;
-- вызывается `ordersService.getOrder(orderId)`;
-- полученный заказ подставляется в форму через `applyOrder()`.
-
-### 2. Состояние формы
-
-`OrderCreateComponent` хранит данные в двух местах:
-
-- `Reactive Form` для общих полей заказа;
-- `signal`-состояние для товарных позиций:
+- шапка заказа: `name`, `phone`, `date`, `prepayment`, `discount`, `needsDelivery`, `deliveryAddress`, `comment`, `status`;
+- массивы позиций:
   - `interiorDoors`
   - `entranceDoors`
+  - `moldings`
+  - `extensions`
+  - `capitals`
+  - `panelings`
 
-Поля формы:
+На фронте сумма заказа считается локально:
 
-- `name`
-- `phone`
-- `date`
-- `prepayment`
-- `discount`
-- `needsDelivery`
-- `deliveryAddress`
-- `comment`
-- `status`
+- `orderTotal` — сумма всех товарных позиций;
+- `totalToPay` — `orderTotal - discount`;
+- `customerDebt` — `totalToPay - prepayment`.
 
-Отдельно считаются производные значения:
+Важно: в текущей логике в итог входят:
 
-- `orderTotal` - сумма всех позиций.
-- `totalToPay` - `orderTotal - discount`, но не меньше 0.
-- `customerDebt` - `totalToPay - prepayment`, но не меньше 0.
+- межкомнатные двери;
+- входные двери;
+- погонаж;
+- доборы;
+- обшивка.
 
-### 3. Добавление товаров
+Капитель цены не имеет и в итог не входит.
 
-Кнопка "Добавить" открывает меню, из которого сейчас реально работают:
+## Как работает создание и редактирование
 
-- межкомнатная дверь;
-- входная дверь.
+Экран [order-create.component.ts](/c:/main/projects/diplom/almak-front/src/app/components/order-create/order-create.component.ts):
 
-Пункты для погонажа, доборов, капители, фурнитуры и обшивки пока заглушены: методы есть, но в них нет логики.
+- работает и в create, и в edit режиме;
+- в edit режиме загружает заказ через `ordersService.getOrder(id)`;
+- хранит шапку заказа в `Reactive Form`;
+- хранит товарные позиции в `signal`;
+- для каждой позиции умеет `add/edit/duplicate/remove`;
+- перед сохранением проверяет:
+  - валидность формы;
+  - что в заказе есть хотя бы одна позиция;
+  - что при `needsDelivery = true` заполнен `deliveryAddress`.
 
-#### Межкомнатная дверь
-
-Сценарий:
-
-1. `onAddInteriorDoorClick()`
-2. открывается `InteriorDoorDialogComponent`
-3. после закрытия диалога результат добавляется в `interiorDoors`
-4. элементу присваивается локальный `id` через `nextId()`
-
-#### Входная дверь
-
-Сценарий аналогичный:
-
-1. `onAddEntranceDoorClick()`
-2. открывается `EntranceDoorDialogComponent`
-3. результат добавляется в `entranceDoors`
-4. элемент получает локальный `id`
-
-После любого добавления/удаления/дублирования вызывается `syncQuantity()`, чтобы снять ошибку "в заказе нет товаров".
-
-### 4. Валидация перед сохранением
-
-Перед отправкой `onSaveClick()` проверяет:
-
-- валидность формы;
-- наличие хотя бы одной товарной позиции;
-- если включена доставка, то адрес обязателен.
-
-Часть проверки выполняется на уровне Angular-валидаторов, а часть логикой компонента:
-
-- `phone` должен соответствовать паттерну `^7\\d{10}$`;
-- `prepayment` и `discount` не могут быть меньше 0;
-- `deliveryAddress` становится обязательным только когда `needsDelivery = true`.
-
-### 5. Сборка payload
-
-Если форма валидна, компонент собирает `OrderCreatePayload`:
-
-- общие поля берутся из `form.getRawValue()`;
-- товары берутся из `interiorDoors()` и `entranceDoors()`;
-- `status` по умолчанию для нового заказа = `OrderStatus.Accepted`.
-
-Далее показывается confirm-диалог, и только после подтверждения вызывается `saveOrder(payload)`.
-
-### 6. Отправка на бэк
-
-`saveOrder(payload)` выбирает метод по режиму:
+Сохранение идёт через confirm-диалог, затем:
 
 - create: `ordersService.createOrder(payload)`
-- edit: `ordersService.updateOrder(orderId, payload)`
-
-Внутри `OrdersService` происходит маппинг в backend-формат:
-
-- `name -> customer`
-- enum статуса переводится в строку
-- поля дверей приводятся к JSON-схеме API
-- дополнительно считается `price` как сумма `price * count` по всем позициям
-
-Запросы:
-
-- `POST /orders` - создание
-- `PUT /orders/:id` - полное обновление
-
-Базовый URL берется из environment:
-
-- `src/environments/environment.ts` - удаленный API `http://5.42.120.239/api`
-- `src/environments/environment.local.ts` - локальный API `http://localhost:8081/api`
-
-### 7. Что происходит после успешного сохранения
-
-Бэк возвращает созданный/обновленный заказ.
-`OrdersService` вытаскивает `order.id`, и компонент делает переход на `/order/:id`, то есть на экран просмотра заказа.
+- edit: `ordersService.updateOrder(id, payload)`
 
 ## Как работает просмотр заказа
 
-`src/app/pages/order-view/order-view.component.ts`:
+Экран [order-view.component.ts](/c:/main/projects/diplom/almak-front/src/app/pages/order-view/order-view.component.ts):
 
-- загружает заказ через `ordersService.getOrder(id)`;
-- показывает состав заказа и сводные суммы;
-- умеет удалять заказ;
-- умеет менять статус через `PATCH /orders/:id/status`;
-- умеет формировать HTML/`.doc` через `OrderDocumentService`, `OrderPrintService`, `FileDownloadService`.
+- загружает заказ по `id`;
+- показывает все типы товарных позиций;
+- позволяет сменить статус;
+- умеет удалить заказ;
+- умеет распечатать и скачать документ.
 
-Важно: просмотр заказа использует тот же `OrderCreatePayload`, что и форма создания. Это упрощает повторное использование логики и формат данных между экранами.
+Документ строится в [order-document.service.ts](/c:/main/projects/diplom/almak-front/src/app/services/order-document.service.ts).
 
-## OrdersService как центральная точка интеграции
+## Mapping в API
 
-`src/app/services/orders.service.ts` - главный файл, если нужно понять интеграцию фронта с API.
+[orders.service.ts](/c:/main/projects/diplom/almak-front/src/app/services/orders.service.ts) отвечает за:
 
-В нём собраны:
-
-- загрузка списка заказов;
-- загрузка одного заказа;
+- загрузку списка заказов;
+- загрузку одного заказа;
 - создание;
 - обновление;
 - удаление;
-- смена статуса;
-- маппинг API <-> UI.
+- смену статуса;
+- преобразование backend JSON в `OrderCreatePayload` и обратно.
 
-Если что-то "ломается между фронтом и бэком", в первую очередь смотреть нужно сюда.
+Здесь важно помнить:
 
-## Что полезно помнить при доработках
+- на фронте поле клиента называется `name`, на бэке — `customer`;
+- статус на фронте — число (`1 | 2 | 3`), на бэке — строка (`accepted | progress | completed`);
+- фронт передаёт все массивы позиций целиком;
+- бэк при `PUT /orders/:id` пересоздаёт дочерние записи заново.
 
-- На экране создания сейчас поддерживаются только `interiorDoors` и `entranceDoors`.
-- Стоимость доставки в заказ не включается автоматически, в UI только есть подсказка, что она считается по тарифу такси.
-- Для новых заказов статус в форме не показывается, он выставляется программно как `Accepted`.
-- При редактировании заказ загружается целиком и потом сохраняется тоже целиком.
-- В `README` бэка отдельно описано, что сервер при update удаляет старые дочерние записи дверей и создает новые заново.
+## Локальный запуск
 
-## Запуск
+### Обычный dev-режим
+
+```bash
+npm install
+npm start
+```
 
 ### Локальный фронт против локального бэка
 
@@ -235,16 +143,7 @@ npm install
 npm run start:local
 ```
 
-Конфигурация `start:local` использует `src/environments/environment.local.ts`.
-
-### Обычный dev-запуск
-
-```bash
-npm install
-npm start
-```
-
-По умолчанию фронт смотрит на удаленный API.
+Локальный API берётся из [src/environments/environment.local.ts](/c:/main/projects/diplom/almak-front/src/environments/environment.local.ts).
 
 ## Полезные команды
 
@@ -252,6 +151,12 @@ npm start
 npm start
 npm run start:local
 npm run build
-npm run lint
-npm run check
+npx tsc -p tsconfig.json --noEmit
 ```
+
+## Правило по кодировке
+
+- Все текстовые исходники фронта (`src/**/*.ts`, `src/**/*.html`, `src/**/*.scss`, `README.md`) должны храниться в `UTF-8` без BOM.
+- Нельзя сохранять файлы в `ANSI`, `Windows-1251`, `CP1251` или другой локальной кодировке.
+- После массовых правок нужно проверять, что в проект не попали `�`, `Ð`, `Ñ`, `Р`/`С`-кракозябры или сломанная кириллица.
+- Если файл уже повреждён по кодировке, его нужно сначала перекодировать в `UTF-8`, и только потом продолжать правки.
