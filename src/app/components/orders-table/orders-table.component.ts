@@ -71,9 +71,9 @@ export class OrdersTableComponent implements OnInit {
 
       this.dataSource.sort = sort;
       sort.active = 'date';
-      sort.direction = 'asc';
+      sort.direction = 'desc';
       sort.disableClear = true;
-      sort.sortChange.emit({ active: 'date', direction: 'asc' });
+      sort.sortChange.emit({ active: 'date', direction: 'desc' });
     });
 
     effect(() => {
