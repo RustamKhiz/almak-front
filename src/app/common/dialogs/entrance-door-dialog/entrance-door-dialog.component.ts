@@ -63,10 +63,10 @@ export class EntranceDoorDialogComponent {
     width: [this.data.door?.width ?? this.widthOptions[0], [Validators.required, Validators.min(1)]],
     height: [this.data.door?.height ?? this.heightOptions[2], [Validators.required, Validators.min(1)]],
     color: [this.data.door?.color ?? '', [Validators.required]],
-    painting: [this.data.door?.painting ?? ''],
-    panelColor: [this.data.door?.panelColor ?? ''],
-    hasPeephole: [this.data.door?.hasPeephole ?? true],
-    comment: [this.data.door?.comment ?? ''],
+    painting: this.data.door?.painting ?? '',
+    panelColor: this.data.door?.panelColor ?? '',
+    hasPeephole: this.data.door?.hasPeephole ?? true,
+    comment: this.data.door?.comment ?? '',
     count: [this.data.door?.count ?? 1, [Validators.required, Validators.min(1)]],
     price: [this.data.door?.price ?? 0, [Validators.required, Validators.min(0)]],
   });
@@ -105,8 +105,8 @@ export class EntranceDoorDialogComponent {
       width: value.width,
       height: value.height,
       color: value.color.trim(),
-      painting: kind === EntranceDoorKind.Welded ? this.normalizeText(value.painting) : null,
-      panelColor: kind === EntranceDoorKind.Welded ? this.normalizeText(value.panelColor) : null,
+      painting: kind === EntranceDoorKind.Welded ? value.painting.trim() || null : null,
+      panelColor: kind === EntranceDoorKind.Welded ? value.panelColor.trim() || null : null,
       hasPeephole: kind === EntranceDoorKind.Welded ? value.hasPeephole : null,
       comment: value.comment.trim(),
       count: value.count,
@@ -137,10 +137,5 @@ export class EntranceDoorDialogComponent {
     this.form.controls.painting.updateValueAndValidity({ emitEvent: false });
     this.form.controls.panelColor.updateValueAndValidity({ emitEvent: false });
     this.form.controls.hasPeephole.updateValueAndValidity({ emitEvent: false });
-  }
-
-  private normalizeText(value: string | null | undefined): string | null {
-    const normalized = value?.trim() ?? '';
-    return normalized ? normalized : null;
   }
 }

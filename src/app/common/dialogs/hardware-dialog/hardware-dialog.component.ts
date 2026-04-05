@@ -41,28 +41,28 @@ export class HardwareDialogComponent {
   protected readonly mechanismOptions = HARDWARE_MECHANISM_OPTIONS;
   protected readonly mechanismLabels = HARDWARE_MECHANISM_LABELS;
 
-  protected readonly form = this.fb.group(
+  protected readonly form = this.fb.nonNullable.group(
     {
-      handleModel: [this.data.hardware?.handleModel ?? ''],
-      handleColor: [this.data.hardware?.handleColor ?? ''],
-      handleCount: [this.data.hardware?.handleCount ?? (null as number | null)],
-      handlePrice: [this.data.hardware?.handlePrice ?? (null as number | null)],
-      mechanismType: [this.data.hardware?.mechanismType ?? (null as HardwareMechanismType | null)],
-      mechanismCount: [this.data.hardware?.mechanismCount ?? (null as number | null)],
-      mechanismPrice: [this.data.hardware?.mechanismPrice ?? (null as number | null)],
-      thumbturnCount: [this.data.hardware?.thumbturnCount ?? (null as number | null)],
-      thumbturnPrice: [this.data.hardware?.thumbturnPrice ?? (null as number | null)],
-      escutcheonCount: [this.data.hardware?.escutcheonCount ?? (null as number | null)],
-      escutcheonPrice: [this.data.hardware?.escutcheonPrice ?? (null as number | null)],
-      cylinderCount: [this.data.hardware?.cylinderCount ?? (null as number | null)],
-      cylinderPrice: [this.data.hardware?.cylinderPrice ?? (null as number | null)],
-      boltCount: [this.data.hardware?.boltCount ?? (null as number | null)],
-      boltPrice: [this.data.hardware?.boltPrice ?? (null as number | null)],
-      hingeCount: [this.data.hardware?.hingeCount ?? (null as number | null)],
-      hingePrice: [this.data.hardware?.hingePrice ?? (null as number | null)],
-      doorStopCount: [this.data.hardware?.doorStopCount ?? (null as number | null)],
-      doorStopPrice: [this.data.hardware?.doorStopPrice ?? (null as number | null)],
-      comment: [this.data.hardware?.comment ?? ''],
+      handleModel: this.data.hardware?.handleModel ?? '',
+      handleColor: this.data.hardware?.handleColor ?? '',
+      handleCount: this.data.hardware?.handleCount ?? null,
+      handlePrice: this.data.hardware?.handlePrice ?? null,
+      mechanismType: this.data.hardware?.mechanismType ?? null,
+      mechanismCount: this.data.hardware?.mechanismCount ?? null,
+      mechanismPrice: this.data.hardware?.mechanismPrice ?? null,
+      thumbturnCount: this.data.hardware?.thumbturnCount ?? null,
+      thumbturnPrice: this.data.hardware?.thumbturnPrice ?? null,
+      escutcheonCount: this.data.hardware?.escutcheonCount ?? null,
+      escutcheonPrice: this.data.hardware?.escutcheonPrice ?? null,
+      cylinderCount: this.data.hardware?.cylinderCount ?? null,
+      cylinderPrice: this.data.hardware?.cylinderPrice ?? null,
+      boltCount: this.data.hardware?.boltCount ?? null,
+      boltPrice: this.data.hardware?.boltPrice ?? null,
+      hingeCount: this.data.hardware?.hingeCount ?? null,
+      hingePrice: this.data.hardware?.hingePrice ?? null,
+      doorStopCount: this.data.hardware?.doorStopCount ?? null,
+      doorStopPrice: this.data.hardware?.doorStopPrice ?? null,
+      comment: this.data.hardware?.comment ?? '',
     },
     { validators: [hardwareNotEmptyValidator()] },
   );
@@ -92,26 +92,26 @@ export class HardwareDialogComponent {
     const value = this.form.getRawValue();
     this.dialogRef.close({
       type: OrderItemType.Hardware,
-      handleModel: value.handleModel?.trim() || '',
-      handleColor: value.handleColor?.trim() || '',
-      handleCount: normalizeOptionalNumber(value.handleCount),
-      handlePrice: normalizeOptionalNumber(value.handlePrice),
-      mechanismType: value.mechanismType ?? null,
-      mechanismCount: normalizeOptionalNumber(value.mechanismCount),
-      mechanismPrice: normalizeOptionalNumber(value.mechanismPrice),
-      thumbturnCount: normalizeOptionalNumber(value.thumbturnCount),
-      thumbturnPrice: normalizeOptionalNumber(value.thumbturnPrice),
-      escutcheonCount: normalizeOptionalNumber(value.escutcheonCount),
-      escutcheonPrice: normalizeOptionalNumber(value.escutcheonPrice),
-      cylinderCount: normalizeOptionalNumber(value.cylinderCount),
-      cylinderPrice: normalizeOptionalNumber(value.cylinderPrice),
-      boltCount: normalizeOptionalNumber(value.boltCount),
-      boltPrice: normalizeOptionalNumber(value.boltPrice),
-      hingeCount: normalizeOptionalNumber(value.hingeCount),
-      hingePrice: normalizeOptionalNumber(value.hingePrice),
-      doorStopCount: normalizeOptionalNumber(value.doorStopCount),
-      doorStopPrice: normalizeOptionalNumber(value.doorStopPrice),
-      comment: value.comment?.trim() || '',
+      handleModel: value.handleModel.trim(),
+      handleColor: value.handleColor.trim(),
+      handleCount: value.handleCount,
+      handlePrice: value.handlePrice,
+      mechanismType: value.mechanismType,
+      mechanismCount: value.mechanismCount,
+      mechanismPrice: value.mechanismPrice,
+      thumbturnCount: value.thumbturnCount,
+      thumbturnPrice: value.thumbturnPrice,
+      escutcheonCount: value.escutcheonCount,
+      escutcheonPrice: value.escutcheonPrice,
+      cylinderCount: value.cylinderCount,
+      cylinderPrice: value.cylinderPrice,
+      boltCount: value.boltCount,
+      boltPrice: value.boltPrice,
+      hingeCount: value.hingeCount,
+      hingePrice: value.hingePrice,
+      doorStopCount: value.doorStopCount,
+      doorStopPrice: value.doorStopPrice,
+      comment: value.comment.trim(),
     });
   }
 }
@@ -130,20 +130,9 @@ function hardwareNotEmptyValidator(): ValidatorFn {
       if (typeof fieldValue === 'string') {
         return fieldValue.trim() !== '';
       }
-      if (typeof fieldValue === 'number') {
-        return !Number.isNaN(fieldValue);
-      }
-      return fieldValue !== null && fieldValue !== undefined;
+      return fieldValue != null;
     });
 
     return hasValue ? null : { emptyHardware: true };
   };
-}
-
-function normalizeOptionalNumber(value: number | null | undefined): number | null {
-  if (value === null || value === undefined || Number.isNaN(value)) {
-    return null;
-  }
-
-  return value;
 }

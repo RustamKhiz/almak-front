@@ -33,7 +33,7 @@ export class QuantityFieldComponent implements ControlValueAccessor {
   };
 
   writeValue(value: number | null): void {
-    this.value = this.normalizeValue(value);
+    this.value = Math.max(this.min(), Math.floor(value ?? this.min()));
   }
 
   registerOnChange(fn: (value: number) => void): void {
@@ -65,7 +65,7 @@ export class QuantityFieldComponent implements ControlValueAccessor {
   }
 
   protected onInput(value: string | number): void {
-    this.updateValue(Number(value));
+    this.updateValue(+value);
   }
 
   protected markTouched(): void {
@@ -73,14 +73,8 @@ export class QuantityFieldComponent implements ControlValueAccessor {
   }
 
   private updateValue(value: number): void {
-    this.value = this.normalizeValue(value);
+    this.value = Math.max(this.min(), Math.floor(value || this.min()));
     this.onChange(this.value);
     this.onTouched();
-  }
-
-  private normalizeValue(value: number | null | undefined): number {
-    const fallback = this.min();
-    const normalized = Number.isFinite(value) ? Number(value) : fallback;
-    return Math.max(this.min(), Math.floor(normalized || fallback));
   }
 }

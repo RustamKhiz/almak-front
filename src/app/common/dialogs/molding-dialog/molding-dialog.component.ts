@@ -54,19 +54,19 @@ export class MoldingDialogComponent {
   protected readonly platbandType = MoldingPlatbandType;
   protected readonly isFigureType = signal(this.data.molding?.platbandType === MoldingPlatbandType.Figure);
 
-  protected readonly form = this.fb.group({
-    frameLength: [this.data.molding?.frameLength ?? (null as number | null), [Validators.min(0)]],
+  protected readonly form = this.fb.nonNullable.group({
+    frameLength: [this.data.molding?.frameLength ?? null, [Validators.min(0)]],
     framePrice: [this.data.molding?.framePrice ?? 0, [Validators.required, Validators.min(0)]],
     frameCount: [this.data.molding?.frameCount ?? 1, [Validators.required, Validators.min(1)]],
     platbandType: [this.data.molding?.platbandType ?? DEFAULT_MOLDING_PLATBAND_TYPE, [Validators.required]],
-    platbandFigure: [this.data.molding?.platbandFigure ?? ''],
-    platbandLength: [this.data.molding?.platbandLength ?? (null as number | null), [Validators.min(0)]],
+    platbandFigure: this.data.molding?.platbandFigure ?? '',
+    platbandLength: [this.data.molding?.platbandLength ?? null, [Validators.min(0)]],
     platbandPrice: [this.data.molding?.platbandPrice ?? 0, [Validators.required, Validators.min(0)]],
     platbandCount: [this.data.molding?.platbandCount ?? 1, [Validators.required, Validators.min(1)]],
     rebateBarCount: [this.data.molding?.rebateBarCount ?? 0, [Validators.required, Validators.min(0)]],
     color: [this.data.molding?.color ?? '', [Validators.required]],
     covering: [this.data.molding?.covering ?? DEFAULT_MOLDING_COVERING, [Validators.required]],
-    comment: [this.data.molding?.comment ?? ''],
+    comment: this.data.molding?.comment ?? '',
   });
 
   protected readonly title = computed(() => (this.data.mode === 'edit' ? 'Редактировать погонаж' : 'Добавить погонаж'));
@@ -94,19 +94,18 @@ export class MoldingDialogComponent {
     const value = this.form.getRawValue();
     this.dialogRef.close({
       type: OrderItemType.Molding,
-      frameLength: this.normalizeOptionalNumber(value.frameLength),
-      framePrice: value.framePrice!,
-      frameCount: value.frameCount!,
-      platbandType: value.platbandType!,
-      platbandFigure:
-        value.platbandType === MoldingPlatbandType.Figure ? this.normalizeText(value.platbandFigure) : null,
-      platbandLength: this.normalizeOptionalNumber(value.platbandLength),
-      platbandPrice: value.platbandPrice!,
-      platbandCount: value.platbandCount!,
-      rebateBarCount: value.rebateBarCount!,
-      color: value.color!.trim(),
-      covering: value.covering!,
-      comment: value.comment?.trim() || '',
+      frameLength: value.frameLength == null ? null : Math.max(0, value.frameLength),
+      framePrice: value.framePrice,
+      frameCount: value.frameCount,
+      platbandType: value.platbandType,
+      platbandFigure: value.platbandType === MoldingPlatbandType.Figure ? value.platbandFigure.trim() || null : null,
+      platbandLength: value.platbandLength == null ? null : Math.max(0, value.platbandLength),
+      platbandPrice: value.platbandPrice,
+      platbandCount: value.platbandCount,
+      rebateBarCount: value.rebateBarCount,
+      color: value.color.trim(),
+      covering: value.covering,
+      comment: value.comment.trim(),
     });
   }
 
@@ -121,19 +120,5 @@ export class MoldingDialogComponent {
     }
 
     this.form.controls.platbandFigure.updateValueAndValidity({ emitEvent: false });
-  }
-
-  private normalizeOptionalNumber(value: number | null | undefined): number | null {
-    if (value === null || value === undefined) {
-      return null;
-    }
-
-    const normalized = Number(value);
-    return Number.isFinite(normalized) ? Math.max(0, normalized) : null;
-  }
-
-  private normalizeText(value: string | null | undefined): string | null {
-    const normalized = value?.trim() || '';
-    return normalized ? normalized : null;
   }
 }

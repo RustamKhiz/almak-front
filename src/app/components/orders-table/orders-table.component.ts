@@ -166,19 +166,19 @@ export class OrdersTableComponent implements OnInit {
       return;
     }
 
-    const normalizedCustomer = filters.customer.toLocaleLowerCase();
-    const normalizedPhone = filters.phone;
+    const customerQuery = filters.customer.toLocaleLowerCase();
+    const phoneQuery = filters.phone;
 
     this.dataSource.data = this.allOrders.filter((order) => {
       if (filters.orderId && order.id !== filters.orderId) {
         return false;
       }
 
-      if (normalizedCustomer && !order.customer.toLocaleLowerCase().includes(normalizedCustomer)) {
+      if (customerQuery && !order.customer.toLocaleLowerCase().includes(customerQuery)) {
         return false;
       }
 
-      if (normalizedPhone && !order.phone.includes(normalizedPhone)) {
+      if (phoneQuery && !order.phone.includes(phoneQuery)) {
         return false;
       }
 

@@ -55,8 +55,7 @@ export class CatalogAutocompleteFieldComponent implements ControlValueAccessor {
   }
 
   writeValue(value: CatalogOption | null): void {
-    const normalized = value === null || value === undefined ? '' : String(value);
-    this.control.setValue(normalized, { emitEvent: false });
+    this.control.setValue(value == null ? '' : `${value}`, { emitEvent: false });
   }
 
   registerOnChange(fn: (value: CatalogOption) => void): void {
@@ -79,7 +78,7 @@ export class CatalogAutocompleteFieldComponent implements ControlValueAccessor {
   }
 
   protected onOptionSelected(value: CatalogOption): void {
-    this.control.setValue(String(value), { emitEvent: false });
+    this.control.setValue(`${value}`, { emitEvent: false });
     this.onChange(value);
     this.onTouched();
   }
@@ -95,12 +94,12 @@ export class CatalogAutocompleteFieldComponent implements ControlValueAccessor {
       return this.options();
     }
 
-    return this.options().filter((option) => String(option).toLowerCase().includes(query));
+    return this.options().filter((option) => `${option}`.toLowerCase().includes(query));
   }
 
   private emitValue(value: string): void {
     if (this.mode() === 'number') {
-      const parsed = Number(value);
+      const parsed = +value;
       if (!Number.isFinite(parsed)) {
         return;
       }

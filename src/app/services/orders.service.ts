@@ -418,8 +418,8 @@ export class OrdersService {
         count: item.count,
       })),
       hardwares: payload.hardwares.map((item) => ({
-        handleModel: normalizeOptionalString(item.handleModel),
-        handleColor: normalizeOptionalString(item.handleColor),
+        handleModel: item.handleModel || null,
+        handleColor: item.handleColor || null,
         handleCount: item.handleCount,
         handlePrice: item.handlePrice,
         mechanismType: item.mechanismType,
@@ -660,9 +660,4 @@ export class OrdersService {
         return BackendOrderStatus.Accepted;
     }
   }
-}
-
-function normalizeOptionalString(value: string): string | null {
-  const normalized = value.trim();
-  return normalized === '' ? null : normalized;
 }
