@@ -125,6 +125,7 @@ export class OrderCreateComponent implements OnInit {
       this.entranceDoors().reduce((sum, item) => sum + item.price * item.count, 0) +
       this.moldings().reduce((sum, item) => sum + this.getMoldingTotal(item), 0) +
       this.extensions().reduce((sum, item) => sum + this.getExtensionTotal(item), 0) +
+      this.capitals().reduce((sum, item) => sum + this.getCapitalTotal(item), 0) +
       this.hardwares().reduce((sum, item) => sum + this.getHardwareTotal(item), 0) +
       this.panelings().reduce((sum, item) => sum + this.getPanelingTotal(item), 0),
   );
@@ -361,6 +362,9 @@ export class OrderCreateComponent implements OnInit {
     return item.price * item.count;
   }
   protected getPanelingTotal(item: PanelingItem): number {
+    return item.price * item.count;
+  }
+  protected getCapitalTotal(item: CapitalItem): number {
     return item.price * item.count;
   }
   protected getHardwareTotal(item: HardwareItem): number {

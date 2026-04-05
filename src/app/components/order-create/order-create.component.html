@@ -354,14 +354,14 @@
                 <div class="door-item__title">Капитель · {{ item.name }}</div>
                 <div class="door-item__meta">
                   цвет {{ item.color }} · {{ capitalCoveringLabels[item.covering] }} · {{ item.width }} ×
-                  {{ item.height }} см · количество {{ item.count }}
+                  {{ item.height }} см · количество {{ item.count }} · цена {{ item.price | number: '1.0-0' }} ₽
                   @if (item.comment) {
                     · {{ item.comment }}
                   }
                 </div>
               </div>
               <div class="door-item__aside">
-                <div class="door-item__price">0 ₽</div>
+                <div class="door-item__price">{{ getCapitalTotal(item) | number: '1.0-0' }} ₽</div>
                 <div class="door-item__actions">
                   <button
                     mat-icon-button
@@ -524,7 +524,8 @@
             </div>
           }
         </div>
-      }      @if (panelingItems.length) {
+      }
+      @if (panelingItems.length) {
         <div class="door-section">
           <div class="door-section__title">Обшивка</div>
           @for (item of panelingItems; track item.id) {

@@ -49,6 +49,7 @@ export class CapitalDialogComponent {
     covering: [this.data.capital?.covering ?? DEFAULT_CAPITAL_COVERING, [Validators.required]],
     width: [this.data.capital?.width ?? 0, [Validators.required, Validators.min(1)]],
     height: [this.data.capital?.height ?? 0, [Validators.required, Validators.min(1)]],
+    price: [this.data.capital?.price ?? 0, [Validators.required, Validators.min(0)]],
     comment: [this.data.capital?.comment ?? ''],
     count: [this.data.capital?.count ?? 1, [Validators.required, Validators.min(1)]],
   });
@@ -74,6 +75,7 @@ export class CapitalDialogComponent {
       covering: value.covering ?? DEFAULT_CAPITAL_COVERING,
       width: Number(value.width ?? 0),
       height: Number(value.height ?? 0),
+      price: Number(value.price ?? 0),
       comment: value.comment?.trim() ?? '',
       count: Math.max(1, Number(value.count ?? 1)),
     });

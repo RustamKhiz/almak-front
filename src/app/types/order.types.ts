@@ -142,6 +142,7 @@ export interface CapitalItem {
   covering: CapitalCovering;
   width: number;
   height: number;
+  price: number;
   comment: string;
   count: number;
 }

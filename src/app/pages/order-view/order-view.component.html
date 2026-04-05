@@ -202,13 +202,13 @@
                   <div class="order-view__value">Капитель · {{ item.name }}</div>
                   <div class="order-view__meta">
                     цвет {{ item.color }} · {{ capitalCoveringLabels[item.covering] }} · {{ item.width }} ×
-                    {{ item.height }} см · количество {{ item.count }}
+                    {{ item.height }} см · количество {{ item.count }} · цена {{ item.price | number: '1.0-0' }} ₽
                     @if (item.comment) {
                       · {{ item.comment }}
                     }
                   </div>
                 </div>
-                <div class="order-view__price">0 ₽</div>
+                <div class="order-view__price">{{ getCapitalTotal(item) | number: '1.0-0' }} ₽</div>
               </div>
             }
             @for (item of $state.data.hardwares; track item.id) {

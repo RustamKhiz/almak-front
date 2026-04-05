@@ -112,6 +112,7 @@ interface BackendCapital {
   covering?: string;
   width: number;
   height: number;
+  price: number;
   comment?: string;
   count: number;
 }
@@ -224,6 +225,7 @@ interface BackendCapitalPayload {
   covering: string;
   width: number;
   height: number;
+  price: number;
   comment: string;
   count: number;
 }
@@ -353,6 +355,7 @@ export class OrdersService {
         0,
       ) +
       payload.extensions.reduce((sum, item) => sum + item.price * item.count, 0) +
+      payload.capitals.reduce((sum, item) => sum + item.price * item.count, 0) +
       payload.hardwares.reduce((sum, item) => sum + this.getHardwareTotal(item), 0) +
       payload.panelings.reduce((sum, item) => sum + item.price * item.count, 0);
 
@@ -421,6 +424,7 @@ export class OrdersService {
         covering: item.covering,
         width: item.width,
         height: item.height,
+        price: item.price,
         comment: item.comment,
         count: item.count,
       })),
@@ -530,6 +534,7 @@ export class OrdersService {
       covering: this.mapCapitalCovering(item.covering),
       width: item.width,
       height: item.height,
+      price: item.price,
       comment: item.comment ?? '',
       count: item.count,
     };

@@ -29,6 +29,7 @@ export class OrderDocumentService {
       order.entranceDoors.reduce((sum, item) => sum + item.price * item.count, 0) +
       order.moldings.reduce((sum, item) => sum + this.getMoldingTotal(item), 0) +
       order.extensions.reduce((sum, item) => sum + this.getExtensionTotal(item), 0) +
+      order.capitals.reduce((sum, item) => sum + this.getCapitalTotal(item), 0) +
       order.hardwares.reduce((sum, item) => sum + this.getHardwareTotal(item), 0) +
       order.panelings.reduce((sum, item) => sum + this.getPanelingTotal(item), 0);
     const totalToPay = Math.max(totalAmount - order.discount, 0);
@@ -110,8 +111,8 @@ export class OrderDocumentService {
           this.getCapitalCoveringLabel(item.covering),
           item.comment || '-',
           item.count,
-          0,
-          0,
+          item.price,
+          this.getCapitalTotal(item),
         ),
       )
       .join('');
@@ -345,6 +346,10 @@ export class OrderDocumentService {
   }
 
   private getPanelingTotal(item: PanelingItem): number {
+    return item.price * item.count;
+  }
+
+  private getCapitalTotal(item: { price: number; count: number }): number {
     return item.price * item.count;
   }
 

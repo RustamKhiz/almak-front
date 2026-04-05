@@ -166,6 +166,7 @@ export class OrderViewComponent {
       order.entranceDoors.reduce((sum, item) => sum + item.price * item.count, 0) +
       order.moldings.reduce((sum, item) => sum + this.getMoldingTotal(item), 0) +
       order.extensions.reduce((sum, item) => sum + this.getExtensionTotal(item), 0) +
+      order.capitals.reduce((sum, item) => sum + this.getCapitalTotal(item), 0) +
       order.hardwares.reduce((sum, item) => sum + this.getHardwareTotal(item), 0) +
       order.panelings.reduce((sum, item) => sum + this.getPanelingTotal(item), 0)
     );
@@ -198,7 +199,7 @@ export class OrderViewComponent {
     );
   }
   protected getCapitalTotal(item: CapitalItem): number {
-    return 0;
+    return item.price * item.count;
   }
 
   private fetchOrder(id: number): void {
