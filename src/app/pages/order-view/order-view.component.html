@@ -99,6 +99,7 @@
           $state.data.moldings.length ||
           $state.data.extensions.length ||
           $state.data.capitals.length ||
+          $state.data.hardwares.length ||
           $state.data.panelings.length
         ) {
           <div class="order-view__list">
@@ -208,6 +209,105 @@
                   </div>
                 </div>
                 <div class="order-view__price">0 ₽</div>
+              </div>
+            }
+            @for (item of $state.data.hardwares; track item.id) {
+              <div class="order-view__item">
+                <div>
+                  <div class="order-view__value">
+                    Фурнитура
+                    @if (item.handleModel) {
+                      · Ручка {{ item.handleModel }}
+                    }
+                  </div>
+                  <div class="order-view__meta">
+                    @if (
+                      item.handleModel || item.handleColor || item.handleCount !== null || item.handlePrice !== null
+                    ) {
+                      Ручка
+                      @if (item.handleModel) {
+                        {{ item.handleModel }}
+                      }
+                      @if (item.handleColor) {
+                        · цвет {{ item.handleColor }}
+                      }
+                      @if (item.handleCount !== null) {
+                        · кол-во {{ item.handleCount }}
+                      }
+                      @if (item.handlePrice !== null) {
+                        · цена {{ item.handlePrice | number: '1.0-0' }} ₽
+                      }
+                    }
+                    @if (item.mechanismType || item.mechanismCount !== null || item.mechanismPrice !== null) {
+                      · Механизм
+                      {{ item.mechanismType === 'fixator' ? 'фиксатор' : item.mechanismType === 'lock' ? 'замок' : '' }}
+                      @if (item.mechanismCount !== null) {
+                        · кол-во {{ item.mechanismCount }}
+                      }
+                      @if (item.mechanismPrice !== null) {
+                        · цена {{ item.mechanismPrice | number: '1.0-0' }} ₽
+                      }
+                    }
+                    @if (item.thumbturnCount !== null || item.thumbturnPrice !== null) {
+                      · Крутилка
+                      @if (item.thumbturnCount !== null) {
+                        · кол-во {{ item.thumbturnCount }}
+                      }
+                      @if (item.thumbturnPrice !== null) {
+                        · цена {{ item.thumbturnPrice | number: '1.0-0' }} ₽
+                      }
+                    }
+                    @if (item.escutcheonCount !== null || item.escutcheonPrice !== null) {
+                      · Накладка
+                      @if (item.escutcheonCount !== null) {
+                        · кол-во {{ item.escutcheonCount }}
+                      }
+                      @if (item.escutcheonPrice !== null) {
+                        · цена {{ item.escutcheonPrice | number: '1.0-0' }} ₽
+                      }
+                    }
+                    @if (item.cylinderCount !== null || item.cylinderPrice !== null) {
+                      · Барабан
+                      @if (item.cylinderCount !== null) {
+                        · кол-во {{ item.cylinderCount }}
+                      }
+                      @if (item.cylinderPrice !== null) {
+                        · цена {{ item.cylinderPrice | number: '1.0-0' }} ₽
+                      }
+                    }
+                    @if (item.boltCount !== null || item.boltPrice !== null) {
+                      · Шпингалет
+                      @if (item.boltCount !== null) {
+                        · кол-во {{ item.boltCount }}
+                      }
+                      @if (item.boltPrice !== null) {
+                        · цена {{ item.boltPrice | number: '1.0-0' }} ₽
+                      }
+                    }
+                    @if (item.hingeCount !== null || item.hingePrice !== null) {
+                      · Петли
+                      @if (item.hingeCount !== null) {
+                        · кол-во {{ item.hingeCount }}
+                      }
+                      @if (item.hingePrice !== null) {
+                        · цена {{ item.hingePrice | number: '1.0-0' }} ₽
+                      }
+                    }
+                    @if (item.doorStopCount !== null || item.doorStopPrice !== null) {
+                      · Ограничитель
+                      @if (item.doorStopCount !== null) {
+                        · кол-во {{ item.doorStopCount }}
+                      }
+                      @if (item.doorStopPrice !== null) {
+                        · цена {{ item.doorStopPrice | number: '1.0-0' }} ₽
+                      }
+                    }
+                    @if (item.comment) {
+                      · {{ item.comment }}
+                    }
+                  </div>
+                </div>
+                <div class="order-view__price">{{ getHardwareTotal(item) | number: '1.0-0' }} ₽</div>
               </div>
             }
             @for (item of $state.data.panelings; track item.id) {

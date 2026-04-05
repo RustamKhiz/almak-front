@@ -5,6 +5,8 @@ import {
   EntranceDoorKind,
   ExtensionCovering,
   ExtensionItem,
+  HardwareItem,
+  HardwareMechanismType,
   MoldingCovering,
   MoldingItem,
   MoldingPlatbandType,
@@ -27,6 +29,7 @@ export class OrderDocumentService {
       order.entranceDoors.reduce((sum, item) => sum + item.price * item.count, 0) +
       order.moldings.reduce((sum, item) => sum + this.getMoldingTotal(item), 0) +
       order.extensions.reduce((sum, item) => sum + this.getExtensionTotal(item), 0) +
+      order.hardwares.reduce((sum, item) => sum + this.getHardwareTotal(item), 0) +
       order.panelings.reduce((sum, item) => sum + this.getPanelingTotal(item), 0);
     const totalToPay = Math.max(totalAmount - order.discount, 0);
     const customerDebt = Math.max(totalToPay - order.prepayment, 0);
@@ -112,6 +115,22 @@ export class OrderDocumentService {
         ),
       )
       .join('');
+    const hardwareRows = order.hardwares
+      .map((item) =>
+        this.buildRow(
+          rowNumber++,
+          'Фурнитура',
+          this.getHardwareTitle(item),
+          this.getHardwareExecutionLabel(item),
+          '-',
+          '-',
+          item.comment || '-',
+          this.getHardwareCount(item),
+          this.getHardwareTotal(item),
+          this.getHardwareTotal(item),
+        ),
+      )
+      .join('');
     const panelingRows = order.panelings
       .map((item) =>
         this.buildRow(
@@ -128,7 +147,7 @@ export class OrderDocumentService {
         ),
       )
       .join('');
-    const rows = `${interiorRows}${entranceRows}${moldingRows}${extensionRows}${capitalRows}${panelingRows}`;
+    const rows = `${interiorRows}${entranceRows}${moldingRows}${extensionRows}${capitalRows}${hardwareRows}${panelingRows}`;
 
     return `
       <html>
@@ -214,6 +233,7 @@ export class OrderDocumentService {
         return value;
     }
   }
+
   private getEntranceExecutionLabel(
     kind: EntranceDoorKind,
     painting: string | null,
@@ -232,17 +252,21 @@ export class OrderDocumentService {
     }
     return details.join(', ');
   }
+
   private getMoldingTitle(item: MoldingItem): string {
     return `Коробка + наличник ${this.getMoldingPlatbandTypeLabel(item.platbandType)}${item.platbandFigure ? ` (${item.platbandFigure})` : ''}`;
   }
+
   private getMoldingExecutionLabel(item: MoldingItem): string {
     return `Цвет ${item.color}, притворная планка ${item.rebateBarCount}`;
   }
+
   private getMoldingSizeLabel(item: MoldingItem): string {
     const frame = item.frameLength !== null ? `коробка ${item.frameLength}` : 'коробка -';
     const platband = item.platbandLength !== null ? `наличник ${item.platbandLength}` : 'наличник -';
     return `${frame}; ${platband}`;
   }
+
   private getMoldingCoveringLabel(value: MoldingCovering): string {
     switch (value) {
       case MoldingCovering.Enamel:
@@ -257,6 +281,7 @@ export class OrderDocumentService {
         return value;
     }
   }
+
   private getMoldingPlatbandTypeLabel(value: MoldingPlatbandType): string {
     switch (value) {
       case MoldingPlatbandType.Oval:
@@ -269,6 +294,7 @@ export class OrderDocumentService {
         return value;
     }
   }
+
   private getExtensionCoveringLabel(value: ExtensionCovering): string {
     switch (value) {
       case ExtensionCovering.Enamel:
@@ -281,6 +307,7 @@ export class OrderDocumentService {
         return value;
     }
   }
+
   private getCapitalCoveringLabel(value: CapitalCovering): string {
     switch (value) {
       case CapitalCovering.Enamel:
@@ -293,6 +320,7 @@ export class OrderDocumentService {
         return value;
     }
   }
+
   private getPanelingCoveringLabel(value: PanelingCovering): string {
     switch (value) {
       case PanelingCovering.Enamel:
@@ -307,18 +335,124 @@ export class OrderDocumentService {
         return value;
     }
   }
+
   private getMoldingTotal(item: MoldingItem): number {
     return item.framePrice * item.frameCount + item.platbandPrice * item.platbandCount;
   }
+
   private getExtensionTotal(item: ExtensionItem): number {
     return item.price * item.count;
   }
+
   private getPanelingTotal(item: PanelingItem): number {
     return item.price * item.count;
   }
+
+  private getHardwareTitle(item: HardwareItem): string {
+    const parts: string[] = [];
+    if (item.handleModel) {
+      parts.push(`Ручка ${item.handleModel}`);
+    }
+    if (item.mechanismType) {
+      parts.push(item.mechanismType === HardwareMechanismType.Lock ? 'Механизм замок' : 'Механизм фиксатор');
+    }
+    if (item.thumbturnCount !== null) {
+      parts.push('Крутилка');
+    }
+    if (item.escutcheonCount !== null) {
+      parts.push('Накладка');
+    }
+    if (item.cylinderCount !== null) {
+      parts.push('Барабан');
+    }
+    if (item.boltCount !== null) {
+      parts.push('Шпингалет');
+    }
+    if (item.hingeCount !== null) {
+      parts.push('Петли');
+    }
+    if (item.doorStopCount !== null) {
+      parts.push('Ограничитель');
+    }
+    return parts.join(', ') || 'Фурнитура';
+  }
+
+  private getHardwareExecutionLabel(item: HardwareItem): string {
+    const details: string[] = [];
+    if (item.handleColor) {
+      details.push(`цвет ручки: ${item.handleColor}`);
+    }
+    if (item.handleCount !== null || item.handlePrice !== null) {
+      details.push(`ручка ${this.formatCountPrice(item.handleCount, item.handlePrice)}`);
+    }
+    if (item.mechanismType || item.mechanismCount !== null || item.mechanismPrice !== null) {
+      const label =
+        item.mechanismType === HardwareMechanismType.Fixator
+          ? 'фиксатор'
+          : item.mechanismType === HardwareMechanismType.Lock
+            ? 'замок'
+            : 'механизм';
+      details.push(`${label} ${this.formatCountPrice(item.mechanismCount, item.mechanismPrice)}`);
+    }
+    if (item.thumbturnCount !== null || item.thumbturnPrice !== null) {
+      details.push(`крутилка ${this.formatCountPrice(item.thumbturnCount, item.thumbturnPrice)}`);
+    }
+    if (item.escutcheonCount !== null || item.escutcheonPrice !== null) {
+      details.push(`накладка ${this.formatCountPrice(item.escutcheonCount, item.escutcheonPrice)}`);
+    }
+    if (item.cylinderCount !== null || item.cylinderPrice !== null) {
+      details.push(`барабан ${this.formatCountPrice(item.cylinderCount, item.cylinderPrice)}`);
+    }
+    if (item.boltCount !== null || item.boltPrice !== null) {
+      details.push(`шпингалет ${this.formatCountPrice(item.boltCount, item.boltPrice)}`);
+    }
+    if (item.hingeCount !== null || item.hingePrice !== null) {
+      details.push(`петли ${this.formatCountPrice(item.hingeCount, item.hingePrice)}`);
+    }
+    if (item.doorStopCount !== null || item.doorStopPrice !== null) {
+      details.push(`ограничитель ${this.formatCountPrice(item.doorStopCount, item.doorStopPrice)}`);
+    }
+    return details.join(', ') || '-';
+  }
+
+  private getHardwareCount(item: HardwareItem): number {
+    return (
+      Number(item.handleCount ?? 0) +
+      Number(item.mechanismCount ?? 0) +
+      Number(item.thumbturnCount ?? 0) +
+      Number(item.escutcheonCount ?? 0) +
+      Number(item.cylinderCount ?? 0) +
+      Number(item.boltCount ?? 0) +
+      Number(item.hingeCount ?? 0) +
+      Number(item.doorStopCount ?? 0)
+    );
+  }
+
+  private getHardwareTotal(item: HardwareItem): number {
+    return (
+      this.getOptionalTotal(item.handleCount, item.handlePrice) +
+      this.getOptionalTotal(item.mechanismCount, item.mechanismPrice) +
+      this.getOptionalTotal(item.thumbturnCount, item.thumbturnPrice) +
+      this.getOptionalTotal(item.escutcheonCount, item.escutcheonPrice) +
+      this.getOptionalTotal(item.cylinderCount, item.cylinderPrice) +
+      this.getOptionalTotal(item.boltCount, item.boltPrice) +
+      this.getOptionalTotal(item.hingeCount, item.hingePrice) +
+      this.getOptionalTotal(item.doorStopCount, item.doorStopPrice)
+    );
+  }
+
   private formatDoorSize(width: number, height: number, width2: number | null): string {
     return `${width2 === null ? `${width}` : `${width}+${width2}`}x${height}`;
   }
+
+  private formatCountPrice(count: number | null, price: number | null): string {
+    return `кол-во ${count ?? 0}, цена ${price ?? 0}`;
+  }
+
+  private getOptionalTotal(count: number | null, price: number | null): number {
+    return Number(count ?? 0) * Number(price ?? 0);
+  }
+
   private escapeHtml(value: string): string {
     return value
       .replaceAll('&', '&amp;')

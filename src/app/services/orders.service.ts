@@ -11,6 +11,8 @@ import {
   EntranceDoorKind,
   ExtensionCovering,
   ExtensionItem,
+  HardwareItem,
+  HardwareMechanismType,
   InteriorDoorCovering,
   InteriorDoorItem,
   MoldingCovering,
@@ -41,6 +43,7 @@ interface BackendOrder {
   moldings?: BackendMolding[];
   extensions?: BackendExtension[];
   capitals?: BackendCapital[];
+  hardwares?: BackendHardware[];
   panelings?: BackendPaneling[];
   created_at?: string;
 }
@@ -112,6 +115,30 @@ interface BackendCapital {
   comment?: string;
   count: number;
 }
+interface BackendHardware {
+  id: number;
+  order_id: number;
+  handleModel?: string | null;
+  handleColor?: string | null;
+  handleCount?: number | null;
+  handlePrice?: number | null;
+  mechanismType?: string | null;
+  mechanismCount?: number | null;
+  mechanismPrice?: number | null;
+  thumbturnCount?: number | null;
+  thumbturnPrice?: number | null;
+  escutcheonCount?: number | null;
+  escutcheonPrice?: number | null;
+  cylinderCount?: number | null;
+  cylinderPrice?: number | null;
+  boltCount?: number | null;
+  boltPrice?: number | null;
+  hingeCount?: number | null;
+  hingePrice?: number | null;
+  doorStopCount?: number | null;
+  doorStopPrice?: number | null;
+  comment?: string;
+}
 interface BackendPaneling {
   id: number;
   order_id: number;
@@ -139,6 +166,7 @@ interface BackendOrderPayload {
   moldings: BackendMoldingPayload[];
   extensions: BackendExtensionPayload[];
   capitals: BackendCapitalPayload[];
+  hardwares: BackendHardwarePayload[];
   panelings: BackendPanelingPayload[];
 }
 
@@ -198,6 +226,28 @@ interface BackendCapitalPayload {
   height: number;
   comment: string;
   count: number;
+}
+interface BackendHardwarePayload {
+  handleModel?: string | null;
+  handleColor?: string | null;
+  handleCount?: number | null;
+  handlePrice?: number | null;
+  mechanismType?: string | null;
+  mechanismCount?: number | null;
+  mechanismPrice?: number | null;
+  thumbturnCount?: number | null;
+  thumbturnPrice?: number | null;
+  escutcheonCount?: number | null;
+  escutcheonPrice?: number | null;
+  cylinderCount?: number | null;
+  cylinderPrice?: number | null;
+  boltCount?: number | null;
+  boltPrice?: number | null;
+  hingeCount?: number | null;
+  hingePrice?: number | null;
+  doorStopCount?: number | null;
+  doorStopPrice?: number | null;
+  comment: string;
 }
 interface BackendPanelingPayload {
   color: string;
@@ -289,6 +339,7 @@ export class OrdersService {
       moldings: (order.moldings ?? []).map((item) => this.mapBackendMoldingToItem(item)),
       extensions: (order.extensions ?? []).map((item) => this.mapBackendExtensionToItem(item)),
       capitals: (order.capitals ?? []).map((item) => this.mapBackendCapitalToItem(item)),
+      hardwares: (order.hardwares ?? []).map((item) => this.mapBackendHardwareToItem(item)),
       panelings: (order.panelings ?? []).map((item) => this.mapBackendPanelingToItem(item)),
     };
   }
@@ -302,6 +353,7 @@ export class OrdersService {
         0,
       ) +
       payload.extensions.reduce((sum, item) => sum + item.price * item.count, 0) +
+      payload.hardwares.reduce((sum, item) => sum + this.getHardwareTotal(item), 0) +
       payload.panelings.reduce((sum, item) => sum + item.price * item.count, 0);
 
     return {
@@ -371,6 +423,28 @@ export class OrdersService {
         height: item.height,
         comment: item.comment,
         count: item.count,
+      })),
+      hardwares: payload.hardwares.map((item) => ({
+        handleModel: normalizeOptionalString(item.handleModel),
+        handleColor: normalizeOptionalString(item.handleColor),
+        handleCount: item.handleCount,
+        handlePrice: item.handlePrice,
+        mechanismType: item.mechanismType,
+        mechanismCount: item.mechanismCount,
+        mechanismPrice: item.mechanismPrice,
+        thumbturnCount: item.thumbturnCount,
+        thumbturnPrice: item.thumbturnPrice,
+        escutcheonCount: item.escutcheonCount,
+        escutcheonPrice: item.escutcheonPrice,
+        cylinderCount: item.cylinderCount,
+        cylinderPrice: item.cylinderPrice,
+        boltCount: item.boltCount,
+        boltPrice: item.boltPrice,
+        hingeCount: item.hingeCount,
+        hingePrice: item.hingePrice,
+        doorStopCount: item.doorStopCount,
+        doorStopPrice: item.doorStopPrice,
+        comment: item.comment,
       })),
       panelings: payload.panelings.map((item) => ({
         color: item.color,
@@ -460,6 +534,32 @@ export class OrdersService {
       count: item.count,
     };
   }
+  private mapBackendHardwareToItem(item: BackendHardware): HardwareItem {
+    return {
+      id: item.id,
+      type: OrderItemType.Hardware,
+      handleModel: item.handleModel ?? '',
+      handleColor: item.handleColor ?? '',
+      handleCount: item.handleCount ?? null,
+      handlePrice: item.handlePrice ?? null,
+      mechanismType: this.mapHardwareMechanismType(item.mechanismType),
+      mechanismCount: item.mechanismCount ?? null,
+      mechanismPrice: item.mechanismPrice ?? null,
+      thumbturnCount: item.thumbturnCount ?? null,
+      thumbturnPrice: item.thumbturnPrice ?? null,
+      escutcheonCount: item.escutcheonCount ?? null,
+      escutcheonPrice: item.escutcheonPrice ?? null,
+      cylinderCount: item.cylinderCount ?? null,
+      cylinderPrice: item.cylinderPrice ?? null,
+      boltCount: item.boltCount ?? null,
+      boltPrice: item.boltPrice ?? null,
+      hingeCount: item.hingeCount ?? null,
+      hingePrice: item.hingePrice ?? null,
+      doorStopCount: item.doorStopCount ?? null,
+      doorStopPrice: item.doorStopPrice ?? null,
+      comment: item.comment ?? '',
+    };
+  }
   private mapBackendPanelingToItem(item: BackendPaneling): PanelingItem {
     return {
       id: item.id,
@@ -536,6 +636,15 @@ export class OrdersService {
         return MoldingPlatbandType.Oval;
     }
   }
+  private mapHardwareMechanismType(value?: string | null): HardwareMechanismType | null {
+    switch (value) {
+      case HardwareMechanismType.Lock:
+      case HardwareMechanismType.Fixator:
+        return value;
+      default:
+        return null;
+    }
+  }
 
   private mapBackendStatusToOrderStatus(status: BackendOrderStatus): OrderStatus {
     switch (status) {
@@ -557,4 +666,26 @@ export class OrdersService {
         return BackendOrderStatus.Accepted;
     }
   }
+
+  private getHardwareTotal(item: HardwareItem): number {
+    return (
+      getOptionalTotal(item.handleCount, item.handlePrice) +
+      getOptionalTotal(item.mechanismCount, item.mechanismPrice) +
+      getOptionalTotal(item.thumbturnCount, item.thumbturnPrice) +
+      getOptionalTotal(item.escutcheonCount, item.escutcheonPrice) +
+      getOptionalTotal(item.cylinderCount, item.cylinderPrice) +
+      getOptionalTotal(item.boltCount, item.boltPrice) +
+      getOptionalTotal(item.hingeCount, item.hingePrice) +
+      getOptionalTotal(item.doorStopCount, item.doorStopPrice)
+    );
+  }
+}
+
+function getOptionalTotal(count: number | null, price: number | null): number {
+  return Number(count ?? 0) * Number(price ?? 0);
+}
+
+function normalizeOptionalString(value: string): string | null {
+  const normalized = value.trim();
+  return normalized === '' ? null : normalized;
 }

@@ -40,6 +40,10 @@ import {
   InteriorDoorDialogData,
 } from '../../common/dialogs/interior-door-dialog/interior-door-dialog.component';
 import {
+  HardwareDialogComponent,
+  HardwareDialogData,
+} from '../../common/dialogs/hardware-dialog/hardware-dialog.component';
+import {
   MoldingDialogComponent,
   MoldingDialogData,
 } from '../../common/dialogs/molding-dialog/molding-dialog.component';
@@ -55,6 +59,7 @@ import {
   EntranceDoorItem,
   ExtensionCovering,
   ExtensionItem,
+  HardwareItem,
   InteriorDoorItem,
   MoldingCovering,
   MoldingItem,
@@ -99,6 +104,7 @@ export class OrderCreateComponent implements OnInit {
   protected readonly moldings = signal<readonly MoldingItem[]>([]);
   protected readonly extensions = signal<readonly ExtensionItem[]>([]);
   protected readonly capitals = signal<readonly CapitalItem[]>([]);
+  protected readonly hardwares = signal<readonly HardwareItem[]>([]);
   protected readonly panelings = signal<readonly PanelingItem[]>([]);
   protected readonly showOrdersError = signal(false);
   protected readonly isEditMode = signal(false);
@@ -119,6 +125,7 @@ export class OrderCreateComponent implements OnInit {
       this.entranceDoors().reduce((sum, item) => sum + item.price * item.count, 0) +
       this.moldings().reduce((sum, item) => sum + this.getMoldingTotal(item), 0) +
       this.extensions().reduce((sum, item) => sum + this.getExtensionTotal(item), 0) +
+      this.hardwares().reduce((sum, item) => sum + this.getHardwareTotal(item), 0) +
       this.panelings().reduce((sum, item) => sum + this.getPanelingTotal(item), 0),
   );
   protected readonly totalToPay = computed(() => Math.max(this.orderTotal() - this.discount(), 0));
@@ -186,11 +193,11 @@ export class OrderCreateComponent implements OnInit {
   protected onAddCapitalClick(): void {
     this.openCreateDialog(CapitalDialogComponent, { mode: 'create' } as CapitalDialogData, this.capitals);
   }
+  protected onAddHardwareClick(): void {
+    this.openCreateDialog(HardwareDialogComponent, { mode: 'create' } as HardwareDialogData, this.hardwares);
+  }
   protected onAddPanelingClick(): void {
     this.openCreateDialog(PanelingDialogComponent, { mode: 'create' } as PanelingDialogData, this.panelings);
-  }
-  protected onAddHardwareClick(): void {
-    /* empty */
   }
 
   protected onEditInteriorDoorClick(id: number): void {
@@ -233,6 +240,14 @@ export class OrderCreateComponent implements OnInit {
       id,
     );
   }
+  protected onEditHardwareClick(id: number): void {
+    this.openEditDialog(
+      HardwareDialogComponent,
+      { mode: 'edit', hardware: this.findById(this.hardwares(), id) } as HardwareDialogData,
+      this.hardwares,
+      id,
+    );
+  }
   protected onEditPanelingClick(id: number): void {
     this.openEditDialog(
       PanelingDialogComponent,
@@ -257,6 +272,9 @@ export class OrderCreateComponent implements OnInit {
   protected onRemoveCapitalClick(id: number): void {
     this.removeItem(this.capitals, id);
   }
+  protected onRemoveHardwareClick(id: number): void {
+    this.removeItem(this.hardwares, id);
+  }
   protected onRemovePanelingClick(id: number): void {
     this.removeItem(this.panelings, id);
   }
@@ -275,6 +293,9 @@ export class OrderCreateComponent implements OnInit {
   }
   protected onDuplicateCapitalClick(id: number): void {
     this.duplicateItem(this.capitals, id);
+  }
+  protected onDuplicateHardwareClick(id: number): void {
+    this.duplicateItem(this.hardwares, id);
   }
   protected onDuplicatePanelingClick(id: number): void {
     this.duplicateItem(this.panelings, id);
@@ -304,6 +325,7 @@ export class OrderCreateComponent implements OnInit {
       moldings: this.moldings(),
       extensions: this.extensions(),
       capitals: this.capitals(),
+      hardwares: this.hardwares(),
       panelings: this.panelings(),
     };
 
@@ -340,6 +362,18 @@ export class OrderCreateComponent implements OnInit {
   }
   protected getPanelingTotal(item: PanelingItem): number {
     return item.price * item.count;
+  }
+  protected getHardwareTotal(item: HardwareItem): number {
+    return (
+      getOptionalTotal(item.handleCount, item.handlePrice) +
+      getOptionalTotal(item.mechanismCount, item.mechanismPrice) +
+      getOptionalTotal(item.thumbturnCount, item.thumbturnPrice) +
+      getOptionalTotal(item.escutcheonCount, item.escutcheonPrice) +
+      getOptionalTotal(item.cylinderCount, item.cylinderPrice) +
+      getOptionalTotal(item.boltCount, item.boltPrice) +
+      getOptionalTotal(item.hingeCount, item.hingePrice) +
+      getOptionalTotal(item.doorStopCount, item.doorStopPrice)
+    );
   }
 
   private openCreateDialog<T extends { id: number; type: OrderItemType }, R extends Omit<T, 'id'>>(
@@ -419,6 +453,7 @@ export class OrderCreateComponent implements OnInit {
       this.moldings().length > 0 ||
       this.extensions().length > 0 ||
       this.capitals().length > 0 ||
+      this.hardwares().length > 0 ||
       this.panelings().length > 0
     );
   }
@@ -441,6 +476,7 @@ export class OrderCreateComponent implements OnInit {
     this.moldings.set(order.moldings);
     this.extensions.set(order.extensions);
     this.capitals.set(order.capitals);
+    this.hardwares.set(order.hardwares);
     this.panelings.set(order.panelings);
     this.form.patchValue(
       {
@@ -479,4 +515,8 @@ export class OrderCreateComponent implements OnInit {
     const now = new Date();
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
   }
+}
+
+function getOptionalTotal(count: number | null, price: number | null): number {
+  return Number(count ?? 0) * Number(price ?? 0);
 }

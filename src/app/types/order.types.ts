@@ -9,6 +9,7 @@ export enum OrderItemType {
   Molding = 'molding',
   Extension = 'extension',
   Capital = 'capital',
+  Hardware = 'hardware',
   Paneling = 'paneling',
 }
 
@@ -54,6 +55,11 @@ export enum PanelingCovering {
   Veneer = 'Veneer',
   Embossing = 'Embossing',
   PVC = 'PVC',
+}
+
+export enum HardwareMechanismType {
+  Lock = 'lock',
+  Fixator = 'fixator',
 }
 
 export enum OrderStatus {
@@ -151,6 +157,31 @@ export interface PanelingItem {
   comment: string;
 }
 
+export interface HardwareItem {
+  id: number;
+  type: OrderItemType.Hardware;
+  handleModel: string;
+  handleColor: string;
+  handleCount: number | null;
+  handlePrice: number | null;
+  mechanismType: HardwareMechanismType | null;
+  mechanismCount: number | null;
+  mechanismPrice: number | null;
+  thumbturnCount: number | null;
+  thumbturnPrice: number | null;
+  escutcheonCount: number | null;
+  escutcheonPrice: number | null;
+  cylinderCount: number | null;
+  cylinderPrice: number | null;
+  boltCount: number | null;
+  boltPrice: number | null;
+  hingeCount: number | null;
+  hingePrice: number | null;
+  doorStopCount: number | null;
+  doorStopPrice: number | null;
+  comment: string;
+}
+
 export interface OrderCustomerForm {
   name: string;
   phone: string;
@@ -169,5 +200,6 @@ export interface OrderCreatePayload extends OrderCustomerForm {
   moldings: readonly MoldingItem[];
   extensions: readonly ExtensionItem[];
   capitals: readonly CapitalItem[];
+  hardwares: readonly HardwareItem[];
   panelings: readonly PanelingItem[];
 }

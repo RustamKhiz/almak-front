@@ -20,6 +20,7 @@ import {
   DoorLeafType,
   ExtensionCovering,
   ExtensionItem,
+  HardwareItem,
   MoldingCovering,
   MoldingItem,
   MoldingPlatbandType,
@@ -165,6 +166,7 @@ export class OrderViewComponent {
       order.entranceDoors.reduce((sum, item) => sum + item.price * item.count, 0) +
       order.moldings.reduce((sum, item) => sum + this.getMoldingTotal(item), 0) +
       order.extensions.reduce((sum, item) => sum + this.getExtensionTotal(item), 0) +
+      order.hardwares.reduce((sum, item) => sum + this.getHardwareTotal(item), 0) +
       order.panelings.reduce((sum, item) => sum + this.getPanelingTotal(item), 0)
     );
   }
@@ -183,8 +185,19 @@ export class OrderViewComponent {
   protected getPanelingTotal(item: PanelingItem): number {
     return item.price * item.count;
   }
+  protected getHardwareTotal(item: HardwareItem): number {
+    return (
+      getOptionalTotal(item.handleCount, item.handlePrice) +
+      getOptionalTotal(item.mechanismCount, item.mechanismPrice) +
+      getOptionalTotal(item.thumbturnCount, item.thumbturnPrice) +
+      getOptionalTotal(item.escutcheonCount, item.escutcheonPrice) +
+      getOptionalTotal(item.cylinderCount, item.cylinderPrice) +
+      getOptionalTotal(item.boltCount, item.boltPrice) +
+      getOptionalTotal(item.hingeCount, item.hingePrice) +
+      getOptionalTotal(item.doorStopCount, item.doorStopPrice)
+    );
+  }
   protected getCapitalTotal(item: CapitalItem): number {
-    console.log('item', item);
     return 0;
   }
 
@@ -198,4 +211,8 @@ export class OrderViewComponent {
         this.isLoading.set(false);
       });
   }
+}
+
+function getOptionalTotal(count: number | null, price: number | null): number {
+  return Number(count ?? 0) * Number(price ?? 0);
 }
