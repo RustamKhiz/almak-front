@@ -7,7 +7,7 @@ import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatMenuModule } from '@angular/material/menu';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { filter, switchMap } from 'rxjs';
-import { getOrderStatusLabel, ORDER_STATUS_LABELS, ORDER_STATUS_OPTIONS } from '../../common/constants/order-status';
+import { ORDER_STATUS_OPTIONS, getOrderStatusLabel } from '../../common/constants/order-status';
 import { ConfirmDialogComponent, ConfirmDialogData } from '../../common/confirm-dialog/confirm-dialog.component';
 import { PhoneFormatPipe } from '../../common/pipes/phone-format.pipe';
 import { FileDownloadService } from '../../services/file-download.service';
@@ -15,12 +15,18 @@ import { OrderDocumentService } from '../../services/order-document.service';
 import { OrderPrintService } from '../../services/order-print.service';
 import { OrdersService } from '../../services/orders.service';
 import {
+  CapitalCovering,
+  CapitalItem,
   DoorLeafType,
+  ExtensionCovering,
+  ExtensionItem,
   MoldingCovering,
   MoldingItem,
   MoldingPlatbandType,
   OrderCreatePayload,
   OrderStatus,
+  PanelingCovering,
+  PanelingItem,
 } from '../../types/order.types';
 
 interface OrderViewState {
@@ -57,10 +63,9 @@ export class OrderViewComponent {
   protected readonly isLoading = signal(true);
   protected readonly state = signal<OrderViewState | null>(null);
   protected readonly statusOptions = ORDER_STATUS_OPTIONS;
-  protected readonly statusLabels = ORDER_STATUS_LABELS;
   protected readonly leafTypesLabels: Record<DoorLeafType, string> = {
-    Single: 'Одностворчатая',
-    Double: 'Двустворчатая',
+    Single: 'одностворчатая',
+    Double: 'двустворчатая',
   };
   protected readonly moldingPlatbandTypeLabels: Record<MoldingPlatbandType, string> = {
     [MoldingPlatbandType.Oval]: 'овальный',
@@ -68,15 +73,30 @@ export class OrderViewComponent {
     [MoldingPlatbandType.Figure]: 'фигурный',
   };
   protected readonly moldingCoveringLabels: Record<MoldingCovering, string> = {
-    [MoldingCovering.Enamel]: 'Эмаль',
-    [MoldingCovering.Veneer]: 'Шпон',
-    [MoldingCovering.Embossing]: 'Тиснение',
-    [MoldingCovering.PVC]: 'ПВХ',
+    [MoldingCovering.Enamel]: 'эмаль',
+    [MoldingCovering.Veneer]: 'шпон',
+    [MoldingCovering.Embossing]: 'тиснение',
+    [MoldingCovering.PVC]: 'пвх',
+  };
+  protected readonly extensionCoveringLabels: Record<ExtensionCovering, string> = {
+    [ExtensionCovering.Enamel]: 'эмаль',
+    [ExtensionCovering.Veneer]: 'шпон',
+    [ExtensionCovering.Embossing]: 'тиснение',
+  };
+  protected readonly capitalCoveringLabels: Record<CapitalCovering, string> = {
+    [CapitalCovering.Enamel]: 'эмаль',
+    [CapitalCovering.Veneer]: 'шпон',
+    [CapitalCovering.Embossing]: 'тиснение',
+  };
+  protected readonly panelingCoveringLabels: Record<PanelingCovering, string> = {
+    [PanelingCovering.Enamel]: 'эмаль',
+    [PanelingCovering.Veneer]: 'шпон',
+    [PanelingCovering.Embossing]: 'тиснение',
+    [PanelingCovering.PVC]: 'пвх',
   };
 
   constructor() {
-    const id = Number(this.route.snapshot.paramMap.get('id') ?? 0);
-    this.fetchOrder(id);
+    this.fetchOrder(Number(this.route.snapshot.paramMap.get('id') ?? 0));
   }
 
   protected onDeleteClick(): void {
@@ -84,61 +104,46 @@ export class OrderViewComponent {
     if (!current) {
       return;
     }
-
     const dialogData: ConfirmDialogData = {
       title: 'Удаление заказа',
       message: 'Вы уверены, что хотите удалить заказ?',
       confirmText: 'Да, удалить',
       cancelText: 'Нет',
     };
-
     this.dialog
       .open(ConfirmDialogComponent, { data: dialogData })
       .afterClosed()
       .pipe(
-        filter((isConfirmed) => isConfirmed === true),
+        filter((ok) => ok === true),
         switchMap(() => {
           this.isLoading.set(true);
           return this.ordersService.deleteOrder(current.id);
         }),
         takeUntilDestroyed(this.destroyRef),
       )
-      .subscribe({
-        next: () => {
-          this.router.navigate(['/orders']);
-        },
-        error: () => {
-          this.isLoading.set(false);
-        },
-      });
+      .subscribe({ next: () => this.router.navigate(['/orders']), error: () => this.isLoading.set(false) });
   }
 
   protected onDownloadClick(): void {
     const current = this.state();
-    if (!current) {
-      return;
+    if (current) {
+      this.fileDownloadService.download(
+        this.orderDocumentService.createDocBlob(current.id, current.data),
+        `order-${current.id}.doc`,
+      );
     }
-
-    const blob = this.orderDocumentService.createDocBlob(current.id, current.data);
-    this.fileDownloadService.download(blob, `order-${current.id}.doc`);
   }
-
   protected onPrintClick(): void {
     const current = this.state();
-    if (!current) {
-      return;
+    if (current) {
+      this.orderPrintService.printHtml(this.orderDocumentService.buildOrderHtml(current.id, current.data));
     }
-
-    const html = this.orderDocumentService.buildOrderHtml(current.id, current.data);
-    this.orderPrintService.printHtml(html);
   }
-
   protected onStatusChange(status: OrderStatus): void {
     const current = this.state();
     if (!current || current.data.status === status) {
       return;
     }
-
     this.ordersService
       .updateOrderStatus(current.id, status)
       .pipe(takeUntilDestroyed(this.destroyRef))
@@ -147,39 +152,40 @@ export class OrderViewComponent {
         if (!state) {
           return;
         }
-
-        this.state.set({
-          ...state,
-          data: {
-            ...state.data,
-            status: nextStatus,
-          },
-        });
+        this.state.set({ ...state, data: { ...state.data, status: nextStatus } });
       });
   }
 
   protected getStatusLabel(status: OrderStatus): string {
     return getOrderStatusLabel(status);
   }
-
   protected getOrderTotal(order: OrderCreatePayload): number {
     return (
       order.interiorDoors.reduce((sum, item) => sum + item.price * item.count, 0) +
       order.entranceDoors.reduce((sum, item) => sum + item.price * item.count, 0) +
-      order.moldings.reduce((sum, item) => sum + this.getMoldingTotal(item), 0)
+      order.moldings.reduce((sum, item) => sum + this.getMoldingTotal(item), 0) +
+      order.extensions.reduce((sum, item) => sum + this.getExtensionTotal(item), 0) +
+      order.panelings.reduce((sum, item) => sum + this.getPanelingTotal(item), 0)
     );
   }
-
   protected getTotalToPay(order: OrderCreatePayload): number {
     return Math.max(this.getOrderTotal(order) - order.discount, 0);
   }
-
   protected getCustomerDebt(order: OrderCreatePayload): number {
     return Math.max(this.getTotalToPay(order) - order.prepayment, 0);
   }
-
   protected getMoldingTotal(item: MoldingItem): number {
     return item.framePrice * item.frameCount + item.platbandPrice * item.platbandCount;
+  }
+  protected getExtensionTotal(item: ExtensionItem): number {
+    return item.price * item.count;
+  }
+  protected getPanelingTotal(item: PanelingItem): number {
+    return item.price * item.count;
+  }
+  protected getCapitalTotal(item: CapitalItem): number {
+    console.log('item', item);
+    return 0;
   }
 
   private fetchOrder(id: number): void {

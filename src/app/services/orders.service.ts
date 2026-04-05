@@ -4,9 +4,13 @@ import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import {
   BackendOrderStatus,
+  CapitalCovering,
+  CapitalItem,
   DoorLeafType,
   EntranceDoorItem,
   EntranceDoorKind,
+  ExtensionCovering,
+  ExtensionItem,
   InteriorDoorCovering,
   InteriorDoorItem,
   MoldingCovering,
@@ -15,6 +19,8 @@ import {
   OrderCreatePayload,
   OrderItemType,
   OrderStatus,
+  PanelingCovering,
+  PanelingItem,
 } from '../types/order.types';
 import { CoreService } from './core.service';
 
@@ -33,6 +39,9 @@ interface BackendOrder {
   interiorDoors?: BackendInteriorDoor[];
   entranceDoors?: BackendEntranceDoor[];
   moldings?: BackendMolding[];
+  extensions?: BackendExtension[];
+  capitals?: BackendCapital[];
+  panelings?: BackendPaneling[];
   created_at?: string;
 }
 
@@ -50,7 +59,6 @@ interface BackendInteriorDoor {
   covering?: string;
   comment?: string;
 }
-
 interface BackendEntranceDoor {
   id: number;
   order_id: number;
@@ -66,7 +74,6 @@ interface BackendEntranceDoor {
   price: number;
   comment?: string;
 }
-
 interface BackendMolding {
   id: number;
   order_id: number;
@@ -81,6 +88,38 @@ interface BackendMolding {
   rebateBarCount: number;
   color: string;
   covering?: string;
+  comment?: string;
+}
+interface BackendExtension {
+  id: number;
+  order_id: number;
+  color: string;
+  covering?: string;
+  width: number;
+  height: number;
+  comment?: string;
+  count: number;
+  price: number;
+}
+interface BackendCapital {
+  id: number;
+  order_id: number;
+  name: string;
+  color: string;
+  covering?: string;
+  width: number;
+  height: number;
+  comment?: string;
+  count: number;
+}
+interface BackendPaneling {
+  id: number;
+  order_id: number;
+  color: string;
+  size: string;
+  covering?: string;
+  count: number;
+  price: number;
   comment?: string;
 }
 
@@ -98,6 +137,9 @@ interface BackendOrderPayload {
   interiorDoors: BackendInteriorDoorPayload[];
   entranceDoors: BackendEntranceDoorPayload[];
   moldings: BackendMoldingPayload[];
+  extensions: BackendExtensionPayload[];
+  capitals: BackendCapitalPayload[];
+  panelings: BackendPanelingPayload[];
 }
 
 interface BackendInteriorDoorPayload {
@@ -112,7 +154,6 @@ interface BackendInteriorDoorPayload {
   covering: string;
   comment: string;
 }
-
 interface BackendEntranceDoorPayload {
   kind: string;
   model: string;
@@ -126,7 +167,6 @@ interface BackendEntranceDoorPayload {
   price: number;
   comment: string;
 }
-
 interface BackendMoldingPayload {
   frameLength?: number | null;
   framePrice: number;
@@ -141,7 +181,32 @@ interface BackendMoldingPayload {
   covering: string;
   comment: string;
 }
-
+interface BackendExtensionPayload {
+  color: string;
+  covering: string;
+  width: number;
+  height: number;
+  comment: string;
+  count: number;
+  price: number;
+}
+interface BackendCapitalPayload {
+  name: string;
+  color: string;
+  covering: string;
+  width: number;
+  height: number;
+  comment: string;
+  count: number;
+}
+interface BackendPanelingPayload {
+  color: string;
+  size: string;
+  covering: string;
+  count: number;
+  price: number;
+  comment: string;
+}
 interface BackendOrderStatusPayload {
   status: number;
 }
@@ -158,44 +223,38 @@ export interface OrderRecord {
   status: OrderStatus;
 }
 
-@Injectable({
-  providedIn: 'root',
-})
+@Injectable({ providedIn: 'root' })
 export class OrdersService {
-  private readonly http: HttpClient = inject(HttpClient);
-  private readonly coreService: CoreService = inject(CoreService);
+  private readonly http = inject(HttpClient);
+  private readonly coreService = inject(CoreService);
 
   getOrders(): Observable<readonly OrderRecord[]> {
     return this.http
       .get<BackendOrder[]>(`${this.coreService.apiBaseUrl}/orders`)
       .pipe(map((orders) => orders.map((item) => this.mapBackendOrderToRecord(item))));
   }
-
   getOrder(id: number): Observable<OrderCreatePayload> {
     return this.http
       .get<BackendOrder>(`${this.coreService.apiBaseUrl}/orders/${id}`)
       .pipe(map((order) => this.mapBackendOrderToCreatePayload(order)));
   }
-
   createOrder(payload: OrderCreatePayload): Observable<number> {
     return this.http
       .post<BackendOrder>(`${this.coreService.apiBaseUrl}/orders`, this.mapCreatePayloadToBackend(payload))
       .pipe(map((order) => order.id));
   }
-
   updateOrder(id: number, payload: OrderCreatePayload): Observable<number> {
     return this.http
       .put<BackendOrder>(`${this.coreService.apiBaseUrl}/orders/${id}`, this.mapCreatePayloadToBackend(payload))
       .pipe(map((order) => order.id));
   }
-
   updateOrderStatus(id: number, status: OrderStatus): Observable<OrderStatus> {
-    const payload: BackendOrderStatusPayload = { status };
     return this.http
-      .patch<BackendOrder>(`${this.coreService.apiBaseUrl}/orders/${id}/status`, payload)
+      .patch<BackendOrder>(`${this.coreService.apiBaseUrl}/orders/${id}/status`, {
+        status,
+      } as BackendOrderStatusPayload)
       .pipe(map((order) => this.mapBackendStatusToOrderStatus(order.status)));
   }
-
   deleteOrder(id: number): Observable<void> {
     return this.http.delete<void>(`${this.coreService.apiBaseUrl}/orders/${id}`);
   }
@@ -215,10 +274,6 @@ export class OrdersService {
   }
 
   private mapBackendOrderToCreatePayload(order: BackendOrder): OrderCreatePayload {
-    const interiorDoors = (order.interiorDoors ?? []).map((item) => this.mapBackendDoorToDoorItem(item));
-    const entranceDoors = (order.entranceDoors ?? []).map((item) => this.mapBackendEntranceDoorToDoorItem(item));
-    const moldings = (order.moldings ?? []).map((item) => this.mapBackendMoldingToItem(item));
-
     return {
       name: order.customer,
       phone: order.phone,
@@ -229,9 +284,12 @@ export class OrdersService {
       deliveryAddress: order.deliveryAddress ?? '',
       comment: order.comment ?? '',
       status: this.mapBackendStatusToOrderStatus(order.status),
-      interiorDoors,
-      entranceDoors,
-      moldings,
+      interiorDoors: (order.interiorDoors ?? []).map((item) => this.mapBackendDoorToDoorItem(item)),
+      entranceDoors: (order.entranceDoors ?? []).map((item) => this.mapBackendEntranceDoorToDoorItem(item)),
+      moldings: (order.moldings ?? []).map((item) => this.mapBackendMoldingToItem(item)),
+      extensions: (order.extensions ?? []).map((item) => this.mapBackendExtensionToItem(item)),
+      capitals: (order.capitals ?? []).map((item) => this.mapBackendCapitalToItem(item)),
+      panelings: (order.panelings ?? []).map((item) => this.mapBackendPanelingToItem(item)),
     };
   }
 
@@ -239,7 +297,12 @@ export class OrdersService {
     const total =
       payload.interiorDoors.reduce((sum, item) => sum + item.price * item.count, 0) +
       payload.entranceDoors.reduce((sum, item) => sum + item.price * item.count, 0) +
-      payload.moldings.reduce((sum, item) => sum + item.framePrice * item.frameCount + item.platbandPrice * item.platbandCount, 0);
+      payload.moldings.reduce(
+        (sum, item) => sum + item.framePrice * item.frameCount + item.platbandPrice * item.platbandCount,
+        0,
+      ) +
+      payload.extensions.reduce((sum, item) => sum + item.price * item.count, 0) +
+      payload.panelings.reduce((sum, item) => sum + item.price * item.count, 0);
 
     return {
       customer: payload.name,
@@ -291,6 +354,32 @@ export class OrdersService {
         covering: item.covering,
         comment: item.comment,
       })),
+      extensions: payload.extensions.map((item) => ({
+        color: item.color,
+        covering: item.covering,
+        width: item.width,
+        height: item.height,
+        comment: item.comment,
+        count: item.count,
+        price: item.price,
+      })),
+      capitals: payload.capitals.map((item) => ({
+        name: item.name,
+        color: item.color,
+        covering: item.covering,
+        width: item.width,
+        height: item.height,
+        comment: item.comment,
+        count: item.count,
+      })),
+      panelings: payload.panelings.map((item) => ({
+        color: item.color,
+        size: item.size,
+        covering: item.covering,
+        count: item.count,
+        price: item.price,
+        comment: item.comment,
+      })),
     };
   }
 
@@ -306,11 +395,10 @@ export class OrdersService {
       hasGlass: door.hasGlass ?? false,
       leafType: door.leafType === DoorLeafType.Double ? DoorLeafType.Double : DoorLeafType.Single,
       count: door.count,
-      covering: this.mapBackendCoveringToCovering(door.covering),
+      covering: this.mapInteriorCovering(door.covering),
       comment: door.comment ?? '',
     };
   }
-
   private mapBackendEntranceDoorToDoorItem(door: BackendEntranceDoor): EntranceDoorItem {
     return {
       id: door.id,
@@ -328,7 +416,6 @@ export class OrdersService {
       comment: door.comment ?? '',
     };
   }
-
   private mapBackendMoldingToItem(item: BackendMolding): MoldingItem {
     return {
       id: item.id,
@@ -336,48 +423,115 @@ export class OrdersService {
       frameLength: item.frameLength ?? null,
       framePrice: item.framePrice,
       frameCount: item.frameCount,
-      platbandType: this.mapBackendPlatbandType(item.platbandType),
+      platbandType: this.mapMoldingPlatbandType(item.platbandType),
       platbandFigure: item.platbandFigure ?? null,
       platbandLength: item.platbandLength ?? null,
       platbandPrice: item.platbandPrice,
       platbandCount: item.platbandCount,
       rebateBarCount: item.rebateBarCount ?? 0,
       color: item.color ?? '',
-      covering: this.mapBackendMoldingCovering(item.covering),
+      covering: this.mapMoldingCovering(item.covering),
+      comment: item.comment ?? '',
+    };
+  }
+  private mapBackendExtensionToItem(item: BackendExtension): ExtensionItem {
+    return {
+      id: item.id,
+      type: OrderItemType.Extension,
+      color: item.color ?? '',
+      covering: this.mapExtensionCovering(item.covering),
+      width: item.width,
+      height: item.height,
+      comment: item.comment ?? '',
+      count: item.count,
+      price: item.price,
+    };
+  }
+  private mapBackendCapitalToItem(item: BackendCapital): CapitalItem {
+    return {
+      id: item.id,
+      type: OrderItemType.Capital,
+      name: item.name ?? '',
+      color: item.color ?? '',
+      covering: this.mapCapitalCovering(item.covering),
+      width: item.width,
+      height: item.height,
+      comment: item.comment ?? '',
+      count: item.count,
+    };
+  }
+  private mapBackendPanelingToItem(item: BackendPaneling): PanelingItem {
+    return {
+      id: item.id,
+      type: OrderItemType.Paneling,
+      color: item.color ?? '',
+      size: item.size ?? '',
+      covering: this.mapPanelingCovering(item.covering),
+      count: item.count,
+      price: item.price,
       comment: item.comment ?? '',
     };
   }
 
-  private mapBackendCoveringToCovering(covering?: string): InteriorDoorCovering {
-    switch (covering) {
+  private mapInteriorCovering(value?: string): InteriorDoorCovering {
+    switch (value) {
       case InteriorDoorCovering.Enamel:
       case InteriorDoorCovering.Veneer:
       case InteriorDoorCovering.Embossing:
       case InteriorDoorCovering.PVC:
-        return covering;
+        return value;
       default:
         return InteriorDoorCovering.PVC;
     }
   }
-
-  private mapBackendMoldingCovering(covering?: string): MoldingCovering {
-    switch (covering) {
+  private mapMoldingCovering(value?: string): MoldingCovering {
+    switch (value) {
       case MoldingCovering.Enamel:
       case MoldingCovering.Veneer:
       case MoldingCovering.Embossing:
       case MoldingCovering.PVC:
-        return covering;
+        return value;
       default:
         return MoldingCovering.Enamel;
     }
   }
-
-  private mapBackendPlatbandType(type?: string): MoldingPlatbandType {
-    switch (type) {
+  private mapExtensionCovering(value?: string): ExtensionCovering {
+    switch (value) {
+      case ExtensionCovering.Enamel:
+      case ExtensionCovering.Veneer:
+      case ExtensionCovering.Embossing:
+        return value;
+      default:
+        return ExtensionCovering.Enamel;
+    }
+  }
+  private mapCapitalCovering(value?: string): CapitalCovering {
+    switch (value) {
+      case CapitalCovering.Enamel:
+      case CapitalCovering.Veneer:
+      case CapitalCovering.Embossing:
+        return value;
+      default:
+        return CapitalCovering.Enamel;
+    }
+  }
+  private mapPanelingCovering(value?: string): PanelingCovering {
+    switch (value) {
+      case PanelingCovering.Enamel:
+      case PanelingCovering.Veneer:
+      case PanelingCovering.Embossing:
+      case PanelingCovering.PVC:
+        return value;
+      default:
+        return PanelingCovering.Enamel;
+    }
+  }
+  private mapMoldingPlatbandType(value?: string): MoldingPlatbandType {
+    switch (value) {
+      case MoldingPlatbandType.Oval:
       case MoldingPlatbandType.Smooth:
       case MoldingPlatbandType.Figure:
-      case MoldingPlatbandType.Oval:
-        return type;
+        return value;
       default:
         return MoldingPlatbandType.Oval;
     }
@@ -389,19 +543,16 @@ export class OrdersService {
         return OrderStatus.Progress;
       case BackendOrderStatus.Completed:
         return OrderStatus.Completed;
-      case BackendOrderStatus.Accepted:
       default:
         return OrderStatus.Accepted;
     }
   }
-
   private mapOrderStatusToBackendStatus(status: OrderStatus): BackendOrderStatus {
     switch (status) {
       case OrderStatus.Progress:
         return BackendOrderStatus.Progress;
       case OrderStatus.Completed:
         return BackendOrderStatus.Completed;
-      case OrderStatus.Accepted:
       default:
         return BackendOrderStatus.Accepted;
     }

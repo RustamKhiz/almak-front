@@ -14,27 +14,47 @@ import { Router } from '@angular/router';
 import { Observable, filter, switchMap } from 'rxjs';
 import { DOOR_LEAF_TYPE_LABELS } from '../../common/constants/door-catalog';
 import { INTERIOR_DOOR_COVERING_LABELS } from '../../common/constants/interior-door-covering';
+import {
+  CAPITAL_COVERING_LABELS,
+  EXTENSION_COVERING_LABELS,
+  MOLDING_COVERING_LABELS,
+  MOLDING_PLATBAND_TYPE_LABELS,
+  PANELING_COVERING_LABELS,
+} from '../../common/constants/molding-catalog';
 import { ORDER_STATUS_LABELS, ORDER_STATUS_OPTIONS } from '../../common/constants/order-status';
 import { ConfirmDialogComponent, ConfirmDialogData } from '../../common/confirm-dialog/confirm-dialog.component';
 import {
+  CapitalDialogComponent,
+  CapitalDialogData,
+} from '../../common/dialogs/capital-dialog/capital-dialog.component';
+import {
   EntranceDoorDialogComponent,
   EntranceDoorDialogData,
-  EntranceDoorDialogResult,
 } from '../../common/dialogs/entrance-door-dialog/entrance-door-dialog.component';
+import {
+  ExtensionDialogComponent,
+  ExtensionDialogData,
+} from '../../common/dialogs/extension-dialog/extension-dialog.component';
 import {
   InteriorDoorDialogComponent,
   InteriorDoorDialogData,
-  InteriorDoorDialogResult,
 } from '../../common/dialogs/interior-door-dialog/interior-door-dialog.component';
 import {
   MoldingDialogComponent,
   MoldingDialogData,
-  MoldingDialogResult,
 } from '../../common/dialogs/molding-dialog/molding-dialog.component';
+import {
+  PanelingDialogComponent,
+  PanelingDialogData,
+} from '../../common/dialogs/paneling-dialog/paneling-dialog.component';
 import { PhoneMaskDirective } from '../../common/directives/phone-mask.directive';
 import { OrdersService } from '../../services/orders.service';
 import {
+  CapitalCovering,
+  CapitalItem,
   EntranceDoorItem,
+  ExtensionCovering,
+  ExtensionItem,
   InteriorDoorItem,
   MoldingCovering,
   MoldingItem,
@@ -42,6 +62,8 @@ import {
   OrderCreatePayload,
   OrderItemType,
   OrderStatus,
+  PanelingCovering,
+  PanelingItem,
 } from '../../types/order.types';
 
 @Component({
@@ -75,6 +97,9 @@ export class OrderCreateComponent implements OnInit {
   protected readonly interiorDoors = signal<readonly InteriorDoorItem[]>([]);
   protected readonly entranceDoors = signal<readonly EntranceDoorItem[]>([]);
   protected readonly moldings = signal<readonly MoldingItem[]>([]);
+  protected readonly extensions = signal<readonly ExtensionItem[]>([]);
+  protected readonly capitals = signal<readonly CapitalItem[]>([]);
+  protected readonly panelings = signal<readonly PanelingItem[]>([]);
   protected readonly showOrdersError = signal(false);
   protected readonly isEditMode = signal(false);
   protected readonly prepayment = signal(0);
@@ -83,22 +108,18 @@ export class OrderCreateComponent implements OnInit {
   protected readonly statusLabels = ORDER_STATUS_LABELS;
   protected readonly doorLeafTypeLabels = DOOR_LEAF_TYPE_LABELS;
   protected readonly doorCoveringLabels = INTERIOR_DOOR_COVERING_LABELS;
-  protected readonly moldingPlatbandTypeLabels: Record<MoldingPlatbandType, string> = {
-    [MoldingPlatbandType.Oval]: 'овальный',
-    [MoldingPlatbandType.Smooth]: 'гладкий',
-    [MoldingPlatbandType.Figure]: 'фигурный',
-  };
-  protected readonly moldingCoveringLabels: Record<MoldingCovering, string> = {
-    [MoldingCovering.Enamel]: 'Эмаль',
-    [MoldingCovering.Veneer]: 'Шпон',
-    [MoldingCovering.Embossing]: 'Тиснение',
-    [MoldingCovering.PVC]: 'ПВХ',
-  };
+  protected readonly moldingPlatbandTypeLabels: Record<MoldingPlatbandType, string> = MOLDING_PLATBAND_TYPE_LABELS;
+  protected readonly moldingCoveringLabels: Record<MoldingCovering, string> = MOLDING_COVERING_LABELS;
+  protected readonly extensionCoveringLabels: Record<ExtensionCovering, string> = EXTENSION_COVERING_LABELS;
+  protected readonly capitalCoveringLabels: Record<CapitalCovering, string> = CAPITAL_COVERING_LABELS;
+  protected readonly panelingCoveringLabels: Record<PanelingCovering, string> = PANELING_COVERING_LABELS;
   protected readonly orderTotal = computed(
     () =>
-      this.interiorDoors().reduce((total, item) => total + item.price * item.count, 0) +
-      this.entranceDoors().reduce((total, item) => total + item.price * item.count, 0) +
-      this.moldings().reduce((total, item) => total + this.getMoldingTotal(item), 0),
+      this.interiorDoors().reduce((sum, item) => sum + item.price * item.count, 0) +
+      this.entranceDoors().reduce((sum, item) => sum + item.price * item.count, 0) +
+      this.moldings().reduce((sum, item) => sum + this.getMoldingTotal(item), 0) +
+      this.extensions().reduce((sum, item) => sum + this.getExtensionTotal(item), 0) +
+      this.panelings().reduce((sum, item) => sum + this.getPanelingTotal(item), 0),
   );
   protected readonly totalToPay = computed(() => Math.max(this.orderTotal() - this.discount(), 0));
   protected readonly customerDebt = computed(() => Math.max(this.totalToPay() - this.prepayment(), 0));
@@ -119,11 +140,9 @@ export class OrderCreateComponent implements OnInit {
     this.form.controls.prepayment.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((value) => {
       this.prepayment.set(Number(value ?? 0));
     });
-
     this.form.controls.discount.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((value) => {
       this.discount.set(Number(value ?? 0));
     });
-
     this.form.controls.needsDelivery.valueChanges
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((needsDelivery) => {
@@ -132,256 +151,138 @@ export class OrderCreateComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    const orderId = this.orderId();
-
-    if (!orderId) {
+    const id = this.orderId();
+    if (!id) {
       return;
     }
 
     this.isEditMode.set(true);
     this.ordersService
-      .getOrder(orderId)
+      .getOrder(id)
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((order) => {
-        this.applyOrder(order);
-      });
+      .subscribe((order) => this.applyOrder(order));
   }
 
   protected onAddInteriorDoorClick(): void {
-    const dialogRef = this.dialog.open(InteriorDoorDialogComponent, {
-      width: '520px',
-      data: {
-        mode: 'create',
-      } as InteriorDoorDialogData,
-    });
-
-    dialogRef
-      .afterClosed()
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((result: InteriorDoorDialogResult) => {
-        if (!result) {
-          return;
-        }
-
-        const current = this.interiorDoors();
-        this.interiorDoors.set([...current, { ...result, type: OrderItemType.InteriorDoor, id: this.nextId(current) }]);
-        this.syncQuantity();
-      });
+    this.openCreateDialog(
+      InteriorDoorDialogComponent,
+      { mode: 'create' } as InteriorDoorDialogData,
+      this.interiorDoors,
+    );
   }
-
   protected onAddEntranceDoorClick(): void {
-    const dialogRef = this.dialog.open(EntranceDoorDialogComponent, {
-      width: '640px',
-      data: {
-        mode: 'create',
-      } as EntranceDoorDialogData,
-    });
-
-    dialogRef
-      .afterClosed()
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((result: EntranceDoorDialogResult) => {
-        if (!result) {
-          return;
-        }
-
-        const current = this.entranceDoors();
-        this.entranceDoors.set([...current, { ...result, type: OrderItemType.EntranceDoor, id: this.nextId(current) }]);
-        this.syncQuantity();
-      });
+    this.openCreateDialog(
+      EntranceDoorDialogComponent,
+      { mode: 'create' } as EntranceDoorDialogData,
+      this.entranceDoors,
+    );
   }
-
   protected onAddMoldingClick(): void {
-    const dialogRef = this.dialog.open(MoldingDialogComponent, {
-      width: '640px',
-      data: {
-        mode: 'create',
-      } as MoldingDialogData,
-    });
-
-    dialogRef
-      .afterClosed()
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((result: MoldingDialogResult) => {
-        if (!result) {
-          return;
-        }
-
-        const current = this.moldings();
-        this.moldings.set([...current, { ...result, type: OrderItemType.Molding, id: this.nextId(current) }]);
-        this.syncQuantity();
-      });
+    this.openCreateDialog(MoldingDialogComponent, { mode: 'create' } as MoldingDialogData, this.moldings);
   }
-
   protected onAddExtensionClick(): void {
-    /* empty */
+    this.openCreateDialog(ExtensionDialogComponent, { mode: 'create' } as ExtensionDialogData, this.extensions);
   }
-
   protected onAddCapitalClick(): void {
-    /* empty */
+    this.openCreateDialog(CapitalDialogComponent, { mode: 'create' } as CapitalDialogData, this.capitals);
   }
-
+  protected onAddPanelingClick(): void {
+    this.openCreateDialog(PanelingDialogComponent, { mode: 'create' } as PanelingDialogData, this.panelings);
+  }
   protected onAddHardwareClick(): void {
     /* empty */
   }
 
   protected onEditInteriorDoorClick(id: number): void {
-    const current = this.interiorDoors();
-    const door = current.find((item) => item.id === id);
-    if (!door) {
-      return;
-    }
-
-    const dialogRef = this.dialog.open(InteriorDoorDialogComponent, {
-      width: '600px',
-      data: {
-        mode: 'edit',
-        door,
-      } as InteriorDoorDialogData,
-    });
-
-    dialogRef
-      .afterClosed()
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((result: InteriorDoorDialogResult) => {
-        if (!result) {
-          return;
-        }
-
-        this.interiorDoors.set(current.map((item) => (item.id === id ? { ...item, ...result } : item)));
-        this.syncQuantity();
-      });
+    this.openEditDialog(
+      InteriorDoorDialogComponent,
+      { mode: 'edit', door: this.findById(this.interiorDoors(), id) } as InteriorDoorDialogData,
+      this.interiorDoors,
+      id,
+    );
+  }
+  protected onEditEntranceDoorClick(id: number): void {
+    this.openEditDialog(
+      EntranceDoorDialogComponent,
+      { mode: 'edit', door: this.findById(this.entranceDoors(), id) } as EntranceDoorDialogData,
+      this.entranceDoors,
+      id,
+    );
+  }
+  protected onEditMoldingClick(id: number): void {
+    this.openEditDialog(
+      MoldingDialogComponent,
+      { mode: 'edit', molding: this.findById(this.moldings(), id) } as MoldingDialogData,
+      this.moldings,
+      id,
+    );
+  }
+  protected onEditExtensionClick(id: number): void {
+    this.openEditDialog(
+      ExtensionDialogComponent,
+      { mode: 'edit', extension: this.findById(this.extensions(), id) } as ExtensionDialogData,
+      this.extensions,
+      id,
+    );
+  }
+  protected onEditCapitalClick(id: number): void {
+    this.openEditDialog(
+      CapitalDialogComponent,
+      { mode: 'edit', capital: this.findById(this.capitals(), id) } as CapitalDialogData,
+      this.capitals,
+      id,
+    );
+  }
+  protected onEditPanelingClick(id: number): void {
+    this.openEditDialog(
+      PanelingDialogComponent,
+      { mode: 'edit', paneling: this.findById(this.panelings(), id) } as PanelingDialogData,
+      this.panelings,
+      id,
+    );
   }
 
   protected onRemoveInteriorDoorClick(id: number): void {
-    const current = this.interiorDoors();
-    this.interiorDoors.set(current.filter((item) => item.id !== id));
-    this.syncQuantity();
+    this.removeItem(this.interiorDoors, id);
+  }
+  protected onRemoveEntranceDoorClick(id: number): void {
+    this.removeItem(this.entranceDoors, id);
+  }
+  protected onRemoveMoldingClick(id: number): void {
+    this.removeItem(this.moldings, id);
+  }
+  protected onRemoveExtensionClick(id: number): void {
+    this.removeItem(this.extensions, id);
+  }
+  protected onRemoveCapitalClick(id: number): void {
+    this.removeItem(this.capitals, id);
+  }
+  protected onRemovePanelingClick(id: number): void {
+    this.removeItem(this.panelings, id);
   }
 
   protected onDuplicateInteriorDoorClick(id: number): void {
-    const current = this.interiorDoors();
-    const sourceIndex = current.findIndex((item) => item.id === id);
-
-    if (sourceIndex === -1) {
-      return;
-    }
-
-    const duplicatedDoor = {
-      ...current[sourceIndex],
-      id: this.nextId(current),
-    };
-
-    this.interiorDoors.set([...current.slice(0, sourceIndex + 1), duplicatedDoor, ...current.slice(sourceIndex + 1)]);
-    this.syncQuantity();
+    this.duplicateItem(this.interiorDoors, id);
   }
-
-  protected onEditEntranceDoorClick(id: number): void {
-    const current = this.entranceDoors();
-    const door = current.find((item) => item.id === id);
-    if (!door) {
-      return;
-    }
-
-    const dialogRef = this.dialog.open(EntranceDoorDialogComponent, {
-      width: '640px',
-      data: {
-        mode: 'edit',
-        door,
-      } as EntranceDoorDialogData,
-    });
-
-    dialogRef
-      .afterClosed()
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((result: EntranceDoorDialogResult) => {
-        if (!result) {
-          return;
-        }
-
-        this.entranceDoors.set(current.map((item) => (item.id === id ? { ...item, ...result } : item)));
-        this.syncQuantity();
-      });
-  }
-
-  protected onRemoveEntranceDoorClick(id: number): void {
-    const current = this.entranceDoors();
-    this.entranceDoors.set(current.filter((item) => item.id !== id));
-    this.syncQuantity();
-  }
-
   protected onDuplicateEntranceDoorClick(id: number): void {
-    const current = this.entranceDoors();
-    const sourceIndex = current.findIndex((item) => item.id === id);
-
-    if (sourceIndex === -1) {
-      return;
-    }
-
-    const duplicatedDoor = {
-      ...current[sourceIndex],
-      id: this.nextId(current),
-    };
-
-    this.entranceDoors.set([...current.slice(0, sourceIndex + 1), duplicatedDoor, ...current.slice(sourceIndex + 1)]);
-    this.syncQuantity();
+    this.duplicateItem(this.entranceDoors, id);
   }
-
-  protected onEditMoldingClick(id: number): void {
-    const current = this.moldings();
-    const molding = current.find((item) => item.id === id);
-    if (!molding) {
-      return;
-    }
-
-    const dialogRef = this.dialog.open(MoldingDialogComponent, {
-      width: '640px',
-      data: {
-        mode: 'edit',
-        molding,
-      } as MoldingDialogData,
-    });
-
-    dialogRef
-      .afterClosed()
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((result: MoldingDialogResult) => {
-        if (!result) {
-          return;
-        }
-
-        this.moldings.set(current.map((item) => (item.id === id ? { ...item, ...result } : item)));
-        this.syncQuantity();
-      });
-  }
-
-  protected onRemoveMoldingClick(id: number): void {
-    const current = this.moldings();
-    this.moldings.set(current.filter((item) => item.id !== id));
-    this.syncQuantity();
-  }
-
   protected onDuplicateMoldingClick(id: number): void {
-    const current = this.moldings();
-    const sourceIndex = current.findIndex((item) => item.id === id);
-
-    if (sourceIndex === -1) {
-      return;
-    }
-
-    const duplicatedMolding = {
-      ...current[sourceIndex],
-      id: this.nextId(current),
-    };
-
-    this.moldings.set([...current.slice(0, sourceIndex + 1), duplicatedMolding, ...current.slice(sourceIndex + 1)]);
-    this.syncQuantity();
+    this.duplicateItem(this.moldings, id);
+  }
+  protected onDuplicateExtensionClick(id: number): void {
+    this.duplicateItem(this.extensions, id);
+  }
+  protected onDuplicateCapitalClick(id: number): void {
+    this.duplicateItem(this.capitals, id);
+  }
+  protected onDuplicatePanelingClick(id: number): void {
+    this.duplicateItem(this.panelings, id);
   }
 
   protected onSaveClick(): void {
-    const hasOrders = this.interiorDoors().length > 0 || this.entranceDoors().length > 0 || this.moldings().length > 0;
+    const hasOrders = this.hasOrderItems();
     this.showOrdersError.set(!hasOrders);
-
     if (this.form.invalid || !hasOrders) {
       this.form.markAllAsTouched();
       return;
@@ -401,10 +302,13 @@ export class OrderCreateComponent implements OnInit {
       interiorDoors: this.interiorDoors(),
       entranceDoors: this.entranceDoors(),
       moldings: this.moldings(),
+      extensions: this.extensions(),
+      capitals: this.capitals(),
+      panelings: this.panelings(),
     };
 
     const dialogData: ConfirmDialogData = {
-      title: 'Подтверждение',
+      title: 'Сохранение заказа',
       message: 'Вы уверены, что хотите сохранить заказ?',
       confirmText: 'Да',
       cancelText: 'Нет',
@@ -418,45 +322,126 @@ export class OrderCreateComponent implements OnInit {
         switchMap(() => this.saveOrder(payload)),
         takeUntilDestroyed(this.destroyRef),
       )
-      .subscribe((savedOrderId) => {
-        this.router.navigate(['/order', savedOrderId]);
-      });
+      .subscribe((savedOrderId) => this.router.navigate(['/order', savedOrderId]));
   }
 
   protected onBackToOrderClick(): void {
-    const orderId = this.orderId();
-
-    if (!this.isEditMode() || !orderId) {
-      return;
+    const id = this.orderId();
+    if (this.isEditMode() && id) {
+      this.router.navigate(['/order', id]);
     }
-
-    this.router.navigate(['/order', orderId]);
   }
 
+  protected getMoldingTotal(item: MoldingItem): number {
+    return item.framePrice * item.frameCount + item.platbandPrice * item.platbandCount;
+  }
+  protected getExtensionTotal(item: ExtensionItem): number {
+    return item.price * item.count;
+  }
+  protected getPanelingTotal(item: PanelingItem): number {
+    return item.price * item.count;
+  }
+
+  private openCreateDialog<T extends { id: number; type: OrderItemType }, R extends Omit<T, 'id'>>(
+    component: object,
+    data: object,
+    target: { (): readonly T[]; set(value: readonly T[]): void },
+  ): void {
+    this.dialog
+      .open(component as never, { width: '640px', data })
+      .afterClosed()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((result: R | undefined) => {
+        if (!result) {
+          return;
+        }
+        const current = target();
+        target.set([...current, { ...result, id: this.nextId(current) } as unknown as T]);
+        this.syncQuantity();
+      });
+  }
+
+  private openEditDialog<T extends { id: number }, R extends Omit<T, 'id'>>(
+    component: object,
+    data: object,
+    target: { (): readonly T[]; set(value: readonly T[]): void },
+    id: number,
+  ): void {
+    const item = this.findById(target(), id);
+    if (!item) {
+      return;
+    }
+    this.dialog
+      .open(component as never, { width: '640px', data })
+      .afterClosed()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((result: R | undefined) => {
+        if (!result) {
+          return;
+        }
+        target.set(target().map((current) => (current.id === id ? { ...current, ...result } : current)));
+        this.syncQuantity();
+      });
+  }
+
+  private removeItem<T extends { id: number }>(
+    target: { (): readonly T[]; set(value: readonly T[]): void },
+    id: number,
+  ): void {
+    target.set(target().filter((item) => item.id !== id));
+    this.syncQuantity();
+  }
+
+  private duplicateItem<T extends { id: number }>(
+    target: { (): readonly T[]; set(value: readonly T[]): void },
+    id: number,
+  ): void {
+    const current = target();
+    const sourceIndex = current.findIndex((item) => item.id === id);
+    if (sourceIndex === -1) {
+      return;
+    }
+    const duplicated = { ...current[sourceIndex], id: this.nextId(current) };
+    target.set([...current.slice(0, sourceIndex + 1), duplicated, ...current.slice(sourceIndex + 1)]);
+    this.syncQuantity();
+  }
+
+  private findById<T extends { id: number }>(items: readonly T[], id: number): T | undefined {
+    return items.find((item) => item.id === id);
+  }
   private nextId(current: readonly { id: number }[]): number {
     return current.length ? Math.max(...current.map((item) => item.id)) + 1 : 1;
   }
-
+  private hasOrderItems(): boolean {
+    return (
+      this.interiorDoors().length > 0 ||
+      this.entranceDoors().length > 0 ||
+      this.moldings().length > 0 ||
+      this.extensions().length > 0 ||
+      this.capitals().length > 0 ||
+      this.panelings().length > 0
+    );
+  }
   private syncQuantity(): void {
-    if (this.interiorDoors().length || this.entranceDoors().length || this.moldings().length) {
+    if (this.hasOrderItems()) {
       this.showOrdersError.set(false);
     }
   }
 
   private saveOrder(payload: OrderCreatePayload): Observable<number> {
-    const orderId = this.orderId();
-
-    if (this.isEditMode() && orderId) {
-      return this.ordersService.updateOrder(orderId, payload);
-    }
-
-    return this.ordersService.createOrder(payload);
+    const id = this.orderId();
+    return this.isEditMode() && id
+      ? this.ordersService.updateOrder(id, payload)
+      : this.ordersService.createOrder(payload);
   }
 
   private applyOrder(order: OrderCreatePayload): void {
     this.interiorDoors.set(order.interiorDoors);
     this.entranceDoors.set(order.entranceDoors);
     this.moldings.set(order.moldings);
+    this.extensions.set(order.extensions);
+    this.capitals.set(order.capitals);
+    this.panelings.set(order.panelings);
     this.form.patchValue(
       {
         name: order.name,
@@ -477,21 +462,8 @@ export class OrderCreateComponent implements OnInit {
     this.syncQuantity();
   }
 
-  protected getMoldingTotal(item: MoldingItem): number {
-    return (
-      Number(item.framePrice ?? 0) * Number(item.frameCount ?? 0) +
-      Number(item.platbandPrice ?? 0) * Number(item.platbandCount ?? 0)
-    );
-  }
-
-  private syncDeliveryState(
-    needsDelivery: boolean,
-    options?: {
-      clearAddressWhenDisabled?: boolean;
-    },
-  ): void {
+  private syncDeliveryState(needsDelivery: boolean, options?: { clearAddressWhenDisabled?: boolean }): void {
     const clearAddressWhenDisabled = options?.clearAddressWhenDisabled ?? true;
-
     if (needsDelivery) {
       this.form.controls.deliveryAddress.addValidators([Validators.required]);
     } else {
@@ -500,15 +472,11 @@ export class OrderCreateComponent implements OnInit {
         this.form.controls.deliveryAddress.setValue('', { emitEvent: false });
       }
     }
-
     this.form.controls.deliveryAddress.updateValueAndValidity({ emitEvent: false });
   }
 
   private todayIso(): string {
     const now = new Date();
-    const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, '0');
-    const day = String(now.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
   }
 }

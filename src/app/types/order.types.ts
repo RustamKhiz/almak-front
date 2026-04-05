@@ -7,6 +7,9 @@ export enum OrderItemType {
   InteriorDoor = 'interiorDoor',
   EntranceDoor = 'entranceDoor',
   Molding = 'molding',
+  Extension = 'extension',
+  Capital = 'capital',
+  Paneling = 'paneling',
 }
 
 export enum InteriorDoorCovering {
@@ -28,6 +31,25 @@ export enum MoldingPlatbandType {
 }
 
 export enum MoldingCovering {
+  Enamel = 'Enamel',
+  Veneer = 'Veneer',
+  Embossing = 'Embossing',
+  PVC = 'PVC',
+}
+
+export enum ExtensionCovering {
+  Enamel = 'Enamel',
+  Veneer = 'Veneer',
+  Embossing = 'Embossing',
+}
+
+export enum CapitalCovering {
+  Enamel = 'Enamel',
+  Veneer = 'Veneer',
+  Embossing = 'Embossing',
+}
+
+export enum PanelingCovering {
   Enamel = 'Enamel',
   Veneer = 'Veneer',
   Embossing = 'Embossing',
@@ -94,6 +116,41 @@ export interface MoldingItem {
   comment: string;
 }
 
+export interface ExtensionItem {
+  id: number;
+  type: OrderItemType.Extension;
+  color: string;
+  covering: ExtensionCovering;
+  width: number;
+  height: number;
+  comment: string;
+  count: number;
+  price: number;
+}
+
+export interface CapitalItem {
+  id: number;
+  type: OrderItemType.Capital;
+  name: string;
+  color: string;
+  covering: CapitalCovering;
+  width: number;
+  height: number;
+  comment: string;
+  count: number;
+}
+
+export interface PanelingItem {
+  id: number;
+  type: OrderItemType.Paneling;
+  color: string;
+  size: string;
+  covering: PanelingCovering;
+  count: number;
+  price: number;
+  comment: string;
+}
+
 export interface OrderCustomerForm {
   name: string;
   phone: string;
@@ -110,4 +167,7 @@ export interface OrderCreatePayload extends OrderCustomerForm {
   interiorDoors: readonly InteriorDoorItem[];
   entranceDoors: readonly EntranceDoorItem[];
   moldings: readonly MoldingItem[];
+  extensions: readonly ExtensionItem[];
+  capitals: readonly CapitalItem[];
+  panelings: readonly PanelingItem[];
 }

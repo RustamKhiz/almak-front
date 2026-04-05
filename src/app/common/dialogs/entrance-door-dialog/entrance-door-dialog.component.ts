@@ -72,7 +72,7 @@ export class EntranceDoorDialogComponent {
   });
 
   protected readonly title = computed(() =>
-    this.data.mode === 'edit' ? 'Редактировать входную дверь' : 'Добавить входную дверь',
+    this.data.mode === 'edit' ? 'Р РµРґР°РєС‚РёСЂРѕРІР°С‚СЊ РІС…РѕРґРЅСѓСЋ РґРІРµСЂСЊ' : 'Р”РѕР±Р°РІРёС‚СЊ РІС…РѕРґРЅСѓСЋ РґРІРµСЂСЊ',
   );
 
   constructor() {

@@ -1,5 +1,4 @@
 @let $state = state();
-
 <section class="order-view">
   <header class="order-view__header">
     <div>
@@ -17,9 +16,7 @@
           </button>
           <mat-menu #statusMenu="matMenu">
             @for (status of statusOptions; track status) {
-              <button mat-menu-item type="button" (click)="onStatusChange(status)">
-                {{ getStatusLabel(status) }}
-              </button>
+              <button mat-menu-item type="button" (click)="onStatusChange(status)">{{ getStatusLabel(status) }}</button>
             }
           </mat-menu>
         }
@@ -30,10 +27,10 @@
     </div>
     @if ($state) {
       <div class="order-view__actions">
-        <button mat-flat-button color="warn" (click)="onDeleteClick()">Удалить</button>
-        <button mat-stroked-button (click)="onPrintClick()">Печать</button>
-        <button mat-stroked-button (click)="onDownloadClick()">Скачать .doc</button>
-        <button mat-flat-button color="primary" [routerLink]="['/order', $state.id, 'edit']">Редактировать</button>
+        <button mat-flat-button color="warn" (click)="onDeleteClick()">Удалить</button
+        ><button mat-stroked-button (click)="onPrintClick()">Печать</button
+        ><button mat-stroked-button (click)="onDownloadClick()">Скачать .doc</button
+        ><button mat-flat-button color="primary" [routerLink]="['/order', $state.id, 'edit']">Редактировать</button>
       </div>
     }
   </header>
@@ -96,7 +93,14 @@
 
       <div class="order-view__card">
         <h2>Товары</h2>
-        @if ($state.data.interiorDoors.length || $state.data.entranceDoors.length || $state.data.moldings.length) {
+        @if (
+          $state.data.interiorDoors.length ||
+          $state.data.entranceDoors.length ||
+          $state.data.moldings.length ||
+          $state.data.extensions.length ||
+          $state.data.capitals.length ||
+          $state.data.panelings.length
+        ) {
           <div class="order-view__list">
             @for (door of $state.data.interiorDoors; track door.id) {
               <div class="order-view__item">
@@ -107,8 +111,7 @@
                     @if (door.width2 !== null) {
                       + {{ door.width2 }}
                     }
-                    × {{ door.height }} см ·
-                    {{ leafTypesLabels[door.leafType] }}
+                    × {{ door.height }} см · {{ leafTypesLabels[door.leafType] }}
                     @if (door.hasGlass) {
                       · со стеклом
                     }
@@ -121,7 +124,6 @@
                 <div class="order-view__price">{{ door.price | number }} ₽</div>
               </div>
             }
-
             @for (door of $state.data.entranceDoors; track door.id) {
               <div class="order-view__item">
                 <div>
@@ -147,7 +149,6 @@
                 <div class="order-view__price">{{ door.price | number }} ₽</div>
               </div>
             }
-
             @for (molding of $state.data.moldings; track molding.id) {
               <div class="order-view__item">
                 <div>
@@ -176,6 +177,53 @@
                   </div>
                 </div>
                 <div class="order-view__price">{{ getMoldingTotal(molding) | number: '1.0-0' }} ₽</div>
+              </div>
+            }
+            @for (item of $state.data.extensions; track item.id) {
+              <div class="order-view__item">
+                <div>
+                  <div class="order-view__value">
+                    Доборы · {{ item.color }} · {{ extensionCoveringLabels[item.covering] }}
+                  </div>
+                  <div class="order-view__meta">
+                    {{ item.width }} × {{ item.height }} см · количество {{ item.count }}
+                    @if (item.comment) {
+                      · {{ item.comment }}
+                    }
+                  </div>
+                </div>
+                <div class="order-view__price">{{ getExtensionTotal(item) | number: '1.0-0' }} ₽</div>
+              </div>
+            }
+            @for (item of $state.data.capitals; track item.id) {
+              <div class="order-view__item">
+                <div>
+                  <div class="order-view__value">Капитель · {{ item.name }}</div>
+                  <div class="order-view__meta">
+                    цвет {{ item.color }} · {{ capitalCoveringLabels[item.covering] }} · {{ item.width }} ×
+                    {{ item.height }} см · количество {{ item.count }}
+                    @if (item.comment) {
+                      · {{ item.comment }}
+                    }
+                  </div>
+                </div>
+                <div class="order-view__price">0 ₽</div>
+              </div>
+            }
+            @for (item of $state.data.panelings; track item.id) {
+              <div class="order-view__item">
+                <div>
+                  <div class="order-view__value">
+                    Обшивка · {{ item.color }} · {{ panelingCoveringLabels[item.covering] }}
+                  </div>
+                  <div class="order-view__meta">
+                    размер {{ item.size }} · количество {{ item.count }}
+                    @if (item.comment) {
+                      · {{ item.comment }}
+                    }
+                  </div>
+                </div>
+                <div class="order-view__price">{{ getPanelingTotal(item) | number: '1.0-0' }} ₽</div>
               </div>
             }
           </div>
