@@ -12,15 +12,6 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatSelectModule } from '@angular/material/select';
 import { Router } from '@angular/router';
 import { Observable, filter, switchMap } from 'rxjs';
-import { DOOR_LEAF_TYPE_LABELS } from '../../common/constants/door-catalog';
-import { INTERIOR_DOOR_COVERING_LABELS } from '../../common/constants/interior-door-covering';
-import {
-  CAPITAL_COVERING_LABELS,
-  EXTENSION_COVERING_LABELS,
-  MOLDING_COVERING_LABELS,
-  MOLDING_PLATBAND_TYPE_LABELS,
-  PANELING_COVERING_LABELS,
-} from '../../common/constants/molding-catalog';
 import { ORDER_STATUS_LABELS, ORDER_STATUS_OPTIONS } from '../../common/constants/order-status';
 import { ConfirmDialogComponent, ConfirmDialogData } from '../../common/confirm-dialog/confirm-dialog.component';
 import {
@@ -52,58 +43,27 @@ import {
   PanelingDialogData,
 } from '../../common/dialogs/paneling-dialog/paneling-dialog.component';
 import { PhoneMaskDirective } from '../../common/directives/phone-mask.directive';
-import {
-  getCapitalTotal,
-  getCustomerDebt,
-  getExtensionTotal,
-  getHardwareTotal,
-  getMoldingTotal,
-  getOrderTotal,
-  getPanelingTotal,
-  getTotalToPay,
-} from '../../common/utils/order-calculations';
+import { getCustomerDebt, getOrderTotal, getTotalToPay } from '../../common/utils/order-calculations';
 import { OrdersService } from '../../services/orders.service';
 import {
-  CapitalCovering,
   CapitalItem,
   EntranceDoorItem,
-  ExtensionCovering,
   ExtensionItem,
   HardwareItem,
   InteriorDoorItem,
-  MoldingCovering,
   MoldingItem,
-  MoldingPlatbandType,
   OrderCreatePayload,
   OrderStatus,
-  PanelingCovering,
   PanelingItem,
 } from '../../types/order.types';
+import { OrderItemsListComponent } from './order-items-list/order-items-list.component';
 import { addItem, duplicateItem, findItemById, hasItems, removeItem, updateItem } from './order-item-helpers';
+import { OrderEntityItem, OrderItemActionEvent, OrderItemEntity } from './order-item-types';
 
 interface ItemCollection<T> {
   (): readonly T[];
   set(value: readonly T[]): void;
 }
-
-enum OrderItemEntity {
-  InteriorDoor = 'interiorDoor',
-  EntranceDoor = 'entranceDoor',
-  Molding = 'molding',
-  Extension = 'extension',
-  Capital = 'capital',
-  Hardware = 'hardware',
-  Paneling = 'paneling',
-}
-
-type OrderEntityItem =
-  | InteriorDoorItem
-  | EntranceDoorItem
-  | MoldingItem
-  | ExtensionItem
-  | CapitalItem
-  | HardwareItem
-  | PanelingItem;
 
 interface OrderItemEntityConfig {
   collection: ItemCollection<OrderEntityItem>;
@@ -126,6 +86,7 @@ interface OrderItemEntityConfig {
     MatMenuModule,
     MatSelectModule,
     PhoneMaskDirective,
+    OrderItemsListComponent,
   ],
   templateUrl: './order-create.component.html',
   styleUrl: './order-create.component.scss',
@@ -156,13 +117,6 @@ export class OrderCreateComponent implements OnInit {
   protected readonly discount = signal(0);
   protected readonly statusOptions = ORDER_STATUS_OPTIONS;
   protected readonly statusLabels = ORDER_STATUS_LABELS;
-  protected readonly doorLeafTypeLabels = DOOR_LEAF_TYPE_LABELS;
-  protected readonly doorCoveringLabels = INTERIOR_DOOR_COVERING_LABELS;
-  protected readonly moldingPlatbandTypeLabels: Record<MoldingPlatbandType, string> = MOLDING_PLATBAND_TYPE_LABELS;
-  protected readonly moldingCoveringLabels: Record<MoldingCovering, string> = MOLDING_COVERING_LABELS;
-  protected readonly extensionCoveringLabels: Record<ExtensionCovering, string> = EXTENSION_COVERING_LABELS;
-  protected readonly capitalCoveringLabels: Record<CapitalCovering, string> = CAPITAL_COVERING_LABELS;
-  protected readonly panelingCoveringLabels: Record<PanelingCovering, string> = PANELING_COVERING_LABELS;
   protected readonly orderItemEntity = OrderItemEntity;
   protected readonly draftOrder = computed(() => this.buildOrderPayload());
   protected readonly orderTotal = computed(() => getOrderTotal(this.draftOrder()));
@@ -271,6 +225,18 @@ export class OrderCreateComponent implements OnInit {
     this.syncQuantity();
   }
 
+  protected onItemEditClick(event: OrderItemActionEvent): void {
+    this.onEditItemClick(event.entity, event.id);
+  }
+
+  protected onItemDuplicateClick(event: OrderItemActionEvent): void {
+    this.onDuplicateItemClick(event.entity, event.id);
+  }
+
+  protected onItemRemoveClick(event: OrderItemActionEvent): void {
+    this.onRemoveItemClick(event.entity, event.id);
+  }
+
   protected onSaveClick(): void {
     const hasOrders = this.hasOrderItems();
     this.showOrdersError.set(!hasOrders);
@@ -317,26 +283,6 @@ export class OrderCreateComponent implements OnInit {
     if (this.isEditMode() && id) {
       this.router.navigate(['/order', id]);
     }
-  }
-
-  protected getMoldingTotal(item: MoldingItem): number {
-    return getMoldingTotal(item);
-  }
-
-  protected getExtensionTotal(item: ExtensionItem): number {
-    return getExtensionTotal(item);
-  }
-
-  protected getPanelingTotal(item: PanelingItem): number {
-    return getPanelingTotal(item);
-  }
-
-  protected getCapitalTotal(item: CapitalItem): number {
-    return getCapitalTotal(item);
-  }
-
-  protected getHardwareTotal(item: HardwareItem): number {
-    return getHardwareTotal(item);
   }
 
   private findById<T extends { id: number }>(items: readonly T[], id: number): T | undefined {

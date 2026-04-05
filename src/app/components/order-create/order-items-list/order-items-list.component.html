@@ -1,0 +1,481 @@
+@let interiorDoorItems = interiorDoors();
+@let entranceDoorItems = entranceDoors();
+@let moldingItems = moldings();
+@let extensionItems = extensions();
+@let capitalItems = capitals();
+@let hardwareItems = hardwares();
+@let panelingItems = panelings();
+
+@if (hasItems()) {
+  <div class="door-list">
+    @if (interiorDoorItems.length) {
+      <div class="door-section">
+        <div class="door-section__title">Межкомнатные двери</div>
+        @for (door of interiorDoorItems; track door.id) {
+          <div class="door-item">
+            <div class="door-item__main">
+              <div class="door-item__title">Межкомнатная дверь · {{ door.model }}</div>
+              <div class="door-item__meta">
+                {{ door.width }}
+                @if (door.width2 !== null) {
+                  + {{ door.width2 }}
+                }
+                × {{ door.height }} см · {{ doorLeafTypeLabels[door.leafType] }} ·
+                {{ doorCoveringLabels[door.covering] }}
+                @if (door.hasGlass) {
+                  · со стеклом
+                }
+                · количество {{ door.count }}
+                @if (door.comment) {
+                  · {{ door.comment }}
+                }
+              </div>
+            </div>
+            <div class="door-item__aside">
+              <div class="door-item__price">{{ door.price | number: '1.0-0' }} ₽</div>
+              <div class="door-item__actions">
+                <button
+                  mat-icon-button
+                  type="button"
+                  aria-label="Дублировать"
+                  (click)="onDuplicateClick(orderItemEntity.InteriorDoor, door.id)"
+                >
+                  <mat-icon>content_copy</mat-icon>
+                </button>
+                <button
+                  mat-icon-button
+                  type="button"
+                  aria-label="Редактировать"
+                  (click)="onEditClick(orderItemEntity.InteriorDoor, door.id)"
+                >
+                  <mat-icon>edit</mat-icon>
+                </button>
+                <button
+                  mat-icon-button
+                  type="button"
+                  color="warn"
+                  aria-label="Удалить"
+                  (click)="onRemoveClick(orderItemEntity.InteriorDoor, door.id)"
+                >
+                  <mat-icon>delete</mat-icon>
+                </button>
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+    }
+    @if (entranceDoorItems.length) {
+      <div class="door-section">
+        <div class="door-section__title">Входные двери</div>
+        @for (door of entranceDoorItems; track door.id) {
+          <div class="door-item">
+            <div class="door-item__main">
+              <div class="door-item__title">
+                Входная дверь · {{ door.kind === 'welded' ? 'сварочная' : 'фабричная' }} · {{ door.model }}
+              </div>
+              <div class="door-item__meta">
+                {{ door.width }} × {{ door.height }} см · цвет {{ door.color }} · количество {{ door.count }}
+                @if (door.painting) {
+                  · покраска {{ door.painting }}
+                }
+                @if (door.panelColor) {
+                  · обшивка {{ door.panelColor }}
+                }
+                @if (door.hasPeephole !== null) {
+                  · глазок {{ door.hasPeephole ? 'есть' : 'нет' }}
+                }
+                @if (door.comment) {
+                  · {{ door.comment }}
+                }
+              </div>
+            </div>
+            <div class="door-item__aside">
+              <div class="door-item__price">{{ door.price | number: '1.0-0' }} ₽</div>
+              <div class="door-item__actions">
+                <button
+                  mat-icon-button
+                  type="button"
+                  aria-label="Дублировать"
+                  (click)="onDuplicateClick(orderItemEntity.EntranceDoor, door.id)"
+                >
+                  <mat-icon>content_copy</mat-icon>
+                </button>
+                <button
+                  mat-icon-button
+                  type="button"
+                  aria-label="Редактировать"
+                  (click)="onEditClick(orderItemEntity.EntranceDoor, door.id)"
+                >
+                  <mat-icon>edit</mat-icon>
+                </button>
+                <button
+                  mat-icon-button
+                  type="button"
+                  color="warn"
+                  aria-label="Удалить"
+                  (click)="onRemoveClick(orderItemEntity.EntranceDoor, door.id)"
+                >
+                  <mat-icon>delete</mat-icon>
+                </button>
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+    }
+    @if (moldingItems.length) {
+      <div class="door-section">
+        <div class="door-section__title">Погонаж</div>
+        @for (molding of moldingItems; track molding.id) {
+          <div class="door-item">
+            <div class="door-item__main">
+              <div class="door-item__title">
+                Погонаж · {{ molding.color }} · {{ moldingCoveringLabels[molding.covering] }}
+              </div>
+              <div class="door-item__meta">
+                Коробка:
+                @if (molding.frameLength !== null) {
+                  {{ molding.frameLength }} см,
+                }
+                цена {{ molding.framePrice | number: '1.0-0' }} ₽, количество {{ molding.frameCount }} · Наличник
+                {{ moldingPlatbandTypeLabels[molding.platbandType] }}
+                @if (molding.platbandFigure) {
+                  ({{ molding.platbandFigure }})
+                }
+                :
+                @if (molding.platbandLength !== null) {
+                  {{ molding.platbandLength }} см,
+                }
+                цена {{ molding.platbandPrice | number: '1.0-0' }} ₽, количество {{ molding.platbandCount }} ·
+                Притворная планка {{ molding.rebateBarCount }}
+                @if (molding.comment) {
+                  · {{ molding.comment }}
+                }
+              </div>
+            </div>
+            <div class="door-item__aside">
+              <div class="door-item__price">{{ getMoldingTotal(molding) | number: '1.0-0' }} ₽</div>
+              <div class="door-item__actions">
+                <button
+                  mat-icon-button
+                  type="button"
+                  aria-label="Дублировать"
+                  (click)="onDuplicateClick(orderItemEntity.Molding, molding.id)"
+                >
+                  <mat-icon>content_copy</mat-icon>
+                </button>
+                <button
+                  mat-icon-button
+                  type="button"
+                  aria-label="Редактировать"
+                  (click)="onEditClick(orderItemEntity.Molding, molding.id)"
+                >
+                  <mat-icon>edit</mat-icon>
+                </button>
+                <button
+                  mat-icon-button
+                  type="button"
+                  color="warn"
+                  aria-label="Удалить"
+                  (click)="onRemoveClick(orderItemEntity.Molding, molding.id)"
+                >
+                  <mat-icon>delete</mat-icon>
+                </button>
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+    }
+    @if (extensionItems.length) {
+      <div class="door-section">
+        <div class="door-section__title">Доборы</div>
+        @for (item of extensionItems; track item.id) {
+          <div class="door-item">
+            <div class="door-item__main">
+              <div class="door-item__title">
+                Доборы · {{ item.color }} · {{ extensionCoveringLabels[item.covering] }}
+              </div>
+              <div class="door-item__meta">
+                {{ item.width }} × {{ item.height }} см · количество {{ item.count }}
+                @if (item.comment) {
+                  · {{ item.comment }}
+                }
+              </div>
+            </div>
+            <div class="door-item__aside">
+              <div class="door-item__price">{{ getExtensionTotal(item) | number: '1.0-0' }} ₽</div>
+              <div class="door-item__actions">
+                <button
+                  mat-icon-button
+                  type="button"
+                  aria-label="Дублировать"
+                  (click)="onDuplicateClick(orderItemEntity.Extension, item.id)"
+                >
+                  <mat-icon>content_copy</mat-icon>
+                </button>
+                <button
+                  mat-icon-button
+                  type="button"
+                  aria-label="Редактировать"
+                  (click)="onEditClick(orderItemEntity.Extension, item.id)"
+                >
+                  <mat-icon>edit</mat-icon>
+                </button>
+                <button
+                  mat-icon-button
+                  type="button"
+                  color="warn"
+                  aria-label="Удалить"
+                  (click)="onRemoveClick(orderItemEntity.Extension, item.id)"
+                >
+                  <mat-icon>delete</mat-icon>
+                </button>
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+    }
+    @if (capitalItems.length) {
+      <div class="door-section">
+        <div class="door-section__title">Капитель</div>
+        @for (item of capitalItems; track item.id) {
+          <div class="door-item">
+            <div class="door-item__main">
+              <div class="door-item__title">Капитель · {{ item.name }}</div>
+              <div class="door-item__meta">
+                цвет {{ item.color }} · {{ capitalCoveringLabels[item.covering] }} · {{ item.width }} ×
+                {{ item.height }} см · количество {{ item.count }} · цена {{ item.price | number: '1.0-0' }} ₽
+                @if (item.comment) {
+                  · {{ item.comment }}
+                }
+              </div>
+            </div>
+            <div class="door-item__aside">
+              <div class="door-item__price">{{ getCapitalTotal(item) | number: '1.0-0' }} ₽</div>
+              <div class="door-item__actions">
+                <button
+                  mat-icon-button
+                  type="button"
+                  aria-label="Дублировать"
+                  (click)="onDuplicateClick(orderItemEntity.Capital, item.id)"
+                >
+                  <mat-icon>content_copy</mat-icon>
+                </button>
+                <button
+                  mat-icon-button
+                  type="button"
+                  aria-label="Редактировать"
+                  (click)="onEditClick(orderItemEntity.Capital, item.id)"
+                >
+                  <mat-icon>edit</mat-icon>
+                </button>
+                <button
+                  mat-icon-button
+                  type="button"
+                  color="warn"
+                  aria-label="Удалить"
+                  (click)="onRemoveClick(orderItemEntity.Capital, item.id)"
+                >
+                  <mat-icon>delete</mat-icon>
+                </button>
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+    }
+    @if (hardwareItems.length) {
+      <div class="door-section">
+        <div class="door-section__title">Фурнитура</div>
+        @for (item of hardwareItems; track item.id) {
+          <div class="door-item">
+            <div class="door-item__main">
+              <div class="door-item__title">
+                Фурнитура
+                @if (item.handleModel) {
+                  · Ручка {{ item.handleModel }}
+                }
+              </div>
+              <div class="door-item__meta">
+                @if (item.handleModel || item.handleColor || item.handleCount !== null || item.handlePrice !== null) {
+                  Ручка
+                  @if (item.handleModel) {
+                    {{ item.handleModel }}
+                  }
+                  @if (item.handleColor) {
+                    · цвет {{ item.handleColor }}
+                  }
+                  @if (item.handleCount !== null) {
+                    · кол-во {{ item.handleCount }}
+                  }
+                  @if (item.handlePrice !== null) {
+                    · цена {{ item.handlePrice | number: '1.0-0' }} ₽
+                  }
+                }
+                @if (item.mechanismType || item.mechanismCount !== null || item.mechanismPrice !== null) {
+                  · Механизм
+                  {{ item.mechanismType === 'fixator' ? 'фиксатор' : item.mechanismType === 'lock' ? 'замок' : '' }}
+                  @if (item.mechanismCount !== null) {
+                    · кол-во {{ item.mechanismCount }}
+                  }
+                  @if (item.mechanismPrice !== null) {
+                    · цена {{ item.mechanismPrice | number: '1.0-0' }} ₽
+                  }
+                }
+                @if (item.thumbturnCount !== null || item.thumbturnPrice !== null) {
+                  · Крутилка
+                  @if (item.thumbturnCount !== null) {
+                    · кол-во {{ item.thumbturnCount }}
+                  }
+                  @if (item.thumbturnPrice !== null) {
+                    · цена {{ item.thumbturnPrice | number: '1.0-0' }} ₽
+                  }
+                }
+                @if (item.escutcheonCount !== null || item.escutcheonPrice !== null) {
+                  · Накладка
+                  @if (item.escutcheonCount !== null) {
+                    · кол-во {{ item.escutcheonCount }}
+                  }
+                  @if (item.escutcheonPrice !== null) {
+                    · цена {{ item.escutcheonPrice | number: '1.0-0' }} ₽
+                  }
+                }
+                @if (item.cylinderCount !== null || item.cylinderPrice !== null) {
+                  · Барабан
+                  @if (item.cylinderCount !== null) {
+                    · кол-во {{ item.cylinderCount }}
+                  }
+                  @if (item.cylinderPrice !== null) {
+                    · цена {{ item.cylinderPrice | number: '1.0-0' }} ₽
+                  }
+                }
+                @if (item.boltCount !== null || item.boltPrice !== null) {
+                  · Шпингалет
+                  @if (item.boltCount !== null) {
+                    · кол-во {{ item.boltCount }}
+                  }
+                  @if (item.boltPrice !== null) {
+                    · цена {{ item.boltPrice | number: '1.0-0' }} ₽
+                  }
+                }
+                @if (item.hingeCount !== null || item.hingePrice !== null) {
+                  · Петли
+                  @if (item.hingeCount !== null) {
+                    · кол-во {{ item.hingeCount }}
+                  }
+                  @if (item.hingePrice !== null) {
+                    · цена {{ item.hingePrice | number: '1.0-0' }} ₽
+                  }
+                }
+                @if (item.doorStopCount !== null || item.doorStopPrice !== null) {
+                  · Ограничитель
+                  @if (item.doorStopCount !== null) {
+                    · кол-во {{ item.doorStopCount }}
+                  }
+                  @if (item.doorStopPrice !== null) {
+                    · цена {{ item.doorStopPrice | number: '1.0-0' }} ₽
+                  }
+                }
+                @if (item.comment) {
+                  · {{ item.comment }}
+                }
+              </div>
+            </div>
+            <div class="door-item__aside">
+              <div class="door-item__price">{{ getHardwareTotal(item) | number: '1.0-0' }} ₽</div>
+              <div class="door-item__actions">
+                <button
+                  mat-icon-button
+                  type="button"
+                  aria-label="Дублировать"
+                  (click)="onDuplicateClick(orderItemEntity.Hardware, item.id)"
+                >
+                  <mat-icon>content_copy</mat-icon>
+                </button>
+                <button
+                  mat-icon-button
+                  type="button"
+                  aria-label="Редактировать"
+                  (click)="onEditClick(orderItemEntity.Hardware, item.id)"
+                >
+                  <mat-icon>edit</mat-icon>
+                </button>
+                <button
+                  mat-icon-button
+                  type="button"
+                  color="warn"
+                  aria-label="Удалить"
+                  (click)="onRemoveClick(orderItemEntity.Hardware, item.id)"
+                >
+                  <mat-icon>delete</mat-icon>
+                </button>
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+    }
+    @if (panelingItems.length) {
+      <div class="door-section">
+        <div class="door-section__title">Обшивка</div>
+        @for (item of panelingItems; track item.id) {
+          <div class="door-item">
+            <div class="door-item__main">
+              <div class="door-item__title">
+                Обшивка · {{ item.color }} · {{ panelingCoveringLabels[item.covering] }}
+              </div>
+              <div class="door-item__meta">
+                размер {{ item.size }} · количество {{ item.count }}
+                @if (item.comment) {
+                  · {{ item.comment }}
+                }
+              </div>
+            </div>
+            <div class="door-item__aside">
+              <div class="door-item__price">{{ getPanelingTotal(item) | number: '1.0-0' }} ₽</div>
+              <div class="door-item__actions">
+                <button
+                  mat-icon-button
+                  type="button"
+                  aria-label="Дублировать"
+                  (click)="onDuplicateClick(orderItemEntity.Paneling, item.id)"
+                >
+                  <mat-icon>content_copy</mat-icon>
+                </button>
+                <button
+                  mat-icon-button
+                  type="button"
+                  aria-label="Редактировать"
+                  (click)="onEditClick(orderItemEntity.Paneling, item.id)"
+                >
+                  <mat-icon>edit</mat-icon>
+                </button>
+                <button
+                  mat-icon-button
+                  type="button"
+                  color="warn"
+                  aria-label="Удалить"
+                  (click)="onRemoveClick(orderItemEntity.Paneling, item.id)"
+                >
+                  <mat-icon>delete</mat-icon>
+                </button>
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+    }
+  </div>
+} @else {
+  <div class="empty">
+    <div class="empty__title">Товары пока не добавлены.</div>
+    <div class="empty__text">Нажмите «Добавить», чтобы начать формирование заказа.</div>
+  </div>
+}
+
+@if (showOrdersError() && !hasItems()) {
+  <div class="order-items-list__error">Добавьте хотя бы один товар.</div>
+}
