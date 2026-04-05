@@ -14,13 +14,17 @@
     <div class="order-create__header-actions">
       <button mat-flat-button color="primary" [matMenuTriggerFor]="addItemMenu">Добавить</button>
       <mat-menu #addItemMenu="matMenu">
-        <button mat-menu-item type="button" (click)="onAddInteriorDoorClick()">Межкомнатная дверь</button>
-        <button mat-menu-item type="button" (click)="onAddEntranceDoorClick()">Входная дверь</button>
-        <button mat-menu-item type="button" (click)="onAddMoldingClick()">Погонаж</button>
-        <button mat-menu-item type="button" (click)="onAddExtensionClick()">Доборы</button>
-        <button mat-menu-item type="button" (click)="onAddCapitalClick()">Капитель</button>
-        <button mat-menu-item type="button" (click)="onAddHardwareClick()">Фурнитура</button>
-        <button mat-menu-item type="button" (click)="onAddPanelingClick()">Обшивка</button>
+        <button mat-menu-item type="button" (click)="onAddItemClick(orderItemEntity.InteriorDoor)">
+          Межкомнатная дверь
+        </button>
+        <button mat-menu-item type="button" (click)="onAddItemClick(orderItemEntity.EntranceDoor)">
+          Входная дверь
+        </button>
+        <button mat-menu-item type="button" (click)="onAddItemClick(orderItemEntity.Molding)">Погонаж</button>
+        <button mat-menu-item type="button" (click)="onAddItemClick(orderItemEntity.Extension)">Доборы</button>
+        <button mat-menu-item type="button" (click)="onAddItemClick(orderItemEntity.Capital)">Капитель</button>
+        <button mat-menu-item type="button" (click)="onAddItemClick(orderItemEntity.Hardware)">Фурнитура</button>
+        <button mat-menu-item type="button" (click)="onAddItemClick(orderItemEntity.Paneling)">Обшивка</button>
       </mat-menu>
     </div>
   </header>
@@ -145,7 +149,7 @@
                     mat-icon-button
                     type="button"
                     aria-label="Дублировать"
-                    (click)="onDuplicateInteriorDoorClick(door.id)"
+                    (click)="onDuplicateItemClick(orderItemEntity.InteriorDoor, door.id)"
                   >
                     <mat-icon>content_copy</mat-icon>
                   </button>
@@ -153,7 +157,7 @@
                     mat-icon-button
                     type="button"
                     aria-label="Редактировать"
-                    (click)="onEditInteriorDoorClick(door.id)"
+                    (click)="onEditItemClick(orderItemEntity.InteriorDoor, door.id)"
                   >
                     <mat-icon>edit</mat-icon>
                   </button>
@@ -162,7 +166,7 @@
                     type="button"
                     color="warn"
                     aria-label="Удалить"
-                    (click)="onRemoveInteriorDoorClick(door.id)"
+                    (click)="onRemoveItemClick(orderItemEntity.InteriorDoor, door.id)"
                   >
                     <mat-icon>delete</mat-icon>
                   </button>
@@ -204,7 +208,7 @@
                     mat-icon-button
                     type="button"
                     aria-label="Дублировать"
-                    (click)="onDuplicateEntranceDoorClick(door.id)"
+                    (click)="onDuplicateItemClick(orderItemEntity.EntranceDoor, door.id)"
                   >
                     <mat-icon>content_copy</mat-icon>
                   </button>
@@ -212,7 +216,7 @@
                     mat-icon-button
                     type="button"
                     aria-label="Редактировать"
-                    (click)="onEditEntranceDoorClick(door.id)"
+                    (click)="onEditItemClick(orderItemEntity.EntranceDoor, door.id)"
                   >
                     <mat-icon>edit</mat-icon>
                   </button>
@@ -221,7 +225,7 @@
                     type="button"
                     color="warn"
                     aria-label="Удалить"
-                    (click)="onRemoveEntranceDoorClick(door.id)"
+                    (click)="onRemoveItemClick(orderItemEntity.EntranceDoor, door.id)"
                   >
                     <mat-icon>delete</mat-icon>
                   </button>
@@ -268,7 +272,7 @@
                     mat-icon-button
                     type="button"
                     aria-label="Дублировать"
-                    (click)="onDuplicateMoldingClick(molding.id)"
+                    (click)="onDuplicateItemClick(orderItemEntity.Molding, molding.id)"
                   >
                     <mat-icon>content_copy</mat-icon>
                   </button>
@@ -276,7 +280,7 @@
                     mat-icon-button
                     type="button"
                     aria-label="Редактировать"
-                    (click)="onEditMoldingClick(molding.id)"
+                    (click)="onEditItemClick(orderItemEntity.Molding, molding.id)"
                   >
                     <mat-icon>edit</mat-icon>
                   </button>
@@ -285,7 +289,7 @@
                     type="button"
                     color="warn"
                     aria-label="Удалить"
-                    (click)="onRemoveMoldingClick(molding.id)"
+                    (click)="onRemoveItemClick(orderItemEntity.Molding, molding.id)"
                   >
                     <mat-icon>delete</mat-icon>
                   </button>
@@ -318,7 +322,7 @@
                     mat-icon-button
                     type="button"
                     aria-label="Дублировать"
-                    (click)="onDuplicateExtensionClick(item.id)"
+                    (click)="onDuplicateItemClick(orderItemEntity.Extension, item.id)"
                   >
                     <mat-icon>content_copy</mat-icon>
                   </button>
@@ -326,7 +330,7 @@
                     mat-icon-button
                     type="button"
                     aria-label="Редактировать"
-                    (click)="onEditExtensionClick(item.id)"
+                    (click)="onEditItemClick(orderItemEntity.Extension, item.id)"
                   >
                     <mat-icon>edit</mat-icon>
                   </button>
@@ -335,7 +339,7 @@
                     type="button"
                     color="warn"
                     aria-label="Удалить"
-                    (click)="onRemoveExtensionClick(item.id)"
+                    (click)="onRemoveItemClick(orderItemEntity.Extension, item.id)"
                   >
                     <mat-icon>delete</mat-icon>
                   </button>
@@ -367,7 +371,7 @@
                     mat-icon-button
                     type="button"
                     aria-label="Дублировать"
-                    (click)="onDuplicateCapitalClick(item.id)"
+                    (click)="onDuplicateItemClick(orderItemEntity.Capital, item.id)"
                   >
                     <mat-icon>content_copy</mat-icon>
                   </button>
@@ -375,7 +379,7 @@
                     mat-icon-button
                     type="button"
                     aria-label="Редактировать"
-                    (click)="onEditCapitalClick(item.id)"
+                    (click)="onEditItemClick(orderItemEntity.Capital, item.id)"
                   >
                     <mat-icon>edit</mat-icon>
                   </button>
@@ -384,7 +388,7 @@
                     type="button"
                     color="warn"
                     aria-label="Удалить"
-                    (click)="onRemoveCapitalClick(item.id)"
+                    (click)="onRemoveItemClick(orderItemEntity.Capital, item.id)"
                   >
                     <mat-icon>delete</mat-icon>
                   </button>
@@ -498,7 +502,7 @@
                     mat-icon-button
                     type="button"
                     aria-label="Дублировать"
-                    (click)="onDuplicateHardwareClick(item.id)"
+                    (click)="onDuplicateItemClick(orderItemEntity.Hardware, item.id)"
                   >
                     <mat-icon>content_copy</mat-icon>
                   </button>
@@ -506,7 +510,7 @@
                     mat-icon-button
                     type="button"
                     aria-label="Редактировать"
-                    (click)="onEditHardwareClick(item.id)"
+                    (click)="onEditItemClick(orderItemEntity.Hardware, item.id)"
                   >
                     <mat-icon>edit</mat-icon>
                   </button>
@@ -515,7 +519,7 @@
                     type="button"
                     color="warn"
                     aria-label="Удалить"
-                    (click)="onRemoveHardwareClick(item.id)"
+                    (click)="onRemoveItemClick(orderItemEntity.Hardware, item.id)"
                   >
                     <mat-icon>delete</mat-icon>
                   </button>
@@ -548,7 +552,7 @@
                     mat-icon-button
                     type="button"
                     aria-label="Дублировать"
-                    (click)="onDuplicatePanelingClick(item.id)"
+                    (click)="onDuplicateItemClick(orderItemEntity.Paneling, item.id)"
                   >
                     <mat-icon>content_copy</mat-icon>
                   </button>
@@ -556,7 +560,7 @@
                     mat-icon-button
                     type="button"
                     aria-label="Редактировать"
-                    (click)="onEditPanelingClick(item.id)"
+                    (click)="onEditItemClick(orderItemEntity.Paneling, item.id)"
                   >
                     <mat-icon>edit</mat-icon>
                   </button>
@@ -565,7 +569,7 @@
                     type="button"
                     color="warn"
                     aria-label="Удалить"
-                    (click)="onRemovePanelingClick(item.id)"
+                    (click)="onRemoveItemClick(orderItemEntity.Paneling, item.id)"
                   >
                     <mat-icon>delete</mat-icon>
                   </button>

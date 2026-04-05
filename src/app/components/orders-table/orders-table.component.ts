@@ -1,4 +1,13 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, effect, inject, viewChild } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  DestroyRef,
+  OnInit,
+  effect,
+  inject,
+  signal,
+  viewChild,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { MatChipsModule } from '@angular/material/chips';
@@ -37,6 +46,8 @@ export class OrdersTableComponent implements OnInit {
   private readonly paginator = viewChild(MatPaginator);
 
   protected readonly dataSource = new MatTableDataSource<OrderRecord>([]);
+  protected readonly isLoading = signal(true);
+  protected readonly loadError = signal<string | null>(null);
   protected readonly displayedColumns = [
     'id',
     'customer',
@@ -92,9 +103,17 @@ export class OrdersTableComponent implements OnInit {
     this.ordersService
       .getOrders()
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((orders) => {
-        this.allOrders = [...orders];
-        this.applyFilters();
+      .subscribe({
+        next: (orders) => {
+          this.allOrders = [...orders];
+          this.applyFilters();
+          this.loadError.set(null);
+          this.isLoading.set(false);
+        },
+        error: () => {
+          this.loadError.set('Не удалось загрузить список заказов.');
+          this.isLoading.set(false);
+        },
       });
   }
 
@@ -110,11 +129,16 @@ export class OrdersTableComponent implements OnInit {
     this.ordersService
       .updateOrderStatus(orderId, status)
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((nextStatus) => {
-        this.allOrders = this.allOrders.map((order) =>
-          order.id === orderId ? { ...order, status: nextStatus } : order,
-        );
-        this.applyFilters();
+      .subscribe({
+        next: (nextStatus) => {
+          this.allOrders = this.allOrders.map((order) =>
+            order.id === orderId ? { ...order, status: nextStatus } : order,
+          );
+          this.applyFilters();
+        },
+        error: () => {
+          this.loadError.set('Не удалось обновить статус заказа.');
+        },
       });
   }
 

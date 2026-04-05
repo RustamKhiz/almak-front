@@ -111,16 +111,16 @@ export class InteriorDoorDialogComponent {
     const value = this.form.getRawValue();
     this.dialogRef.close({
       type: OrderItemType.InteriorDoor,
-      model: value.model ?? '',
-      hasGlass: value.hasGlass ?? false,
-      width: value.width ?? DEFAULT_INTERIOR_DOOR_WIDTH,
-      width2: value.leafType === DoorLeafType.Double ? (value.width2 ?? DEFAULT_INTERIOR_DOOR_WIDTH) : null,
-      height: value.height ?? DEFAULT_INTERIOR_DOOR_HEIGHT,
-      price: value.price ?? 0,
-      leafType: value.leafType ?? DoorLeafType.Single,
-      count: Math.max(1, Number(value.count ?? 1)),
-      covering: value.covering ?? DEFAULT_INTERIOR_DOOR_COVERING,
-      comment: value.comment?.trim() ?? '',
+      model: value.model!.trim(),
+      hasGlass: value.hasGlass,
+      width: value.width,
+      width2: value.leafType === DoorLeafType.Double ? value.width2! : null,
+      height: value.height,
+      price: value.price,
+      leafType: value.leafType,
+      count: value.count,
+      covering: value.covering,
+      comment: value.comment?.trim() || '',
     });
   }
 }

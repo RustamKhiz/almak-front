@@ -43,7 +43,7 @@ export class ExtensionDialogComponent {
   protected readonly coveringOptions = EXTENSION_COVERING_OPTIONS;
   protected readonly coveringLabels = EXTENSION_COVERING_LABELS;
 
-  protected readonly form = this.fb.group({
+  protected readonly form = this.fb.nonNullable.group({
     color: [this.data.extension?.color ?? '', [Validators.required]],
     covering: [this.data.extension?.covering ?? DEFAULT_EXTENSION_COVERING, [Validators.required]],
     width: [this.data.extension?.width ?? 0, [Validators.required, Validators.min(1)]],
@@ -68,13 +68,13 @@ export class ExtensionDialogComponent {
     const value = this.form.getRawValue();
     this.dialogRef.close({
       type: OrderItemType.Extension,
-      color: value.color?.trim() ?? '',
-      covering: value.covering ?? DEFAULT_EXTENSION_COVERING,
-      width: Number(value.width ?? 0),
-      height: Number(value.height ?? 0),
-      comment: value.comment?.trim() ?? '',
-      count: Math.max(1, Number(value.count ?? 1)),
-      price: Number(value.price ?? 0),
+      color: value.color.trim(),
+      covering: value.covering,
+      width: value.width,
+      height: value.height,
+      comment: value.comment.trim(),
+      count: value.count,
+      price: value.price,
     });
   }
 }

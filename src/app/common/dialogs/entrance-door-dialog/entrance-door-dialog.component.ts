@@ -57,7 +57,7 @@ export class EntranceDoorDialogComponent {
   protected readonly panelColorOptions = ENTRANCE_DOOR_PANEL_COLOR_OPTIONS;
   protected readonly isWelded = signal(this.data.door?.kind === EntranceDoorKind.Welded);
 
-  protected readonly form = this.fb.group({
+  protected readonly form = this.fb.nonNullable.group({
     kind: [this.data.door?.kind ?? EntranceDoorKind.Factory, [Validators.required]],
     model: [this.data.door?.model ?? '', [Validators.required]],
     width: [this.data.door?.width ?? this.widthOptions[0], [Validators.required, Validators.min(1)]],
@@ -96,21 +96,21 @@ export class EntranceDoorDialogComponent {
     }
 
     const value = this.form.getRawValue();
-    const kind = value.kind ?? EntranceDoorKind.Factory;
+    const kind = value.kind;
 
     this.dialogRef.close({
       type: OrderItemType.EntranceDoor,
       kind,
-      model: value.model?.trim() ?? '',
-      width: Number(value.width ?? this.widthOptions[0]),
-      height: Number(value.height ?? this.heightOptions[2]),
-      color: value.color?.trim() ?? '',
+      model: value.model.trim(),
+      width: value.width,
+      height: value.height,
+      color: value.color.trim(),
       painting: kind === EntranceDoorKind.Welded ? this.normalizeText(value.painting) : null,
       panelColor: kind === EntranceDoorKind.Welded ? this.normalizeText(value.panelColor) : null,
-      hasPeephole: kind === EntranceDoorKind.Welded ? Boolean(value.hasPeephole) : null,
-      comment: value.comment?.trim() ?? '',
-      count: Math.max(1, Number(value.count ?? 1)),
-      price: Number(value.price ?? 0),
+      hasPeephole: kind === EntranceDoorKind.Welded ? value.hasPeephole : null,
+      comment: value.comment.trim(),
+      count: value.count,
+      price: value.price,
     });
   }
 

@@ -43,7 +43,7 @@ export class CapitalDialogComponent {
   protected readonly coveringOptions = CAPITAL_COVERING_OPTIONS;
   protected readonly coveringLabels = CAPITAL_COVERING_LABELS;
 
-  protected readonly form = this.fb.group({
+  protected readonly form = this.fb.nonNullable.group({
     name: [this.data.capital?.name ?? '', [Validators.required]],
     color: [this.data.capital?.color ?? '', [Validators.required]],
     covering: [this.data.capital?.covering ?? DEFAULT_CAPITAL_COVERING, [Validators.required]],
@@ -70,14 +70,14 @@ export class CapitalDialogComponent {
     const value = this.form.getRawValue();
     this.dialogRef.close({
       type: OrderItemType.Capital,
-      name: value.name?.trim() ?? '',
-      color: value.color?.trim() ?? '',
-      covering: value.covering ?? DEFAULT_CAPITAL_COVERING,
-      width: Number(value.width ?? 0),
-      height: Number(value.height ?? 0),
-      price: Number(value.price ?? 0),
-      comment: value.comment?.trim() ?? '',
-      count: Math.max(1, Number(value.count ?? 1)),
+      name: value.name.trim(),
+      color: value.color.trim(),
+      covering: value.covering,
+      width: value.width,
+      height: value.height,
+      price: value.price,
+      comment: value.comment.trim(),
+      count: value.count,
     });
   }
 }

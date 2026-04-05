@@ -15,6 +15,16 @@ import { OrderDocumentService } from '../../services/order-document.service';
 import { OrderPrintService } from '../../services/order-print.service';
 import { OrdersService } from '../../services/orders.service';
 import {
+  getCapitalTotal,
+  getCustomerDebt,
+  getExtensionTotal,
+  getHardwareTotal,
+  getMoldingTotal,
+  getOrderTotal,
+  getPanelingTotal,
+  getTotalToPay,
+} from '../../common/utils/order-calculations';
+import {
   CapitalCovering,
   CapitalItem,
   DoorLeafType,
@@ -62,6 +72,7 @@ export class OrderViewComponent {
   private readonly destroyRef = inject(DestroyRef);
 
   protected readonly isLoading = signal(true);
+  protected readonly errorMessage = signal<string | null>(null);
   protected readonly state = signal<OrderViewState | null>(null);
   protected readonly statusOptions = ORDER_STATUS_OPTIONS;
   protected readonly leafTypesLabels: Record<DoorLeafType, string> = {
@@ -118,11 +129,18 @@ export class OrderViewComponent {
         filter((ok) => ok === true),
         switchMap(() => {
           this.isLoading.set(true);
+          this.errorMessage.set(null);
           return this.ordersService.deleteOrder(current.id);
         }),
         takeUntilDestroyed(this.destroyRef),
       )
-      .subscribe({ next: () => this.router.navigate(['/orders']), error: () => this.isLoading.set(false) });
+      .subscribe({
+        next: () => this.router.navigate(['/orders']),
+        error: () => {
+          this.errorMessage.set('Не удалось удалить заказ.');
+          this.isLoading.set(false);
+        },
+      });
   }
 
   protected onDownloadClick(): void {
@@ -148,12 +166,18 @@ export class OrderViewComponent {
     this.ordersService
       .updateOrderStatus(current.id, status)
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((nextStatus) => {
-        const state = this.state();
-        if (!state) {
-          return;
-        }
-        this.state.set({ ...state, data: { ...state.data, status: nextStatus } });
+      .subscribe({
+        next: (nextStatus) => {
+          const state = this.state();
+          if (!state) {
+            return;
+          }
+          this.errorMessage.set(null);
+          this.state.set({ ...state, data: { ...state.data, status: nextStatus } });
+        },
+        error: () => {
+          this.errorMessage.set('Не удалось обновить статус заказа.');
+        },
       });
   }
 
@@ -161,59 +185,45 @@ export class OrderViewComponent {
     return getOrderStatusLabel(status);
   }
   protected getOrderTotal(order: OrderCreatePayload): number {
-    return (
-      order.interiorDoors.reduce((sum, item) => sum + item.price * item.count, 0) +
-      order.entranceDoors.reduce((sum, item) => sum + item.price * item.count, 0) +
-      order.moldings.reduce((sum, item) => sum + this.getMoldingTotal(item), 0) +
-      order.extensions.reduce((sum, item) => sum + this.getExtensionTotal(item), 0) +
-      order.capitals.reduce((sum, item) => sum + this.getCapitalTotal(item), 0) +
-      order.hardwares.reduce((sum, item) => sum + this.getHardwareTotal(item), 0) +
-      order.panelings.reduce((sum, item) => sum + this.getPanelingTotal(item), 0)
-    );
+    return getOrderTotal(order);
   }
   protected getTotalToPay(order: OrderCreatePayload): number {
-    return Math.max(this.getOrderTotal(order) - order.discount, 0);
+    return getTotalToPay(order);
   }
   protected getCustomerDebt(order: OrderCreatePayload): number {
-    return Math.max(this.getTotalToPay(order) - order.prepayment, 0);
+    return getCustomerDebt(order);
   }
   protected getMoldingTotal(item: MoldingItem): number {
-    return item.framePrice * item.frameCount + item.platbandPrice * item.platbandCount;
+    return getMoldingTotal(item);
   }
   protected getExtensionTotal(item: ExtensionItem): number {
-    return item.price * item.count;
+    return getExtensionTotal(item);
   }
   protected getPanelingTotal(item: PanelingItem): number {
-    return item.price * item.count;
+    return getPanelingTotal(item);
   }
   protected getHardwareTotal(item: HardwareItem): number {
-    return (
-      getOptionalTotal(item.handleCount, item.handlePrice) +
-      getOptionalTotal(item.mechanismCount, item.mechanismPrice) +
-      getOptionalTotal(item.thumbturnCount, item.thumbturnPrice) +
-      getOptionalTotal(item.escutcheonCount, item.escutcheonPrice) +
-      getOptionalTotal(item.cylinderCount, item.cylinderPrice) +
-      getOptionalTotal(item.boltCount, item.boltPrice) +
-      getOptionalTotal(item.hingeCount, item.hingePrice) +
-      getOptionalTotal(item.doorStopCount, item.doorStopPrice)
-    );
+    return getHardwareTotal(item);
   }
   protected getCapitalTotal(item: CapitalItem): number {
-    return item.price * item.count;
+    return getCapitalTotal(item);
   }
 
   private fetchOrder(id: number): void {
     this.isLoading.set(true);
+    this.errorMessage.set(null);
     this.ordersService
       .getOrder(id)
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((data) => {
-        this.state.set({ id, data });
-        this.isLoading.set(false);
+      .subscribe({
+        next: (data) => {
+          this.state.set({ id, data });
+          this.isLoading.set(false);
+        },
+        error: () => {
+          this.errorMessage.set('Не удалось загрузить заказ.');
+          this.isLoading.set(false);
+        },
       });
   }
-}
-
-function getOptionalTotal(count: number | null, price: number | null): number {
-  return Number(count ?? 0) * Number(price ?? 0);
 }

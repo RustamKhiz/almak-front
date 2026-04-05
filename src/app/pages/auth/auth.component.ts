@@ -20,7 +20,7 @@ export class AuthComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly authService = inject(AuthService);
   private readonly destroyRef = inject(DestroyRef);
-  protected readonly authError = signal<string>(null);
+  protected readonly authError = signal<string | null>(null);
   protected readonly isSubmitting = signal<boolean>(false);
 
   protected readonly form = this.fb.group({

@@ -92,8 +92,8 @@ export class HardwareDialogComponent {
     const value = this.form.getRawValue();
     this.dialogRef.close({
       type: OrderItemType.Hardware,
-      handleModel: value.handleModel?.trim() ?? '',
-      handleColor: value.handleColor?.trim() ?? '',
+      handleModel: value.handleModel?.trim() || '',
+      handleColor: value.handleColor?.trim() || '',
       handleCount: normalizeOptionalNumber(value.handleCount),
       handlePrice: normalizeOptionalNumber(value.handlePrice),
       mechanismType: value.mechanismType ?? null,
@@ -111,7 +111,7 @@ export class HardwareDialogComponent {
       hingePrice: normalizeOptionalNumber(value.hingePrice),
       doorStopCount: normalizeOptionalNumber(value.doorStopCount),
       doorStopPrice: normalizeOptionalNumber(value.doorStopPrice),
-      comment: value.comment?.trim() ?? '',
+      comment: value.comment?.trim() || '',
     });
   }
 }
@@ -141,9 +141,9 @@ function hardwareNotEmptyValidator(): ValidatorFn {
 }
 
 function normalizeOptionalNumber(value: number | null | undefined): number | null {
-  if (value === null || value === undefined || Number.isNaN(Number(value))) {
+  if (value === null || value === undefined || Number.isNaN(value)) {
     return null;
   }
 
-  return Number(value);
+  return value;
 }

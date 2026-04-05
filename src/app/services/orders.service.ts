@@ -24,6 +24,7 @@ import {
   PanelingCovering,
   PanelingItem,
 } from '../types/order.types';
+import { getOrderTotal } from '../common/utils/order-calculations';
 import { CoreService } from './core.service';
 
 interface BackendOrder {
@@ -347,23 +348,11 @@ export class OrdersService {
   }
 
   private mapCreatePayloadToBackend(payload: OrderCreatePayload): BackendOrderPayload {
-    const total =
-      payload.interiorDoors.reduce((sum, item) => sum + item.price * item.count, 0) +
-      payload.entranceDoors.reduce((sum, item) => sum + item.price * item.count, 0) +
-      payload.moldings.reduce(
-        (sum, item) => sum + item.framePrice * item.frameCount + item.platbandPrice * item.platbandCount,
-        0,
-      ) +
-      payload.extensions.reduce((sum, item) => sum + item.price * item.count, 0) +
-      payload.capitals.reduce((sum, item) => sum + item.price * item.count, 0) +
-      payload.hardwares.reduce((sum, item) => sum + this.getHardwareTotal(item), 0) +
-      payload.panelings.reduce((sum, item) => sum + item.price * item.count, 0);
-
     return {
       customer: payload.name,
       phone: payload.phone,
       date: payload.date,
-      price: total,
+      price: getOrderTotal(payload),
       prepayment: payload.prepayment,
       discount: payload.discount,
       needsDelivery: payload.needsDelivery,
@@ -671,23 +660,6 @@ export class OrdersService {
         return BackendOrderStatus.Accepted;
     }
   }
-
-  private getHardwareTotal(item: HardwareItem): number {
-    return (
-      getOptionalTotal(item.handleCount, item.handlePrice) +
-      getOptionalTotal(item.mechanismCount, item.mechanismPrice) +
-      getOptionalTotal(item.thumbturnCount, item.thumbturnPrice) +
-      getOptionalTotal(item.escutcheonCount, item.escutcheonPrice) +
-      getOptionalTotal(item.cylinderCount, item.cylinderPrice) +
-      getOptionalTotal(item.boltCount, item.boltPrice) +
-      getOptionalTotal(item.hingeCount, item.hingePrice) +
-      getOptionalTotal(item.doorStopCount, item.doorStopPrice)
-    );
-  }
-}
-
-function getOptionalTotal(count: number | null, price: number | null): number {
-  return Number(count ?? 0) * Number(price ?? 0);
 }
 
 function normalizeOptionalString(value: string): string | null {

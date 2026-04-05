@@ -95,18 +95,18 @@ export class MoldingDialogComponent {
     this.dialogRef.close({
       type: OrderItemType.Molding,
       frameLength: this.normalizeOptionalNumber(value.frameLength),
-      framePrice: Number(value.framePrice ?? 0),
-      frameCount: Math.max(1, Number(value.frameCount ?? 1)),
-      platbandType: value.platbandType ?? DEFAULT_MOLDING_PLATBAND_TYPE,
+      framePrice: value.framePrice!,
+      frameCount: value.frameCount!,
+      platbandType: value.platbandType!,
       platbandFigure:
         value.platbandType === MoldingPlatbandType.Figure ? this.normalizeText(value.platbandFigure) : null,
       platbandLength: this.normalizeOptionalNumber(value.platbandLength),
-      platbandPrice: Number(value.platbandPrice ?? 0),
-      platbandCount: Math.max(1, Number(value.platbandCount ?? 1)),
-      rebateBarCount: Math.max(0, Number(value.rebateBarCount ?? 0)),
-      color: value.color?.trim() ?? '',
-      covering: value.covering ?? DEFAULT_MOLDING_COVERING,
-      comment: value.comment?.trim() ?? '',
+      platbandPrice: value.platbandPrice!,
+      platbandCount: value.platbandCount!,
+      rebateBarCount: value.rebateBarCount!,
+      color: value.color!.trim(),
+      covering: value.covering!,
+      comment: value.comment?.trim() || '',
     });
   }
 
@@ -133,7 +133,7 @@ export class MoldingDialogComponent {
   }
 
   private normalizeText(value: string | null | undefined): string | null {
-    const normalized = value?.trim() ?? '';
+    const normalized = value?.trim() || '';
     return normalized ? normalized : null;
   }
 }

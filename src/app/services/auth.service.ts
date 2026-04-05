@@ -30,7 +30,7 @@ export class AuthService {
   }
 
   logout(): void {
-    localStorage.clear();
+    this.clearToken();
   }
 
   hasToken(): boolean {
@@ -39,6 +39,10 @@ export class AuthService {
 
   getToken(): string | null {
     return localStorage.getItem(this.tokenKey);
+  }
+
+  clearToken(): void {
+    localStorage.removeItem(this.tokenKey);
   }
 
   private setToken(token: string): void {

@@ -43,7 +43,7 @@ export class PanelingDialogComponent {
   protected readonly coveringOptions = PANELING_COVERING_OPTIONS;
   protected readonly coveringLabels = PANELING_COVERING_LABELS;
 
-  protected readonly form = this.fb.group({
+  protected readonly form = this.fb.nonNullable.group({
     color: [this.data.paneling?.color ?? '', [Validators.required]],
     size: [this.data.paneling?.size ?? '', [Validators.required]],
     covering: [this.data.paneling?.covering ?? DEFAULT_PANELING_COVERING, [Validators.required]],
@@ -66,12 +66,12 @@ export class PanelingDialogComponent {
     const value = this.form.getRawValue();
     this.dialogRef.close({
       type: OrderItemType.Paneling,
-      color: value.color?.trim() ?? '',
-      size: value.size?.trim() ?? '',
-      covering: value.covering ?? DEFAULT_PANELING_COVERING,
-      count: Math.max(1, Number(value.count ?? 1)),
-      price: Number(value.price ?? 0),
-      comment: value.comment?.trim() ?? '',
+      color: value.color.trim(),
+      size: value.size.trim(),
+      covering: value.covering,
+      count: value.count,
+      price: value.price,
+      comment: value.comment.trim(),
     });
   }
 }
