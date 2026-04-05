@@ -7,13 +7,17 @@ import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatMenuModule } from '@angular/material/menu';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { filter, switchMap } from 'rxjs';
+import { DOOR_LEAF_TYPE_LABELS } from '../../common/constants/door-catalog';
+import {
+  CAPITAL_COVERING_LABELS,
+  EXTENSION_COVERING_LABELS,
+  MOLDING_COVERING_LABELS,
+  MOLDING_PLATBAND_TYPE_LABELS,
+  PANELING_COVERING_LABELS,
+} from '../../common/constants/molding-catalog';
 import { ORDER_STATUS_OPTIONS, getOrderStatusLabel } from '../../common/constants/order-status';
 import { ConfirmDialogComponent, ConfirmDialogData } from '../../common/confirm-dialog/confirm-dialog.component';
 import { PhoneFormatPipe } from '../../common/pipes/phone-format.pipe';
-import { FileDownloadService } from '../../services/file-download.service';
-import { OrderDocumentService } from '../../services/order-document.service';
-import { OrderPrintService } from '../../services/order-print.service';
-import { OrdersService } from '../../services/orders.service';
 import {
   getCapitalTotal,
   getCustomerDebt,
@@ -24,19 +28,17 @@ import {
   getPanelingTotal,
   getTotalToPay,
 } from '../../common/utils/order-calculations';
+import { FileDownloadService } from '../../services/file-download.service';
+import { OrderDocumentService } from '../../services/order-document.service';
+import { OrderPrintService } from '../../services/order-print.service';
+import { OrdersService } from '../../services/orders.service';
 import {
-  CapitalCovering,
   CapitalItem,
-  DoorLeafType,
-  ExtensionCovering,
   ExtensionItem,
   HardwareItem,
-  MoldingCovering,
   MoldingItem,
-  MoldingPlatbandType,
   OrderCreatePayload,
   OrderStatus,
-  PanelingCovering,
   PanelingItem,
 } from '../../types/order.types';
 
@@ -75,37 +77,12 @@ export class OrderViewComponent {
   protected readonly errorMessage = signal<string | null>(null);
   protected readonly state = signal<OrderViewState | null>(null);
   protected readonly statusOptions = ORDER_STATUS_OPTIONS;
-  protected readonly leafTypesLabels: Record<DoorLeafType, string> = {
-    Single: 'одностворчатая',
-    Double: 'двустворчатая',
-  };
-  protected readonly moldingPlatbandTypeLabels: Record<MoldingPlatbandType, string> = {
-    [MoldingPlatbandType.Oval]: 'овальный',
-    [MoldingPlatbandType.Smooth]: 'гладкий',
-    [MoldingPlatbandType.Figure]: 'фигурный',
-  };
-  protected readonly moldingCoveringLabels: Record<MoldingCovering, string> = {
-    [MoldingCovering.Enamel]: 'эмаль',
-    [MoldingCovering.Veneer]: 'шпон',
-    [MoldingCovering.Embossing]: 'тиснение',
-    [MoldingCovering.PVC]: 'пвх',
-  };
-  protected readonly extensionCoveringLabels: Record<ExtensionCovering, string> = {
-    [ExtensionCovering.Enamel]: 'эмаль',
-    [ExtensionCovering.Veneer]: 'шпон',
-    [ExtensionCovering.Embossing]: 'тиснение',
-  };
-  protected readonly capitalCoveringLabels: Record<CapitalCovering, string> = {
-    [CapitalCovering.Enamel]: 'эмаль',
-    [CapitalCovering.Veneer]: 'шпон',
-    [CapitalCovering.Embossing]: 'тиснение',
-  };
-  protected readonly panelingCoveringLabels: Record<PanelingCovering, string> = {
-    [PanelingCovering.Enamel]: 'эмаль',
-    [PanelingCovering.Veneer]: 'шпон',
-    [PanelingCovering.Embossing]: 'тиснение',
-    [PanelingCovering.PVC]: 'пвх',
-  };
+  protected readonly leafTypesLabels = DOOR_LEAF_TYPE_LABELS;
+  protected readonly moldingPlatbandTypeLabels = MOLDING_PLATBAND_TYPE_LABELS;
+  protected readonly moldingCoveringLabels = MOLDING_COVERING_LABELS;
+  protected readonly extensionCoveringLabels = EXTENSION_COVERING_LABELS;
+  protected readonly capitalCoveringLabels = CAPITAL_COVERING_LABELS;
+  protected readonly panelingCoveringLabels = PANELING_COVERING_LABELS;
 
   constructor() {
     this.fetchOrder(Number(this.route.snapshot.paramMap.get('id') ?? 0));
@@ -113,15 +90,18 @@ export class OrderViewComponent {
 
   protected onDeleteClick(): void {
     const current = this.state();
+
     if (!current) {
       return;
     }
+
     const dialogData: ConfirmDialogData = {
       title: 'Удаление заказа',
       message: 'Вы уверены, что хотите удалить заказ?',
       confirmText: 'Да, удалить',
       cancelText: 'Нет',
     };
+
     this.dialog
       .open(ConfirmDialogComponent, { data: dialogData })
       .afterClosed()
@@ -152,17 +132,22 @@ export class OrderViewComponent {
       );
     }
   }
+
   protected onPrintClick(): void {
     const current = this.state();
+
     if (current) {
       this.orderPrintService.printHtml(this.orderDocumentService.buildOrderHtml(current.id, current.data));
     }
   }
+
   protected onStatusChange(status: OrderStatus): void {
     const current = this.state();
+
     if (!current || current.data.status === status) {
       return;
     }
+
     this.ordersService
       .updateOrderStatus(current.id, status)
       .pipe(takeUntilDestroyed(this.destroyRef))
@@ -184,27 +169,35 @@ export class OrderViewComponent {
   protected getStatusLabel(status: OrderStatus): string {
     return getOrderStatusLabel(status);
   }
+
   protected getOrderTotal(order: OrderCreatePayload): number {
     return getOrderTotal(order);
   }
+
   protected getTotalToPay(order: OrderCreatePayload): number {
     return getTotalToPay(order);
   }
+
   protected getCustomerDebt(order: OrderCreatePayload): number {
     return getCustomerDebt(order);
   }
+
   protected getMoldingTotal(item: MoldingItem): number {
     return getMoldingTotal(item);
   }
+
   protected getExtensionTotal(item: ExtensionItem): number {
     return getExtensionTotal(item);
   }
+
   protected getPanelingTotal(item: PanelingItem): number {
     return getPanelingTotal(item);
   }
+
   protected getHardwareTotal(item: HardwareItem): number {
     return getHardwareTotal(item);
   }
+
   protected getCapitalTotal(item: CapitalItem): number {
     return getCapitalTotal(item);
   }
