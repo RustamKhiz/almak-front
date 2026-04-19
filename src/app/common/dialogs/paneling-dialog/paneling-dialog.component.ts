@@ -43,12 +43,12 @@ export class PanelingDialogComponent {
   protected readonly coveringOptions = PANELING_COVERING_OPTIONS;
   protected readonly coveringLabels = PANELING_COVERING_LABELS;
 
-  protected readonly form = this.fb.nonNullable.group({
+  protected readonly form = this.fb.group({
     color: [this.data.paneling?.color ?? '', [Validators.required]],
     size: [this.data.paneling?.size ?? '', [Validators.required]],
     covering: [this.data.paneling?.covering ?? DEFAULT_PANELING_COVERING, [Validators.required]],
     count: [this.data.paneling?.count ?? 1, [Validators.required, Validators.min(1)]],
-    price: [this.data.paneling?.price ?? 0, [Validators.required, Validators.min(0)]],
+    price: [this.data.paneling?.price ?? null, [Validators.required, Validators.min(0)]],
     comment: [this.data.paneling?.comment ?? ''],
   });
 

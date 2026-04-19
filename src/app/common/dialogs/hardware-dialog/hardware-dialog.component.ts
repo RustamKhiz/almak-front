@@ -7,6 +7,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { HardwareItem, HardwareMechanismType, OrderItemType } from '../../../types/order.types';
+import { bindLeadingCapitalization } from '../../utils/form-text';
 
 export interface HardwareDialogData {
   mode: 'create' | 'edit';
@@ -72,6 +73,8 @@ export class HardwareDialogComponent {
   );
 
   constructor() {
+    bindLeadingCapitalization(this.form.controls.handleModel, this.destroyRef);
+
     this.form.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
       if (this.form.hasError('emptyHardware')) {
         this.form.updateValueAndValidity({ emitEvent: false });

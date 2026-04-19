@@ -23,6 +23,7 @@ import {
 import { DoorLeafType, InteriorDoorItem, OrderItemType } from '../../../types/order.types';
 import { CatalogAutocompleteFieldComponent } from '../../../ui/catalog-autocomplete-field/catalog-autocomplete-field.component';
 import { QuantityFieldComponent } from '../../../ui/quantity-field/quantity-field.component';
+import { bindLeadingCapitalization } from '../../utils/form-text';
 
 export interface InteriorDoorDialogData {
   mode: 'create' | 'edit';
@@ -69,7 +70,7 @@ export class InteriorDoorDialogComponent {
     width: [this.data.door?.width ?? DEFAULT_INTERIOR_DOOR_WIDTH, [Validators.required, Validators.min(1)]],
     width2: [this.data.door?.width2 ?? (null as number | null)],
     height: [this.data.door?.height ?? DEFAULT_INTERIOR_DOOR_HEIGHT, [Validators.required, Validators.min(1)]],
-    price: [this.data.door?.price ?? 0, [Validators.required, Validators.min(0)]],
+    price: [this.data.door?.price ?? null, [Validators.required, Validators.min(0)]],
     leafType: [this.data.door?.leafType ?? DoorLeafType.Single, [Validators.required]],
     count: [this.data.door?.count ?? 1, [Validators.required, Validators.min(1)]],
     covering: [this.data.door?.covering ?? DEFAULT_INTERIOR_DOOR_COVERING, [Validators.required]],
@@ -81,6 +82,8 @@ export class InteriorDoorDialogComponent {
   );
 
   constructor() {
+    bindLeadingCapitalization(this.form.controls.model, this.destroyRef);
+
     this.form.controls.leafType.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((leafType) => {
       if (leafType === DoorLeafType.Double) {
         this.form.controls.width2.addValidators([Validators.required, Validators.min(1)]);

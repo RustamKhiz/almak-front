@@ -1,3 +1,16 @@
+.orders-table-filters-group {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.orders-table-filters-title {
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 20px;
+}
+
 .orders-table-filters {
   display: grid;
   grid-template-columns: repeat(6, minmax(140px, 1fr));
@@ -36,6 +49,10 @@
   .orders-table-form {
     flex-direction: column;
     align-items: stretch;
+  }
+
+  .orders-table-filters-group {
+    width: 100%;
   }
 
   .orders-table-actions {

@@ -18,6 +18,7 @@ import {
 import { EntranceDoorItem, EntranceDoorKind, OrderItemType } from '../../../types/order.types';
 import { CatalogAutocompleteFieldComponent } from '../../../ui/catalog-autocomplete-field/catalog-autocomplete-field.component';
 import { QuantityFieldComponent } from '../../../ui/quantity-field/quantity-field.component';
+import { bindLeadingCapitalization } from '../../utils/form-text';
 
 export interface EntranceDoorDialogData {
   mode: 'create' | 'edit';
@@ -68,7 +69,7 @@ export class EntranceDoorDialogComponent {
     hasPeephole: this.data.door?.hasPeephole ?? true,
     comment: this.data.door?.comment ?? '',
     count: [this.data.door?.count ?? 1, [Validators.required, Validators.min(1)]],
-    price: [this.data.door?.price ?? 0, [Validators.required, Validators.min(0)]],
+    price: [this.data.door?.price ?? null, [Validators.required, Validators.min(0)]],
   });
 
   protected readonly title = computed(() =>
@@ -76,6 +77,8 @@ export class EntranceDoorDialogComponent {
   );
 
   constructor() {
+    bindLeadingCapitalization(this.form.controls.model, this.destroyRef);
+
     this.form.controls.kind.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((kind) => {
       const isWelded = kind === EntranceDoorKind.Welded;
       this.isWelded.set(isWelded);

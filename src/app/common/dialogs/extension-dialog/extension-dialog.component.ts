@@ -43,14 +43,14 @@ export class ExtensionDialogComponent {
   protected readonly coveringOptions = EXTENSION_COVERING_OPTIONS;
   protected readonly coveringLabels = EXTENSION_COVERING_LABELS;
 
-  protected readonly form = this.fb.nonNullable.group({
+  protected readonly form = this.fb.group({
     color: [this.data.extension?.color ?? '', [Validators.required]],
     covering: [this.data.extension?.covering ?? DEFAULT_EXTENSION_COVERING, [Validators.required]],
     width: [this.data.extension?.width ?? 0, [Validators.required, Validators.min(1)]],
     height: [this.data.extension?.height ?? 0, [Validators.required, Validators.min(1)]],
     comment: [this.data.extension?.comment ?? ''],
     count: [this.data.extension?.count ?? 1, [Validators.required, Validators.min(1)]],
-    price: [this.data.extension?.price ?? 0, [Validators.required, Validators.min(0)]],
+    price: [this.data.extension?.price ?? null, [Validators.required, Validators.min(0)]],
   });
 
   protected readonly title = computed(() => (this.data.mode === 'edit' ? 'Редактировать доборы' : 'Добавить доборы'));
