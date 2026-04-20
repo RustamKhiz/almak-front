@@ -15,9 +15,13 @@
     <div class="order-create__header-actions">
       <button mat-flat-button color="primary" [matMenuTriggerFor]="addItemMenu">Добавить</button>
       <mat-menu #addItemMenu="matMenu">
-        <button mat-menu-item type="button" (click)="onAddItemClick(orderItemEntity.InteriorDoor)">Межкомнатная дверь</button>
+        <button mat-menu-item type="button" (click)="onAddItemClick(orderItemEntity.InteriorDoor)">
+          Межкомнатная дверь
+        </button>
         <button mat-menu-item type="button" (click)="onAddItemClick(orderItemEntity.Molding)">Погонаж</button>
-        <button mat-menu-item type="button" (click)="onAddItemClick(orderItemEntity.EntranceDoor)">Входная дверь</button>
+        <button mat-menu-item type="button" (click)="onAddItemClick(orderItemEntity.EntranceDoor)">
+          Входная дверь
+        </button>
         <button mat-menu-item type="button" (click)="onAddItemClick(orderItemEntity.Extension)">Доборы</button>
         <button mat-menu-item type="button" (click)="onAddItemClick(orderItemEntity.Capital)">Капитель</button>
         <button mat-menu-item type="button" (click)="onAddItemClick(orderItemEntity.Hardware)">Фурнитура</button>

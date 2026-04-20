@@ -537,18 +537,18 @@ export class OrdersService {
   }
 
   private mapBackendDoorToDoorItem(door: BackendInteriorDoor): InteriorDoorItem {
-      return {
-        id: door.id,
-        type: OrderItemType.InteriorDoor,
-        model: door.model,
-        color: door.color ?? '',
-        price: door.price,
+    return {
+      id: door.id,
+      type: OrderItemType.InteriorDoor,
+      model: door.model,
+      color: door.color ?? '',
+      price: door.price,
       width: door.width,
       width2: door.width2 ?? null,
-        height: door.height,
-        hasGlass: door.hasGlass ?? false,
-        glassComment: door.glassComment ?? '',
-        leafType: door.leafType === DoorLeafType.Double ? DoorLeafType.Double : DoorLeafType.Single,
+      height: door.height,
+      hasGlass: door.hasGlass ?? false,
+      glassComment: door.glassComment ?? '',
+      leafType: door.leafType === DoorLeafType.Double ? DoorLeafType.Double : DoorLeafType.Single,
       count: door.count,
       covering: this.mapInteriorCovering(door.covering),
       comment: door.comment ?? '',
@@ -599,7 +599,7 @@ export class OrdersService {
       width: item.width,
       height: item.height,
       quantityPerSet: item.quantityPerSet ?? 0.5,
-      totalArea: item.totalArea ?? Number((((item.width * item.height * 0.5) / 10000)).toFixed(2)),
+      totalArea: item.totalArea ?? Number(((item.width * item.height * 0.5) / 10000).toFixed(2)),
       comment: item.comment ?? '',
       count: item.count,
       price: item.price,

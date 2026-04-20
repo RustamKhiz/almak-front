@@ -386,7 +386,9 @@ export class OrderCreateComponent implements OnInit {
 
   private saveOrder(payload: OrderCreatePayload): Observable<number> {
     const id = this.orderId();
-    return this.isEditMode() && id ? this.ordersService.updateOrder(id, payload) : this.ordersService.createOrder(payload);
+    return this.isEditMode() && id
+      ? this.ordersService.updateOrder(id, payload)
+      : this.ordersService.createOrder(payload);
   }
 
   private buildOrderPayload(): OrderCreatePayload {

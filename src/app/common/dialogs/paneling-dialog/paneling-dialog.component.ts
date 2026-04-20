@@ -58,9 +58,7 @@ export class PanelingDialogComponent {
     comment: [this.data.paneling?.comment ?? ''],
   });
 
-  protected readonly title = computed(() =>
-    this.data.mode === 'edit' ? 'Редактировать обшивку' : 'Добавить обшивку',
-  );
+  protected readonly title = computed(() => (this.data.mode === 'edit' ? 'Редактировать обшивку' : 'Добавить обшивку'));
 
   constructor() {
     this.lastAutoTotalArea = this.calculateArea(
@@ -98,7 +96,7 @@ export class PanelingDialogComponent {
     const value = this.form.getRawValue();
     this.dialogRef.close({
       type: OrderItemType.Paneling,
-      color: value.color.trim(),
+      color: value.color?.trim(),
       size: `${value.width}x${value.height}`,
       count: value.count,
       price: value.price,
@@ -107,7 +105,7 @@ export class PanelingDialogComponent {
       height: value.height,
       quantityPerSet: value.quantityPerSet,
       totalArea: value.totalArea,
-      comment: value.comment.trim(),
+      comment: value.comment?.trim(),
     });
   }
 

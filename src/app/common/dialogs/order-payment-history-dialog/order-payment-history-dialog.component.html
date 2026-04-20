@@ -4,7 +4,10 @@
   @if (data.payments.length) {
     <div class="order-payment-history">
       @for (payment of data.payments; track payment.id) {
-        <article class="order-payment-history__item" [class.order-payment-history__item--reversal]="isReversalPayment(payment)">
+        <article
+          class="order-payment-history__item"
+          [class.order-payment-history__item--reversal]="isReversalPayment(payment)"
+        >
           <div class="order-payment-history__main">
             <div class="order-payment-history__top">
               <span class="order-payment-history__kind">{{ getPaymentDirectionLabel(payment) }}</span>

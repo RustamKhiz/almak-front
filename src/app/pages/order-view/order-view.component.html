@@ -85,7 +85,9 @@
         <article class="order-view__summary-tile">
           <div class="order-view__summary-label">Оплата</div>
           <div class="order-view__summary-title">{{ getPaymentLabel($state.data.isPaid) }}</div>
-          <div class="order-view__summary-text">Внесено клиентом: {{ getPaidAmount($state.data) | number: '1.0-0' }} ₽</div>
+          <div class="order-view__summary-text">
+            Внесено клиентом: {{ getPaidAmount($state.data) | number: '1.0-0' }} ₽
+          </div>
         </article>
 
         <article class="order-view__summary-tile">

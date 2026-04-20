@@ -117,7 +117,9 @@ export class OrderViewComponent {
   });
   protected readonly paymentHistory = computed(() => {
     const current = this.state();
-    return current ? [...current.data.payments].sort((a, b) => this.getPaymentTimestamp(b) - this.getPaymentTimestamp(a)) : [];
+    return current
+      ? [...current.data.payments].sort((a, b) => this.getPaymentTimestamp(b) - this.getPaymentTimestamp(a))
+      : [];
   });
 
   constructor() {

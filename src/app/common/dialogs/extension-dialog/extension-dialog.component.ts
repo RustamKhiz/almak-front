@@ -58,9 +58,7 @@ export class ExtensionDialogComponent {
     comment: [this.data.extension?.comment ?? ''],
   });
 
-  protected readonly title = computed(() =>
-    this.data.mode === 'edit' ? 'Редактировать доборы' : 'Добавить доборы',
-  );
+  protected readonly title = computed(() => (this.data.mode === 'edit' ? 'Редактировать доборы' : 'Добавить доборы'));
 
   constructor() {
     this.lastAutoTotalArea = this.calculateArea(
@@ -98,13 +96,13 @@ export class ExtensionDialogComponent {
     const value = this.form.getRawValue();
     this.dialogRef.close({
       type: OrderItemType.Extension,
-      color: value.color.trim(),
+      color: value.color?.trim(),
       covering: value.covering,
       width: value.width,
       height: value.height,
       quantityPerSet: value.quantityPerSet,
       totalArea: value.totalArea,
-      comment: value.comment.trim(),
+      comment: value.comment?.trim(),
       count: value.count,
       price: value.price,
     });

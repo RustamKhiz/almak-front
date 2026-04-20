@@ -20,8 +20,8 @@
                 @if (door.width2 !== null) {
                   + {{ door.width2 }}
                 }
-                × {{ door.height }} см · {{ doorLeafTypeLabels[door.leafType] }} · {{ doorCoveringLabels[door.covering] }}
-                · цвет {{ door.color }} · количество {{ door.count }}
+                × {{ door.height }} см · {{ doorLeafTypeLabels[door.leafType] }} ·
+                {{ doorCoveringLabels[door.covering] }} · цвет {{ door.color }} · количество {{ door.count }}
                 @if (door.hasGlass) {
                   · со стеклом
                   @if (door.glassComment) {
@@ -137,7 +137,9 @@
         @for (molding of moldingItems; track molding.id) {
           <div class="door-item">
             <div class="door-item__main">
-              <div class="door-item__title">Погонаж · {{ molding.color }} · {{ moldingCoveringLabels[molding.covering] }}</div>
+              <div class="door-item__title">
+                Погонаж · {{ molding.color }} · {{ moldingCoveringLabels[molding.covering] }}
+              </div>
               <div class="door-item__meta">
                 Коробка: {{ molding.frameCount }} шт.
                 @if (molding.frameLength !== null) {
@@ -202,10 +204,13 @@
         @for (item of extensionItems; track item.id) {
           <div class="door-item">
             <div class="door-item__main">
-              <div class="door-item__title">Доборы · {{ item.color }} · {{ extensionCoveringLabels[item.covering] }}</div>
+              <div class="door-item__title">
+                Доборы · {{ item.color }} · {{ extensionCoveringLabels[item.covering] }}
+              </div>
               <div class="door-item__meta">
-                {{ item.width }} × {{ item.height }} см · {{ item.quantityPerSet }} в комплекте · {{ item.count }}
-                комплектов · общая квадратура {{ item.totalArea | number: '1.0-2' }} м² · {{ item.price | number: '1.0-0' }} ₽/м²
+                {{ item.width }} × {{ item.height }} см · {{ item.quantityPerSet }} в комплекте ·
+                {{ item.count }} комплектов · общая квадратура {{ item.totalArea | number: '1.0-2' }} м² ·
+                {{ item.price | number: '1.0-0' }} ₽/м²
                 @if (item.comment) {
                   · {{ item.comment }}
                 }
@@ -255,8 +260,8 @@
             <div class="door-item__main">
               <div class="door-item__title">Капитель · {{ item.name }}</div>
               <div class="door-item__meta">
-                цвет {{ item.color }} · {{ capitalCoveringLabels[item.covering] }} · {{ item.width }} × {{ item.height }} см
-                · количество {{ item.count }} · цена {{ item.price | number: '1.0-0' }} ₽
+                цвет {{ item.color }} · {{ capitalCoveringLabels[item.covering] }} · {{ item.width }} ×
+                {{ item.height }} см · количество {{ item.count }} · цена {{ item.price | number: '1.0-0' }} ₽
                 @if (item.comment) {
                   · {{ item.comment }}
                 }
@@ -388,10 +393,13 @@
         @for (item of panelingItems; track item.id) {
           <div class="door-item">
             <div class="door-item__main">
-              <div class="door-item__title">Обшивка · {{ item.color }} · {{ panelingCoveringLabels[item.covering] }}</div>
+              <div class="door-item__title">
+                Обшивка · {{ item.color }} · {{ panelingCoveringLabels[item.covering] }}
+              </div>
               <div class="door-item__meta">
-                {{ item.width }} × {{ item.height }} см · {{ item.quantityPerSet }} в комплекте · {{ item.count }}
-                комплектов · общая квадратура {{ item.totalArea | number: '1.0-2' }} м² · {{ item.price | number: '1.0-0' }} ₽/м²
+                {{ item.width }} × {{ item.height }} см · {{ item.quantityPerSet }} в комплекте ·
+                {{ item.count }} комплектов · общая квадратура {{ item.totalArea | number: '1.0-2' }} м² ·
+                {{ item.price | number: '1.0-0' }} ₽/м²
                 @if (item.comment) {
                   · {{ item.comment }}
                 }

@@ -48,11 +48,7 @@
         <input matInput formControlName="color" />
       </mat-form-field>
 
-      <app-catalog-autocomplete-field
-        title="Цвет обшивки"
-        formControlName="panelColor"
-        [options]="panelColorOptions"
-      />
+      <app-catalog-autocomplete-field title="Цвет обшивки" formControlName="panelColor" [options]="panelColorOptions" />
     </div>
 
     @if (isWelded()) {
