@@ -95,20 +95,19 @@
   display: grid;
   gap: 16px;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  align-items: stretch;
+  align-items: start;
 }
 
 .order-create__details-card {
   display: grid;
   align-content: start;
   min-width: 0;
-  height: 100%;
 }
 
 .order-create__subcard {
   display: grid;
   gap: 12px;
-  height: 100%;
+  min-height: 228px;
   padding: 14px;
   border-radius: 14px;
   border: 1px solid #e5e7eb;
@@ -124,7 +123,6 @@
 
 .order-create__comment {
   width: 100%;
-  height: 100%;
 }
 
 .order-create__delivery-column {
@@ -162,20 +160,9 @@
   font-size: 13px;
 }
 
-.order-create__comment ::ng-deep .mat-mdc-form-field-flex,
-.order-create__comment ::ng-deep .mat-mdc-text-field-wrapper,
-.order-create__comment ::ng-deep .mat-mdc-form-field-infix {
-  height: 100%;
-}
-
-.order-create__comment ::ng-deep .mdc-text-field--outlined {
-  height: 100%;
-}
-
 .order-create__comment ::ng-deep textarea.mat-mdc-input-element {
-  height: 100% !important;
-  min-height: 80px;
-  resize: none;
+  min-height: 148px;
+  resize: vertical;
 }
 
 .order-create__actions {

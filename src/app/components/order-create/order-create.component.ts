@@ -9,10 +9,8 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatMenuModule } from '@angular/material/menu';
-import { MatSelectModule } from '@angular/material/select';
 import { Router } from '@angular/router';
 import { Observable, filter, switchMap } from 'rxjs';
-import { getOrderPaymentLabel, ORDER_STATUS_LABELS, ORDER_STATUS_OPTIONS } from '../../common/constants/order-status';
 import { ConfirmDialogComponent, ConfirmDialogData } from '../../common/confirm-dialog/confirm-dialog.component';
 import {
   CapitalDialogComponent,
@@ -84,7 +82,6 @@ interface OrderItemEntityConfig {
     MatIconModule,
     MatInputModule,
     MatMenuModule,
-    MatSelectModule,
     PhoneMaskDirective,
     OrderItemsListComponent,
   ],
@@ -115,9 +112,6 @@ export class OrderCreateComponent implements OnInit {
   protected readonly submitError = signal<string | null>(null);
   protected readonly prepayment = signal(0);
   protected readonly discount = signal(0);
-  protected readonly statusOptions = ORDER_STATUS_OPTIONS;
-  protected readonly statusLabels = ORDER_STATUS_LABELS;
-  protected readonly paymentOptions = [true, false] as const;
   protected readonly orderItemEntity = OrderItemEntity;
   protected readonly orderTotal = computed(() =>
     getOrderTotal({
@@ -302,10 +296,6 @@ export class OrderCreateComponent implements OnInit {
     if (this.isEditMode() && id) {
       this.router.navigate(['/order', id]);
     }
-  }
-
-  protected getPaymentLabel(isPaid: boolean): string {
-    return getOrderPaymentLabel(isPaid);
   }
 
   private findById<T extends { id: number }>(items: readonly T[], id: number): T | undefined {
