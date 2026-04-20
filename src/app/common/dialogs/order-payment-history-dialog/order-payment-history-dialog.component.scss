@@ -1,0 +1,91 @@
+.order-payment-history {
+  display: grid;
+  gap: 12px;
+  min-width: min(100%, 720px);
+  padding-top: 8px;
+}
+
+.order-payment-history__item {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 18px;
+  border-radius: 16px;
+  border: 1px solid #e5e7eb;
+  background: #fff;
+}
+
+.order-payment-history__item--reversal {
+  background: #fff7ed;
+  border-color: #fed7aa;
+}
+
+.order-payment-history__main {
+  display: grid;
+  gap: 6px;
+}
+
+.order-payment-history__top {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+.order-payment-history__kind {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #eff6ff;
+  color: #1d4ed8;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.order-payment-history__item--reversal .order-payment-history__kind {
+  background: #ffedd5;
+  color: #c2410c;
+}
+
+.order-payment-history__date,
+.order-payment-history__comment {
+  color: #6b7280;
+  font-size: 14px;
+}
+
+.order-payment-history__side {
+  display: grid;
+  gap: 10px;
+  justify-items: end;
+  align-content: center;
+}
+
+.order-payment-history__amount {
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.order-payment-history__empty {
+  padding: 24px;
+  border-radius: 12px;
+  border: 1px dashed #d1d5db;
+  background: #fafafa;
+  text-align: center;
+  color: #6b7280;
+}
+
+@media (max-width: 720px) {
+  .order-payment-history {
+    min-width: 0;
+  }
+
+  .order-payment-history__item {
+    flex-direction: column;
+  }
+
+  .order-payment-history__side {
+    width: 100%;
+    justify-items: start;
+  }
+}

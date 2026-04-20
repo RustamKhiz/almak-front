@@ -403,6 +403,7 @@ export class OrderCreateComponent implements OnInit {
       comment: value.comment.trim(),
       status: value.status,
       isPaid: value.isPaid,
+      payments: [],
       interiorDoors: this.interiorDoors(),
       entranceDoors: this.entranceDoors(),
       moldings: this.moldings(),

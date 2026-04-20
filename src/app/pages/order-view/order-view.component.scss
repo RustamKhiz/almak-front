@@ -193,6 +193,86 @@
   font-size: 18px;
 }
 
+.order-view__payment-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.order-view__payment-tile {
+  padding: 18px;
+  border-radius: 16px;
+  border: 1px solid #dbe4f0;
+  background: linear-gradient(180deg, #f8fbff 0%, #f3f6fb 100%);
+}
+
+.order-view__payment-history {
+  display: grid;
+  gap: 12px;
+}
+
+.order-view__payment-item {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 18px;
+  border-radius: 16px;
+  border: 1px solid #e5e7eb;
+  background: #fff;
+}
+
+.order-view__payment-item--reversal {
+  background: #fff7ed;
+  border-color: #fed7aa;
+}
+
+.order-view__payment-main {
+  display: grid;
+  gap: 6px;
+}
+
+.order-view__payment-top {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+.order-view__payment-kind {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #eff6ff;
+  color: #1d4ed8;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.order-view__payment-item--reversal .order-view__payment-kind {
+  background: #ffedd5;
+  color: #c2410c;
+}
+
+.order-view__payment-date,
+.order-view__payment-comment {
+  color: #6b7280;
+  font-size: 14px;
+}
+
+.order-view__payment-side {
+  display: grid;
+  gap: 10px;
+  justify-items: end;
+  align-content: center;
+}
+
+.order-view__payment-amount {
+  font-size: 20px;
+  font-weight: 700;
+}
+
 .order-view__loading,
 .order-view__empty {
   padding: 24px;
@@ -279,11 +359,13 @@
   }
 
   .order-view__section-header,
-  .order-view__item {
+  .order-view__item,
+  .order-view__payment-item {
     flex-direction: column;
   }
 
-  .order-view__item-side {
+  .order-view__item-side,
+  .order-view__payment-side {
     width: 100%;
     justify-items: start;
   }

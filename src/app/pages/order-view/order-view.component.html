@@ -85,7 +85,7 @@
         <article class="order-view__summary-tile">
           <div class="order-view__summary-label">Оплата</div>
           <div class="order-view__summary-title">{{ getPaymentLabel($state.data.isPaid) }}</div>
-          <div class="order-view__summary-text">Внесено клиентом: {{ $state.data.prepayment | number: '1.0-0' }} ₽</div>
+          <div class="order-view__summary-text">Внесено клиентом: {{ getPaidAmount($state.data) | number: '1.0-0' }} ₽</div>
         </article>
 
         <article class="order-view__summary-tile">
@@ -116,6 +116,44 @@
           <div class="order-view__value">{{ getOrderTotal($state.data) | number: '1.0-0' }} ₽</div>
           <div class="order-view__meta">Скидка: {{ $state.data.discount | number: '1.0-0' }} ₽</div>
         </div>
+      </div>
+    </section>
+
+    <section class="order-view__card">
+      <div class="order-view__section-header">
+        <div>
+          <h2>Оплата</h2>
+          <p>Доплаты по заказу и история внесения средств клиента.</p>
+        </div>
+        <div class="order-view__actions">
+          <button mat-stroked-button type="button" (click)="onPaymentHistoryClick()">Посмотреть историю</button>
+          <button mat-flat-button color="primary" type="button" (click)="onAddPaymentClick()">Внести оплату</button>
+        </div>
+      </div>
+
+      <div class="order-view__payment-grid">
+        <article class="order-view__payment-tile">
+          <div class="order-view__summary-label">Итого к оплате</div>
+          <div class="order-view__summary-title">{{ getTotalToPay($state.data) | number: '1.0-0' }} ₽</div>
+        </article>
+
+        <article class="order-view__payment-tile">
+          <div class="order-view__summary-label">Внесено клиентом</div>
+          <div class="order-view__summary-title">{{ getPaidAmount($state.data) | number: '1.0-0' }} ₽</div>
+        </article>
+
+        <article class="order-view__payment-tile">
+          <div class="order-view__summary-label">Остаток</div>
+          <div class="order-view__summary-title">{{ getCustomerDebt($state.data) | number: '1.0-0' }} ₽</div>
+        </article>
+      </div>
+
+      <div class="order-view__meta">
+        @if (paymentHistory().length) {
+          Всего записей в истории: {{ paymentHistory().length }}.
+        } @else {
+          По заказу еще нет записей об оплате.
+        }
       </div>
     </section>
 

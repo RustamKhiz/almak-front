@@ -32,7 +32,9 @@ export class OrderDocumentService {
       order.hardwares.reduce((sum, item) => sum + this.getHardwareTotal(item), 0) +
       order.panelings.reduce((sum, item) => sum + this.getPanelingTotal(item), 0);
     const totalToPay = Math.max(totalAmount - order.discount, 0);
-    const customerDebt = Math.max(totalToPay - order.prepayment, 0);
+    const paidAmount =
+      order.payments.length > 0 ? order.payments.reduce((sum, payment) => sum + payment.amount, 0) : order.prepayment;
+    const customerDebt = Math.max(totalToPay - paidAmount, 0);
     const rowCount =
       order.interiorDoors.length +
       order.entranceDoors.length +
@@ -163,6 +165,8 @@ export class OrderDocumentService {
             body { font-family: "Times New Roman", serif; font-size: 11px; line-height: 1.15; color: #111; margin: 0; padding: 0; }
             .doc { border: 1px solid #111; padding: 10px 12px; }
             .doc-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; margin-bottom: 8px; border-bottom: 1px solid #111; padding-bottom: 6px; }
+            .company-wrap { display: flex; align-items: flex-start; gap: 12px; }
+            .logo { width: 72px; height: auto; object-fit: contain; }
             .company { font-size: 11px; }
             .company strong { font-size: 13px; }
             .order-title { text-align: right; }
@@ -210,7 +214,7 @@ export class OrderDocumentService {
         </head>
         <body class="${layoutMode}">
           <div class="doc">
-            <div class="doc-header"><div class="company"><div><strong>Двери Алмак</strong></div><div>ИП Хизриев С.С.</div></div><div class="order-title"><h1>ЗАКАЗ-НАРЯД</h1><div class="num">№ ${orderId} от ${issueDate}</div></div></div>
+            <div class="doc-header"><div class="company-wrap"><img class="logo" src="/logo.jpg" alt="Логотип" /><div class="company"><div><strong>Двери Алмак</strong></div><div>ИП Хизриев С.С.</div></div></div><div class="order-title"><h1>ЗАКАЗ-НАРЯД</h1><div class="num">№ ${orderId} от ${issueDate}</div></div></div>
             <div class="section-title">Данные клиента</div>
             <div class="meta-grid">
               <div class="meta-line"><strong>ФИО:</strong> ${this.escapeHtml(order.name)}</div>
@@ -223,7 +227,7 @@ export class OrderDocumentService {
               <thead><tr><th style="width: 28px;">№</th><th style="width: 110px;">Товар</th><th>Модель / позиция</th><th style="width: 68px;">Размер</th><th style="width: 138px;">Цвет / покрытие</th><th style="width: 120px;">Комментарий</th><th style="width: 48px;">Кол-во</th><th style="width: 64px;">Цена</th><th style="width: 68px;">Сумма</th></tr></thead>
               <tbody>${rows}</tbody>
             </table>
-            <div class="totals"><div class="totals-row"><span>Общая сумма:</span><strong>${totalAmount}</strong></div><div class="totals-row"><span>Скидка:</span><strong>${order.discount}</strong></div><div class="totals-row"><span>Итого к оплате:</span><strong>${totalToPay}</strong></div><div class="totals-row"><span>Внесено клиентом:</span><strong>${order.prepayment}</strong></div><div class="totals-row"><span>Долг клиента:</span><strong>${customerDebt}</strong></div></div>
+            <div class="totals"><div class="totals-row"><span>Общая сумма:</span><strong>${totalAmount}</strong></div><div class="totals-row"><span>Скидка:</span><strong>${order.discount}</strong></div><div class="totals-row"><span>Итого к оплате:</span><strong>${totalToPay}</strong></div><div class="totals-row"><span>Внесено клиентом:</span><strong>${paidAmount}</strong></div><div class="totals-row"><span>Долг клиента:</span><strong>${customerDebt}</strong></div></div>
             <div class="comment"><strong>Комментарий:</strong> ${this.escapeHtml(order.comment)}</div>
             <div class="footer"><div class="sign-block"><div class="sign-line"></div><div>Подпись клиента</div></div><div class="sign-block"><div class="sign-line"></div><div>Подпись менеджера</div></div><div class="stamp">М.П.</div></div>
             <div class="muted">Документ сформирован автоматически в информационной системе.</div>

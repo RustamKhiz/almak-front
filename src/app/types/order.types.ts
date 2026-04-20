@@ -199,6 +199,15 @@ export interface HardwareItem {
   comment: string;
 }
 
+export interface OrderPayment {
+  id: number;
+  amount: number;
+  comment: string;
+  createdAt: string;
+  reversalOfPaymentId: number | null;
+  reversedByPaymentId: number | null;
+}
+
 export interface OrderCustomerForm {
   name: string;
   phone: string;
@@ -213,6 +222,7 @@ export interface OrderCustomerForm {
 }
 
 export interface OrderCreatePayload extends OrderCustomerForm {
+  payments: readonly OrderPayment[];
   interiorDoors: readonly InteriorDoorItem[];
   entranceDoors: readonly EntranceDoorItem[];
   moldings: readonly MoldingItem[];

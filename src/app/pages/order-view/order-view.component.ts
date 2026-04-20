@@ -31,9 +31,15 @@ import {
   getHardwareTotal,
   getMoldingTotal,
   getOrderTotal,
+  getPaidAmount,
   getPanelingTotal,
   getTotalToPay,
 } from '../../common/utils/order-calculations';
+import {
+  OrderPaymentDialogComponent,
+  OrderPaymentDialogResult,
+} from '../../common/dialogs/order-payment-dialog/order-payment-dialog.component';
+import { OrderPaymentHistoryDialogComponent } from '../../common/dialogs/order-payment-history-dialog/order-payment-history-dialog.component';
 import { FileDownloadService } from '../../services/file-download.service';
 import { OrderDocumentService } from '../../services/order-document.service';
 import { OrderPrintService } from '../../services/order-print.service';
@@ -47,6 +53,7 @@ import {
   InteriorDoorItem,
   MoldingItem,
   OrderCreatePayload,
+  OrderPayment,
   OrderStatus,
   PanelingItem,
 } from '../../types/order.types';
@@ -107,6 +114,10 @@ export class OrderViewComponent {
   protected readonly productCards = computed(() => {
     const current = this.state();
     return current ? this.buildProductCards(current.data) : [];
+  });
+  protected readonly paymentHistory = computed(() => {
+    const current = this.state();
+    return current ? [...current.data.payments].sort((a, b) => this.getPaymentTimestamp(b) - this.getPaymentTimestamp(a)) : [];
   });
 
   constructor() {
@@ -220,6 +231,87 @@ export class OrderViewComponent {
     });
   }
 
+  protected onAddPaymentClick(): void {
+    const current = this.state();
+    if (!current) {
+      return;
+    }
+
+    this.dialog
+      .open(OrderPaymentDialogComponent, {
+        width: '460px',
+        maxWidth: 'calc(100vw - 24px)',
+        data: {
+          title: 'Внести оплату',
+          confirmText: 'Добавить платеж',
+        },
+      })
+      .afterClosed()
+      .pipe(
+        filter((result): result is OrderPaymentDialogResult => !!result),
+        switchMap((result) => this.ordersService.addOrderPayment(current.id, result.amount, result.comment)),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe({
+        next: (data) => {
+          this.errorMessage.set(null);
+          this.state.set({ id: current.id, data });
+        },
+        error: () => {
+          this.errorMessage.set('Не удалось добавить оплату.');
+        },
+      });
+  }
+
+  protected onReversePaymentClick(payment: OrderPayment): void {
+    const current = this.state();
+    if (!current || !this.canReversePayment(payment)) {
+      return;
+    }
+
+    const dialogData: ConfirmDialogData = {
+      title: 'Сторно платежа',
+      message: 'Подтвердите сторно этой оплаты. Операция будет добавлена в историю отдельной записью.',
+      confirmText: 'Сделать сторно',
+      cancelText: 'Отмена',
+    };
+
+    this.dialog
+      .open(ConfirmDialogComponent, { data: dialogData })
+      .afterClosed()
+      .pipe(
+        filter((ok) => ok === true),
+        switchMap(() => this.ordersService.reverseOrderPayment(current.id, payment.id)),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe({
+        next: (data) => {
+          this.errorMessage.set(null);
+          this.state.set({ id: current.id, data });
+        },
+        error: () => {
+          this.errorMessage.set('Не удалось выполнить сторно платежа.');
+        },
+      });
+  }
+
+  protected onPaymentHistoryClick(): void {
+    const payments = this.paymentHistory();
+
+    this.dialog
+      .open(OrderPaymentHistoryDialogComponent, {
+        width: '760px',
+        maxWidth: 'calc(100vw - 24px)',
+        data: { payments },
+      })
+      .afterClosed()
+      .pipe(
+        filter((payment): payment is OrderPayment => !!payment),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe((payment) => this.onReversePaymentClick(payment));
+  }
+
   protected getStatusLabel(status: OrderStatus): string {
     return getOrderStatusLabel(status);
   }
@@ -232,12 +324,45 @@ export class OrderViewComponent {
     return getOrderTotal(order);
   }
 
+  protected getPaidAmount(order: OrderCreatePayload): number {
+    return getPaidAmount(order);
+  }
+
   protected getTotalToPay(order: OrderCreatePayload): number {
     return getTotalToPay(order);
   }
 
   protected getCustomerDebt(order: OrderCreatePayload): number {
     return getCustomerDebt(order);
+  }
+
+  protected canReversePayment(payment: OrderPayment): boolean {
+    return payment.reversalOfPaymentId === null && payment.reversedByPaymentId === null;
+  }
+
+  protected isReversalPayment(payment: OrderPayment): boolean {
+    return payment.reversalOfPaymentId !== null;
+  }
+
+  protected getPaymentAmountLabel(payment: OrderPayment): string {
+    const sign = payment.amount < 0 ? '-' : '+';
+    return `${sign}${Math.abs(payment.amount).toLocaleString('ru-RU')} ₽`;
+  }
+
+  protected getPaymentComment(payment: OrderPayment): string {
+    if (payment.comment) {
+      return payment.comment;
+    }
+
+    return this.isReversalPayment(payment) ? 'Сторно без комментария' : 'Без комментария';
+  }
+
+  protected getPaymentDirectionLabel(payment: OrderPayment): string {
+    return this.isReversalPayment(payment) ? 'Сторно' : 'Оплата';
+  }
+
+  private getPaymentTimestamp(payment: OrderPayment): number {
+    return payment.createdAt ? new Date(payment.createdAt).getTime() : 0;
   }
 
   private fetchOrder(id: number): void {

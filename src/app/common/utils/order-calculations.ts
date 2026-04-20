@@ -57,6 +57,14 @@ export function getTotalToPay(order: OrderCreatePayload): number {
   return Math.max(getOrderTotal(order) - order.discount, 0);
 }
 
+export function getPaidAmount(order: OrderCreatePayload): number {
+  if (order.payments.length > 0) {
+    return order.payments.reduce((sum, payment) => sum + payment.amount, 0);
+  }
+
+  return order.prepayment;
+}
+
 export function getCustomerDebt(order: OrderCreatePayload): number {
-  return Math.max(getTotalToPay(order) - order.prepayment, 0);
+  return Math.max(getTotalToPay(order) - getPaidAmount(order), 0);
 }

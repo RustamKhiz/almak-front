@@ -20,6 +20,7 @@ import {
   MoldingPlatbandType,
   OrderCreatePayload,
   OrderItemType,
+  OrderPayment,
   OrderStatus,
   PanelingCovering,
   PanelingItem,
@@ -40,6 +41,7 @@ interface BackendOrder {
   comment: string;
   status: BackendOrderStatus;
   isPaid: boolean;
+  payments?: BackendOrderPayment[];
   interiorDoors?: BackendInteriorDoor[];
   entranceDoors?: BackendEntranceDoor[];
   moldings?: BackendMolding[];
@@ -48,6 +50,16 @@ interface BackendOrder {
   hardwares?: BackendHardware[];
   panelings?: BackendPaneling[];
   created_at?: string;
+}
+
+interface BackendOrderPayment {
+  id: number;
+  orderId: number;
+  amount: number;
+  comment?: string;
+  createdAt?: string;
+  reversalOfPaymentId?: number | null;
+  reversedByPaymentId?: number | null;
 }
 
 interface BackendInteriorDoor {
@@ -288,6 +300,11 @@ interface BackendOrderPaymentStatusPayload {
   isPaid: boolean;
 }
 
+interface BackendAddOrderPaymentPayload {
+  amount: number;
+  comment: string;
+}
+
 export interface OrderRecord {
   id: number;
   customer: string;
@@ -340,6 +357,19 @@ export class OrdersService {
       } as BackendOrderPaymentStatusPayload)
       .pipe(map((order) => order.isPaid));
   }
+  addOrderPayment(id: number, amount: number, comment: string): Observable<OrderCreatePayload> {
+    return this.http
+      .post<BackendOrder>(`${this.coreService.apiBaseUrl}/orders/${id}/payments`, {
+        amount,
+        comment,
+      } as BackendAddOrderPaymentPayload)
+      .pipe(map((order) => this.mapBackendOrderToCreatePayload(order)));
+  }
+  reverseOrderPayment(orderId: number, paymentId: number): Observable<OrderCreatePayload> {
+    return this.http
+      .post<BackendOrder>(`${this.coreService.apiBaseUrl}/orders/${orderId}/payments/${paymentId}/reverse`, {})
+      .pipe(map((order) => this.mapBackendOrderToCreatePayload(order)));
+  }
   deleteOrder(id: number): Observable<void> {
     return this.http.delete<void>(`${this.coreService.apiBaseUrl}/orders/${id}`);
   }
@@ -371,6 +401,7 @@ export class OrdersService {
       comment: order.comment ?? '',
       status: this.mapBackendStatusToOrderStatus(order.status),
       isPaid: order.isPaid ?? false,
+      payments: (order.payments ?? []).map((payment) => this.mapBackendPaymentToItem(payment)),
       interiorDoors: (order.interiorDoors ?? []).map((item) => this.mapBackendDoorToDoorItem(item)),
       entranceDoors: (order.entranceDoors ?? []).map((item) => this.mapBackendEntranceDoorToDoorItem(item)),
       moldings: (order.moldings ?? []).map((item) => this.mapBackendMoldingToItem(item)),
@@ -491,6 +522,17 @@ export class OrdersService {
         price: item.price,
         comment: item.comment,
       })),
+    };
+  }
+
+  private mapBackendPaymentToItem(payment: BackendOrderPayment): OrderPayment {
+    return {
+      id: payment.id,
+      amount: payment.amount,
+      comment: payment.comment ?? '',
+      createdAt: payment.createdAt ?? '',
+      reversalOfPaymentId: payment.reversalOfPaymentId ?? null,
+      reversedByPaymentId: payment.reversedByPaymentId ?? null,
     };
   }
 
