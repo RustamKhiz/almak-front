@@ -21,16 +21,19 @@
                   + {{ door.width2 }}
                 }
                 × {{ door.height }} см · {{ doorLeafTypeLabels[door.leafType] }} ·
-                {{ doorCoveringLabels[door.covering] }}
+                {{ doorCoveringLabels[door.covering] }} · цвет {{ door.color }} · количество {{ door.count }}
                 @if (door.hasGlass) {
                   · со стеклом
+                  @if (door.glassComment) {
+                    ({{ door.glassComment }})
+                  }
                 }
-                · количество {{ door.count }}
                 @if (door.comment) {
                   · {{ door.comment }}
                 }
               </div>
             </div>
+
             <div class="door-item__aside">
               <div class="door-item__price">{{ door.price | number: '1.0-0' }} ₽</div>
               <div class="door-item__actions">
@@ -65,6 +68,7 @@
         }
       </div>
     }
+
     @if (entranceDoorItems.length) {
       <div class="door-section">
         <div class="door-section__title">Входные двери</div>
@@ -75,12 +79,13 @@
                 Входная дверь · {{ door.kind === 'welded' ? 'сварочная' : 'фабричная' }} · {{ door.model }}
               </div>
               <div class="door-item__meta">
-                {{ door.width }} × {{ door.height }} см · цвет {{ door.color }} · количество {{ door.count }}
+                {{ door.width }} × {{ door.height }} см · {{ doorLeafTypeLabels[door.leafType] }} · цвет двери
+                {{ door.color }} · количество {{ door.count }}
                 @if (door.painting) {
-                  · покраска {{ door.painting }}
+                  · покрытие {{ door.painting }}
                 }
                 @if (door.panelColor) {
-                  · обшивка {{ door.panelColor }}
+                  · цвет обшивки {{ door.panelColor }}
                 }
                 @if (door.hasPeephole !== null) {
                   · глазок {{ door.hasPeephole ? 'есть' : 'нет' }}
@@ -90,6 +95,7 @@
                 }
               </div>
             </div>
+
             <div class="door-item__aside">
               <div class="door-item__price">{{ door.price | number: '1.0-0' }} ₽</div>
               <div class="door-item__actions">
@@ -124,6 +130,7 @@
         }
       </div>
     }
+
     @if (moldingItems.length) {
       <div class="door-section">
         <div class="door-section__title">Погонаж</div>
@@ -134,26 +141,28 @@
                 Погонаж · {{ molding.color }} · {{ moldingCoveringLabels[molding.covering] }}
               </div>
               <div class="door-item__meta">
-                Коробка:
+                Коробка: {{ molding.frameCount }} шт.
                 @if (molding.frameLength !== null) {
-                  {{ molding.frameLength }} см,
+                  · {{ molding.frameLength }} см
                 }
-                цена {{ molding.framePrice | number: '1.0-0' }} ₽, количество {{ molding.frameCount }} · Наличник
-                {{ moldingPlatbandTypeLabels[molding.platbandType] }}
+                @if (molding.framePrice > 0) {
+                  · {{ molding.framePrice | number: '1.0-0' }} ₽
+                }
+                · Наличник {{ moldingPlatbandTypeLabels[molding.platbandType] }}
                 @if (molding.platbandFigure) {
-                  ({{ molding.platbandFigure }})
+                  · модель {{ molding.platbandFigure }}
                 }
-                :
+                · {{ molding.platbandCount }} шт.
                 @if (molding.platbandLength !== null) {
-                  {{ molding.platbandLength }} см,
+                  · {{ molding.platbandLength }} см
                 }
-                цена {{ molding.platbandPrice | number: '1.0-0' }} ₽, количество {{ molding.platbandCount }} ·
-                Притворная планка {{ molding.rebateBarCount }}
+                · притворная планка {{ molding.rebateBarCount }} шт.
                 @if (molding.comment) {
                   · {{ molding.comment }}
                 }
               </div>
             </div>
+
             <div class="door-item__aside">
               <div class="door-item__price">{{ getMoldingTotal(molding) | number: '1.0-0' }} ₽</div>
               <div class="door-item__actions">
@@ -188,6 +197,7 @@
         }
       </div>
     }
+
     @if (extensionItems.length) {
       <div class="door-section">
         <div class="door-section__title">Доборы</div>
@@ -198,12 +208,15 @@
                 Доборы · {{ item.color }} · {{ extensionCoveringLabels[item.covering] }}
               </div>
               <div class="door-item__meta">
-                {{ item.width }} × {{ item.height }} см · количество {{ item.count }}
+                {{ item.width }} × {{ item.height }} см · {{ item.quantityPerSet }} в комплекте ·
+                {{ item.count }} комплектов · общая квадратура {{ item.totalArea | number: '1.0-2' }} м² ·
+                {{ item.price | number: '1.0-0' }} ₽/м²
                 @if (item.comment) {
                   · {{ item.comment }}
                 }
               </div>
             </div>
+
             <div class="door-item__aside">
               <div class="door-item__price">{{ getExtensionTotal(item) | number: '1.0-0' }} ₽</div>
               <div class="door-item__actions">
@@ -238,6 +251,7 @@
         }
       </div>
     }
+
     @if (capitalItems.length) {
       <div class="door-section">
         <div class="door-section__title">Капитель</div>
@@ -253,6 +267,7 @@
                 }
               </div>
             </div>
+
             <div class="door-item__aside">
               <div class="door-item__price">{{ getCapitalTotal(item) | number: '1.0-0' }} ₽</div>
               <div class="door-item__actions">
@@ -287,6 +302,7 @@
         }
       </div>
     }
+
     @if (hardwareItems.length) {
       <div class="door-section">
         <div class="door-section__title">Фурнитура</div>
@@ -296,94 +312,46 @@
               <div class="door-item__title">
                 Фурнитура
                 @if (item.handleModel) {
-                  · Ручка {{ item.handleModel }}
+                  · ручка {{ item.handleModel }}
                 }
               </div>
               <div class="door-item__meta">
-                @if (item.handleModel || item.handleColor || item.handleCount !== null || item.handlePrice !== null) {
-                  Ручка
-                  @if (item.handleModel) {
-                    {{ item.handleModel }}
-                  }
-                  @if (item.handleColor) {
-                    · цвет {{ item.handleColor }}
-                  }
-                  @if (item.handleCount !== null) {
-                    · кол-во {{ item.handleCount }}
-                  }
-                  @if (item.handlePrice !== null) {
-                    · цена {{ item.handlePrice | number: '1.0-0' }} ₽
-                  }
+                @if (item.handleColor) {
+                  цвет ручки {{ item.handleColor }}
                 }
-                @if (item.mechanismType || item.mechanismCount !== null || item.mechanismPrice !== null) {
-                  · Механизм
-                  {{ item.mechanismType === 'fixator' ? 'фиксатор' : item.mechanismType === 'lock' ? 'замок' : '' }}
-                  @if (item.mechanismCount !== null) {
-                    · кол-во {{ item.mechanismCount }}
-                  }
-                  @if (item.mechanismPrice !== null) {
-                    · цена {{ item.mechanismPrice | number: '1.0-0' }} ₽
-                  }
+                @if (item.handleCount !== null) {
+                  · ручек {{ item.handleCount }}
                 }
-                @if (item.thumbturnCount !== null || item.thumbturnPrice !== null) {
-                  · Крутилка
-                  @if (item.thumbturnCount !== null) {
-                    · кол-во {{ item.thumbturnCount }}
-                  }
-                  @if (item.thumbturnPrice !== null) {
-                    · цена {{ item.thumbturnPrice | number: '1.0-0' }} ₽
-                  }
+                @if (item.lockCount !== null) {
+                  · замков {{ item.lockCount }}
                 }
-                @if (item.escutcheonCount !== null || item.escutcheonPrice !== null) {
-                  · Накладка
-                  @if (item.escutcheonCount !== null) {
-                    · кол-во {{ item.escutcheonCount }}
-                  }
-                  @if (item.escutcheonPrice !== null) {
-                    · цена {{ item.escutcheonPrice | number: '1.0-0' }} ₽
-                  }
+                @if (item.fixatorCount !== null) {
+                  · фиксаторов {{ item.fixatorCount }}
                 }
-                @if (item.cylinderCount !== null || item.cylinderPrice !== null) {
-                  · Барабан
-                  @if (item.cylinderCount !== null) {
-                    · кол-во {{ item.cylinderCount }}
-                  }
-                  @if (item.cylinderPrice !== null) {
-                    · цена {{ item.cylinderPrice | number: '1.0-0' }} ₽
-                  }
+                @if (item.thumbturnCount !== null) {
+                  · крутилок {{ item.thumbturnCount }}
                 }
-                @if (item.boltCount !== null || item.boltPrice !== null) {
-                  · Шпингалет
-                  @if (item.boltCount !== null) {
-                    · кол-во {{ item.boltCount }}
-                  }
-                  @if (item.boltPrice !== null) {
-                    · цена {{ item.boltPrice | number: '1.0-0' }} ₽
-                  }
+                @if (item.escutcheonCount !== null) {
+                  · накладок {{ item.escutcheonCount }}
                 }
-                @if (item.hingeCount !== null || item.hingePrice !== null) {
-                  · Петли
-                  @if (item.hingeCount !== null) {
-                    · кол-во {{ item.hingeCount }}
-                  }
-                  @if (item.hingePrice !== null) {
-                    · цена {{ item.hingePrice | number: '1.0-0' }} ₽
-                  }
+                @if (item.cylinderCount !== null) {
+                  · цилиндров {{ item.cylinderCount }}
                 }
-                @if (item.doorStopCount !== null || item.doorStopPrice !== null) {
-                  · Ограничитель
-                  @if (item.doorStopCount !== null) {
-                    · кол-во {{ item.doorStopCount }}
-                  }
-                  @if (item.doorStopPrice !== null) {
-                    · цена {{ item.doorStopPrice | number: '1.0-0' }} ₽
-                  }
+                @if (item.boltCount !== null) {
+                  · шпингалетов {{ item.boltCount }}
+                }
+                @if (item.hingeCount !== null) {
+                  · петель {{ item.hingeCount }}
+                }
+                @if (item.doorStopCount !== null) {
+                  · ограничителей {{ item.doorStopCount }}
                 }
                 @if (item.comment) {
                   · {{ item.comment }}
                 }
               </div>
             </div>
+
             <div class="door-item__aside">
               <div class="door-item__price">{{ getHardwareTotal(item) | number: '1.0-0' }} ₽</div>
               <div class="door-item__actions">
@@ -418,6 +386,7 @@
         }
       </div>
     }
+
     @if (panelingItems.length) {
       <div class="door-section">
         <div class="door-section__title">Обшивка</div>
@@ -428,12 +397,15 @@
                 Обшивка · {{ item.color }} · {{ panelingCoveringLabels[item.covering] }}
               </div>
               <div class="door-item__meta">
-                размер {{ item.size }} · количество {{ item.count }}
+                {{ item.width }} × {{ item.height }} см · {{ item.quantityPerSet }} в комплекте ·
+                {{ item.count }} комплектов · общая квадратура {{ item.totalArea | number: '1.0-2' }} м² ·
+                {{ item.price | number: '1.0-0' }} ₽/м²
                 @if (item.comment) {
                   · {{ item.comment }}
                 }
               </div>
             </div>
+
             <div class="door-item__aside">
               <div class="door-item__price">{{ getPanelingTotal(item) | number: '1.0-0' }} ₽</div>
               <div class="door-item__actions">

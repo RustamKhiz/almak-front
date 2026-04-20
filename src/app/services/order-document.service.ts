@@ -6,7 +6,6 @@ import {
   ExtensionCovering,
   ExtensionItem,
   HardwareItem,
-  HardwareMechanismType,
   MoldingCovering,
   MoldingItem,
   MoldingPlatbandType,
@@ -33,7 +32,9 @@ export class OrderDocumentService {
       order.hardwares.reduce((sum, item) => sum + this.getHardwareTotal(item), 0) +
       order.panelings.reduce((sum, item) => sum + this.getPanelingTotal(item), 0);
     const totalToPay = Math.max(totalAmount - order.discount, 0);
-    const customerDebt = Math.max(totalToPay - order.prepayment, 0);
+    const paidAmount =
+      order.payments.length > 0 ? order.payments.reduce((sum, payment) => sum + payment.amount, 0) : order.prepayment;
+    const customerDebt = Math.max(totalToPay - paidAmount, 0);
     const rowCount =
       order.interiorDoors.length +
       order.entranceDoors.length +
@@ -49,11 +50,10 @@ export class OrderDocumentService {
       .map((item) =>
         this.buildRow(
           rowNumber++,
-          'М/К',
+          'Межкомнатная дверь',
           item.model,
-          item.hasGlass ? 'Со стеклом' : 'Глухая',
           this.formatDoorSize(item.width, item.height, item.width2),
-          this.getLeafTypeLabel(item.leafType),
+          `${this.getLeafTypeLabel(item.leafType)}, ${item.color}${item.hasGlass ? `, со стеклом${item.glassComment ? `: ${item.glassComment}` : ''}` : ''}`,
           item.comment || '-',
           item.count,
           item.price,
@@ -65,11 +65,10 @@ export class OrderDocumentService {
       .map((item) =>
         this.buildRow(
           rowNumber++,
-          'Вх.',
+          'Входная дверь',
           item.model,
-          this.getEntranceExecutionLabel(item.kind, item.painting, item.panelColor, item.hasPeephole),
           this.formatDoorSize(item.width, item.height, null),
-          item.color,
+          this.getEntranceColorLabel(item),
           item.comment || '-',
           item.count,
           item.price,
@@ -83,9 +82,8 @@ export class OrderDocumentService {
           rowNumber++,
           'Погонаж',
           this.getMoldingTitle(item),
-          this.getMoldingExecutionLabel(item),
           this.getMoldingSizeLabel(item),
-          this.getMoldingCoveringLabel(item.covering),
+          `${item.color}, ${this.getMoldingCoveringLabel(item.covering)}`,
           item.comment || '-',
           item.frameCount + item.platbandCount,
           this.getMoldingTotal(item),
@@ -99,13 +97,12 @@ export class OrderDocumentService {
           rowNumber++,
           'Доборы',
           `Доборы ${item.color}`,
-          '-',
           `${item.width}x${item.height}`,
-          this.getExtensionCoveringLabel(item.covering),
+          `${item.color}, ${this.getExtensionCoveringLabel(item.covering)}, ${item.quantityPerSet} в компл., общ. кв.м ${item.totalArea}`,
           item.comment || '-',
           item.count,
           item.price,
-          item.price * item.count,
+          this.getExtensionTotal(item),
         ),
       )
       .join('');
@@ -115,9 +112,8 @@ export class OrderDocumentService {
           rowNumber++,
           'Капитель',
           item.name,
-          `цвет ${item.color}`,
           `${item.width}x${item.height}`,
-          this.getCapitalCoveringLabel(item.covering),
+          `${item.color}, ${this.getCapitalCoveringLabel(item.covering)}`,
           item.comment || '-',
           item.count,
           item.price,
@@ -131,9 +127,8 @@ export class OrderDocumentService {
           rowNumber++,
           'Фурнитура',
           this.getHardwareTitle(item),
+          '-',
           this.getHardwareExecutionLabel(item),
-          '-',
-          '-',
           item.comment || '-',
           this.getHardwareCount(item),
           this.getHardwareTotal(item),
@@ -147,13 +142,12 @@ export class OrderDocumentService {
           rowNumber++,
           'Обшивка',
           `Обшивка ${item.color}`,
-          '-',
-          item.size,
-          this.getPanelingCoveringLabel(item.covering),
+          `${item.width}x${item.height}`,
+          `${item.color}, ${this.getPanelingCoveringLabel(item.covering)}, ${item.quantityPerSet} в компл., общ. кв.м ${item.totalArea}`,
           item.comment || '-',
           item.count,
           item.price,
-          item.price * item.count,
+          this.getPanelingTotal(item),
         ),
       )
       .join('');
@@ -171,6 +165,8 @@ export class OrderDocumentService {
             body { font-family: "Times New Roman", serif; font-size: 11px; line-height: 1.15; color: #111; margin: 0; padding: 0; }
             .doc { border: 1px solid #111; padding: 10px 12px; }
             .doc-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; margin-bottom: 8px; border-bottom: 1px solid #111; padding-bottom: 6px; }
+            .company-wrap { display: flex; align-items: flex-start; gap: 12px; }
+            .logo { width: 72px; height: auto; object-fit: contain; }
             .company { font-size: 11px; }
             .company strong { font-size: 13px; }
             .order-title { text-align: right; }
@@ -218,21 +214,20 @@ export class OrderDocumentService {
         </head>
         <body class="${layoutMode}">
           <div class="doc">
-            <div class="doc-header"><div class="company"><div><strong>ООО "АЛМАК"</strong></div><div>Заказ-наряд на поставку дверей и комплектующих</div></div><div class="order-title"><h1>ЗАКАЗ-НАРЯД</h1><div class="num">№ ${orderId} от ${issueDate}</div></div></div>
+            <div class="doc-header"><div class="company-wrap"><img class="logo" src="/logo.jpg" alt="Логотип" /><div class="company"><div><strong>Двери Алмак</strong></div><div>ИП Хизриев С.С.</div></div></div><div class="order-title"><h1>ЗАКАЗ-НАРЯД</h1><div class="num">№ ${orderId} от ${issueDate}</div></div></div>
             <div class="section-title">Данные клиента</div>
             <div class="meta-grid">
               <div class="meta-line"><strong>ФИО:</strong> ${this.escapeHtml(order.name)}</div>
               <div class="meta-line"><strong>Телефон:</strong> ${this.escapeHtml(order.phone)}</div>
-              <div class="meta-line"><strong>Дата заказа:</strong> ${issueDate}</div>
               <div class="meta-line"><strong>Доставка:</strong> ${order.needsDelivery ? 'Да' : 'Нет'}</div>
               <div class="meta-line"><strong>Адрес доставки:</strong> ${this.escapeHtml(order.deliveryAddress || '-')}</div>
             </div>
             <div class="section-title">Спецификация</div>
             <table>
-              <thead><tr><th style="width: 28px;">№</th><th style="width: 52px;">Тип</th><th>Модель / позиция</th><th>Исполнение</th><th style="width: 68px;">Размер</th><th style="width: 98px;">Цвет / покрытие</th><th style="width: 120px;">Комментарий</th><th style="width: 48px;">Кол-во</th><th style="width: 64px;">Цена</th><th style="width: 68px;">Сумма</th></tr></thead>
+              <thead><tr><th style="width: 28px;">№</th><th style="width: 110px;">Товар</th><th>Модель / позиция</th><th style="width: 68px;">Размер</th><th style="width: 138px;">Цвет / покрытие</th><th style="width: 120px;">Комментарий</th><th style="width: 48px;">Кол-во</th><th style="width: 64px;">Цена</th><th style="width: 68px;">Сумма</th></tr></thead>
               <tbody>${rows}</tbody>
             </table>
-            <div class="totals"><div class="totals-row"><span>Общая сумма:</span><strong>${totalAmount}</strong></div><div class="totals-row"><span>Скидка:</span><strong>${order.discount}</strong></div><div class="totals-row"><span>Итого к оплате:</span><strong>${totalToPay}</strong></div><div class="totals-row"><span>Предоплата:</span><strong>${order.prepayment}</strong></div><div class="totals-row"><span>Долг клиента:</span><strong>${customerDebt}</strong></div></div>
+            <div class="totals"><div class="totals-row"><span>Общая сумма:</span><strong>${totalAmount}</strong></div><div class="totals-row"><span>Скидка:</span><strong>${order.discount}</strong></div><div class="totals-row"><span>Итого к оплате:</span><strong>${totalToPay}</strong></div><div class="totals-row"><span>Внесено клиентом:</span><strong>${paidAmount}</strong></div><div class="totals-row"><span>Долг клиента:</span><strong>${customerDebt}</strong></div></div>
             <div class="comment"><strong>Комментарий:</strong> ${this.escapeHtml(order.comment)}</div>
             <div class="footer"><div class="sign-block"><div class="sign-line"></div><div>Подпись клиента</div></div><div class="sign-block"><div class="sign-line"></div><div>Подпись менеджера</div></div><div class="stamp">М.П.</div></div>
             <div class="muted">Документ сформирован автоматически в информационной системе.</div>
@@ -246,7 +241,6 @@ export class OrderDocumentService {
     index: number,
     type: string,
     title: string,
-    execution: string,
     size: string,
     color: string,
     comment: string,
@@ -254,7 +248,7 @@ export class OrderDocumentService {
     price: number,
     amount: number,
   ): string {
-    return `<tr><td class="num">${index}</td><td>${this.escapeHtml(type)}</td><td>${this.escapeHtml(title)}</td><td>${this.escapeHtml(execution)}</td><td class="num">${this.escapeHtml(size)}</td><td>${this.escapeHtml(color)}</td><td>${this.escapeHtml(comment)}</td><td class="num">${count}</td><td class="money">${price}</td><td class="money">${amount}</td></tr>`;
+    return `<tr><td class="num">${index}</td><td>${this.escapeHtml(type)}</td><td>${this.escapeHtml(title)}</td><td class="num">${this.escapeHtml(size)}</td><td>${this.escapeHtml(color)}</td><td>${this.escapeHtml(comment)}</td><td class="num">${count}</td><td class="money">${price}</td><td class="money">${amount}</td></tr>`;
   }
 
   private getLayoutMode(order: OrderCreatePayload, rowCount: number): string {
@@ -263,8 +257,20 @@ export class OrderDocumentService {
       order.phone.length +
       order.deliveryAddress.length +
       order.comment.length +
-      order.interiorDoors.reduce((sum, item) => sum + item.model.length + item.comment.length, 0) +
-      order.entranceDoors.reduce((sum, item) => sum + item.model.length + item.comment.length, 0) +
+      order.interiorDoors.reduce(
+        (sum, item) => sum + item.model.length + item.color.length + item.glassComment.length + item.comment.length,
+        0,
+      ) +
+      order.entranceDoors.reduce(
+        (sum, item) =>
+          sum +
+          item.model.length +
+          item.color.length +
+          (item.panelColor?.length ?? 0) +
+          (item.painting?.length ?? 0) +
+          item.comment.length,
+        0,
+      ) +
       order.moldings.reduce((sum, item) => sum + item.color.length + item.comment.length, 0) +
       order.extensions.reduce((sum, item) => sum + item.color.length + item.comment.length, 0) +
       order.capitals.reduce((sum, item) => sum + item.name.length + item.color.length + item.comment.length, 0) +
@@ -272,7 +278,16 @@ export class OrderDocumentService {
         (sum, item) => sum + item.handleModel.length + item.handleColor.length + item.comment.length,
         0,
       ) +
-      order.panelings.reduce((sum, item) => sum + item.color.length + item.size.length + item.comment.length, 0);
+      order.panelings.reduce(
+        (sum, item) =>
+          sum +
+          item.color.length +
+          `${item.width}x${item.height}`.length +
+          `${item.quantityPerSet}`.length +
+          `${item.totalArea}`.length +
+          item.comment.length,
+        0,
+      );
     const densityScore = rowCount * 10 + Math.ceil(detailsLength / 90);
 
     if (densityScore >= 155) {
@@ -299,11 +314,13 @@ export class OrderDocumentService {
 
   private getEntranceExecutionLabel(
     kind: EntranceDoorKind,
+    leafType: DoorLeafType,
     painting: string | null,
     panelColor: string | null,
     hasPeephole: boolean | null,
   ): string {
     const details = [kind === EntranceDoorKind.Welded ? 'Сварная' : 'Фабричная'];
+    details.push(leafType === DoorLeafType.Double ? 'Две створки' : 'Одна створка');
     if (painting) {
       details.push(`покр.: ${painting}`);
     }
@@ -312,6 +329,29 @@ export class OrderDocumentService {
     }
     if (hasPeephole !== null) {
       details.push(`глазок: ${hasPeephole ? '+' : '-'}`);
+    }
+    return details.join(', ');
+  }
+
+  private getEntranceColorLabel(item: {
+    kind: EntranceDoorKind;
+    leafType: DoorLeafType;
+    color: string;
+    painting: string | null;
+    panelColor: string | null;
+    hasPeephole: boolean | null;
+  }): string {
+    const details = [item.color];
+    details.push(item.kind === EntranceDoorKind.Welded ? 'сварочная' : 'фабричная');
+    details.push(item.leafType === DoorLeafType.Double ? 'две створки' : 'одна створка');
+    if (item.painting) {
+      details.push(`покрытие: ${item.painting}`);
+    }
+    if (item.panelColor) {
+      details.push(`цвет обшивки: ${item.panelColor}`);
+    }
+    if (item.hasPeephole !== null) {
+      details.push(`глазок: ${item.hasPeephole ? 'есть' : 'нет'}`);
     }
     return details.join(', ');
   }
@@ -404,11 +444,11 @@ export class OrderDocumentService {
   }
 
   private getExtensionTotal(item: ExtensionItem): number {
-    return item.price * item.count;
+    return item.totalArea * item.price * item.count;
   }
 
   private getPanelingTotal(item: PanelingItem): number {
-    return item.price * item.count;
+    return item.totalArea * item.price * item.count;
   }
 
   private getCapitalTotal(item: { price: number; count: number }): number {
@@ -420,8 +460,11 @@ export class OrderDocumentService {
     if (item.handleModel) {
       parts.push(`Ручка ${item.handleModel}`);
     }
-    if (item.mechanismType) {
-      parts.push(item.mechanismType === HardwareMechanismType.Lock ? 'Механизм замок' : 'Механизм фиксатор');
+    if (item.lockCount !== null || item.lockPrice !== null) {
+      parts.push('Замок');
+    }
+    if (item.fixatorCount !== null || item.fixatorPrice !== null) {
+      parts.push('Фиксатор');
     }
     if (item.thumbturnCount !== null) {
       parts.push('Крутилка');
@@ -452,14 +495,11 @@ export class OrderDocumentService {
     if (item.handleCount !== null || item.handlePrice !== null) {
       details.push(`ручка ${this.formatCountPrice(item.handleCount, item.handlePrice)}`);
     }
-    if (item.mechanismType || item.mechanismCount !== null || item.mechanismPrice !== null) {
-      const label =
-        item.mechanismType === HardwareMechanismType.Fixator
-          ? 'фиксатор'
-          : item.mechanismType === HardwareMechanismType.Lock
-            ? 'замок'
-            : 'механизм';
-      details.push(`${label} ${this.formatCountPrice(item.mechanismCount, item.mechanismPrice)}`);
+    if (item.lockCount !== null || item.lockPrice !== null) {
+      details.push(`замок ${this.formatCountPrice(item.lockCount, item.lockPrice)}`);
+    }
+    if (item.fixatorCount !== null || item.fixatorPrice !== null) {
+      details.push(`фиксатор ${this.formatCountPrice(item.fixatorCount, item.fixatorPrice)}`);
     }
     if (item.thumbturnCount !== null || item.thumbturnPrice !== null) {
       details.push(`крутилка ${this.formatCountPrice(item.thumbturnCount, item.thumbturnPrice)}`);
@@ -485,7 +525,8 @@ export class OrderDocumentService {
   private getHardwareCount(item: HardwareItem): number {
     return (
       Number(item.handleCount ?? 0) +
-      Number(item.mechanismCount ?? 0) +
+      Number(item.lockCount ?? 0) +
+      Number(item.fixatorCount ?? 0) +
       Number(item.thumbturnCount ?? 0) +
       Number(item.escutcheonCount ?? 0) +
       Number(item.cylinderCount ?? 0) +
@@ -498,7 +539,8 @@ export class OrderDocumentService {
   private getHardwareTotal(item: HardwareItem): number {
     return (
       this.getOptionalTotal(item.handleCount, item.handlePrice) +
-      this.getOptionalTotal(item.mechanismCount, item.mechanismPrice) +
+      this.getOptionalTotal(item.lockCount, item.lockPrice) +
+      this.getOptionalTotal(item.fixatorCount, item.fixatorPrice) +
       this.getOptionalTotal(item.thumbturnCount, item.thumbturnPrice) +
       this.getOptionalTotal(item.escutcheonCount, item.escutcheonPrice) +
       this.getOptionalTotal(item.cylinderCount, item.cylinderPrice) +

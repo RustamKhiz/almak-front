@@ -7,7 +7,19 @@
       <input matInput formControlName="model" />
     </mat-form-field>
 
+    <mat-form-field appearance="outline">
+      <mat-label>Цвет</mat-label>
+      <input matInput formControlName="color" />
+    </mat-form-field>
+
     <mat-checkbox formControlName="hasGlass">Со стеклом</mat-checkbox>
+
+    @if (form.controls.hasGlass.value) {
+      <mat-form-field appearance="outline" class="glass-comment-field">
+        <mat-label>Какое стекло</mat-label>
+        <textarea matInput rows="2" formControlName="glassComment"></textarea>
+      </mat-form-field>
+    }
 
     <div class="dialog-row dialog-row--sizes">
       <div class="dialog-column">
@@ -32,7 +44,7 @@
 
     <mat-form-field appearance="outline">
       <mat-label>Цена</mat-label>
-      <input matInput type="number" formControlName="price" />
+      <input matInput type="number" formControlName="price" placeholder="0" />
     </mat-form-field>
 
     <app-quantity-field formControlName="count" />

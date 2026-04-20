@@ -89,15 +89,45 @@ th {
 }
 
 .status-2 {
-  background: var(--app-status-progress-bg);
-  color: var(--app-status-progress-text);
-  border-color: var(--app-status-progress-border);
+  background: var(--app-status-ordered-bg);
+  color: var(--app-status-ordered-text);
+  border-color: var(--app-status-ordered-border);
 }
 
 .status-3 {
+  background: var(--app-status-received-bg);
+  color: var(--app-status-received-text);
+  border-color: var(--app-status-received-border);
+}
+
+.status-4 {
+  background: var(--app-status-notified-bg);
+  color: var(--app-status-notified-text);
+  border-color: var(--app-status-notified-border);
+}
+
+.status-5 {
+  background: var(--app-status-issued-bg);
+  color: var(--app-status-issued-text);
+  border-color: var(--app-status-issued-border);
+}
+
+.status-6 {
   background: var(--app-status-completed-bg);
   color: var(--app-status-completed-text);
   border-color: var(--app-status-completed-border);
+}
+
+.payment-paid {
+  background: var(--app-payment-paid-bg);
+  color: var(--app-payment-paid-text);
+  border-color: var(--app-payment-paid-border);
+}
+
+.payment-unpaid {
+  background: var(--app-payment-unpaid-bg);
+  color: var(--app-payment-unpaid-text);
+  border-color: var(--app-payment-unpaid-border);
 }
 
 @media (max-width: 768px) {

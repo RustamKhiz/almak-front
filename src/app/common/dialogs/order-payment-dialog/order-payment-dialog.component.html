@@ -1,0 +1,25 @@
+<h2 mat-dialog-title>{{ data.title || 'Внести оплату' }}</h2>
+
+<mat-dialog-content>
+  <form class="order-payment-dialog__form" [formGroup]="form">
+    <mat-form-field appearance="outline">
+      <mat-label>Сумма</mat-label>
+      <input matInput type="number" min="0.01" step="0.01" formControlName="amount" placeholder="0" />
+      @if (form.controls.amount.touched && form.controls.amount.invalid) {
+        <mat-error>Укажите сумму больше 0</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Комментарий</mat-label>
+      <textarea matInput rows="3" formControlName="comment" placeholder="Например: доплата по заказу"></textarea>
+    </mat-form-field>
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button type="button" mat-dialog-close>Отмена</button>
+  <button mat-flat-button color="primary" type="button" (click)="onSubmit()">
+    {{ data.confirmText || 'Сохранить' }}
+  </button>
+</mat-dialog-actions>

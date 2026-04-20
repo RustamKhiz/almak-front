@@ -1,0 +1,43 @@
+<h2 mat-dialog-title>{{ data.title }}</h2>
+
+<mat-dialog-content class="details-dialog">
+  @if (data.subtitle) {
+    <p class="details-dialog__subtitle">{{ data.subtitle }}</p>
+  }
+
+  @if (data.badges?.length) {
+    <div class="details-dialog__badges">
+      @for (badge of data.badges; track badge) {
+        <span class="details-dialog__badge">{{ badge }}</span>
+      }
+    </div>
+  }
+
+  @if (data.total !== undefined) {
+    <div class="details-dialog__total">
+      <span>{{ data.totalLabel ?? 'Итоговая стоимость' }}</span>
+      <strong>{{ data.total | number: '1.0-2' }} ₽</strong>
+    </div>
+  }
+
+  <div class="details-dialog__sections">
+    @for (section of data.sections; track section.title) {
+      <section class="details-dialog__section">
+        <div class="details-dialog__section-title">{{ section.title }}</div>
+
+        <div class="details-dialog__rows">
+          @for (row of section.rows; track row.label) {
+            <div class="details-dialog__row">
+              <span class="details-dialog__row-label">{{ row.label }}</span>
+              <span class="details-dialog__row-value">{{ row.value }}</span>
+            </div>
+          }
+        </div>
+      </section>
+    }
+  </div>
+</mat-dialog-content>
+
+<div mat-dialog-actions align="end">
+  <button mat-flat-button color="primary" type="button" (click)="onCloseClick()">Закрыть</button>
+</div>

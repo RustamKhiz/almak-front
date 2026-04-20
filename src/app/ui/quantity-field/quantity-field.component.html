@@ -8,6 +8,7 @@
       type="number"
       class="quantity-field__input"
       [min]="min()"
+      [step]="step()"
       [ngModel]="value"
       [disabled]="disabled"
       (ngModelChange)="onInput($event)"

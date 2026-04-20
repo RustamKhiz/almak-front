@@ -15,9 +15,10 @@ import {
   ENTRANCE_DOOR_PANEL_COLOR_OPTIONS,
   ENTRANCE_DOOR_WIDTH_OPTIONS,
 } from '../../constants/entrance-door-catalog';
-import { EntranceDoorItem, EntranceDoorKind, OrderItemType } from '../../../types/order.types';
+import { DoorLeafType, EntranceDoorItem, EntranceDoorKind, OrderItemType } from '../../../types/order.types';
 import { CatalogAutocompleteFieldComponent } from '../../../ui/catalog-autocomplete-field/catalog-autocomplete-field.component';
 import { QuantityFieldComponent } from '../../../ui/quantity-field/quantity-field.component';
+import { bindLeadingCapitalization } from '../../utils/form-text';
 
 export interface EntranceDoorDialogData {
   mode: 'create' | 'edit';
@@ -55,20 +56,22 @@ export class EntranceDoorDialogComponent {
   protected readonly heightOptions = ENTRANCE_DOOR_HEIGHT_OPTIONS;
   protected readonly paintingOptions = ENTRANCE_DOOR_PAINTING_OPTIONS;
   protected readonly panelColorOptions = ENTRANCE_DOOR_PANEL_COLOR_OPTIONS;
+  protected readonly leafTypeOptions = [DoorLeafType.Single, DoorLeafType.Double] as const;
   protected readonly isWelded = signal(this.data.door?.kind === EntranceDoorKind.Welded);
 
   protected readonly form = this.fb.nonNullable.group({
     kind: [this.data.door?.kind ?? EntranceDoorKind.Factory, [Validators.required]],
+    leafType: [this.data.door?.leafType ?? DoorLeafType.Single, [Validators.required]],
     model: [this.data.door?.model ?? '', [Validators.required]],
     width: [this.data.door?.width ?? this.widthOptions[0], [Validators.required, Validators.min(1)]],
     height: [this.data.door?.height ?? this.heightOptions[2], [Validators.required, Validators.min(1)]],
     color: [this.data.door?.color ?? '', [Validators.required]],
-    painting: this.data.door?.painting ?? '',
-    panelColor: this.data.door?.panelColor ?? '',
+    painting: [this.data.door?.painting ?? ''],
+    panelColor: [this.data.door?.panelColor ?? ''],
     hasPeephole: this.data.door?.hasPeephole ?? true,
     comment: this.data.door?.comment ?? '',
     count: [this.data.door?.count ?? 1, [Validators.required, Validators.min(1)]],
-    price: [this.data.door?.price ?? 0, [Validators.required, Validators.min(0)]],
+    price: [this.data.door?.price ?? null, [Validators.required, Validators.min(0)]],
   });
 
   protected readonly title = computed(() =>
@@ -76,6 +79,10 @@ export class EntranceDoorDialogComponent {
   );
 
   constructor() {
+    bindLeadingCapitalization(this.form.controls.model, this.destroyRef);
+    bindLeadingCapitalization(this.form.controls.color, this.destroyRef);
+    bindLeadingCapitalization(this.form.controls.panelColor, this.destroyRef);
+
     this.form.controls.kind.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((kind) => {
       const isWelded = kind === EntranceDoorKind.Welded;
       this.isWelded.set(isWelded);
@@ -101,12 +108,13 @@ export class EntranceDoorDialogComponent {
     this.dialogRef.close({
       type: OrderItemType.EntranceDoor,
       kind,
+      leafType: value.leafType,
       model: value.model.trim(),
       width: value.width,
       height: value.height,
       color: value.color.trim(),
       painting: kind === EntranceDoorKind.Welded ? value.painting.trim() || null : null,
-      panelColor: kind === EntranceDoorKind.Welded ? value.panelColor.trim() || null : null,
+      panelColor: value.panelColor.trim() || null,
       hasPeephole: kind === EntranceDoorKind.Welded ? value.hasPeephole : null,
       comment: value.comment.trim(),
       count: value.count,
@@ -117,20 +125,15 @@ export class EntranceDoorDialogComponent {
   private syncWeldedState(isWelded: boolean): void {
     if (isWelded) {
       this.form.controls.painting.enable({ emitEvent: false });
-      this.form.controls.panelColor.enable({ emitEvent: false });
       this.form.controls.hasPeephole.enable({ emitEvent: false });
       this.form.controls.painting.addValidators([Validators.required]);
-      this.form.controls.panelColor.addValidators([Validators.required]);
       this.form.controls.hasPeephole.addValidators([Validators.required]);
     } else {
       this.form.controls.painting.disable({ emitEvent: false });
-      this.form.controls.panelColor.disable({ emitEvent: false });
       this.form.controls.hasPeephole.disable({ emitEvent: false });
       this.form.controls.painting.removeValidators([Validators.required]);
-      this.form.controls.panelColor.removeValidators([Validators.required]);
       this.form.controls.hasPeephole.removeValidators([Validators.required]);
       this.form.controls.painting.setValue('', { emitEvent: false });
-      this.form.controls.panelColor.setValue('', { emitEvent: false });
       this.form.controls.hasPeephole.setValue(true, { emitEvent: false });
     }
 

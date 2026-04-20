@@ -1,0 +1,35 @@
+<h2 mat-dialog-title>История оплат</h2>
+
+<mat-dialog-content>
+  @if (data.payments.length) {
+    <div class="order-payment-history">
+      @for (payment of data.payments; track payment.id) {
+        <article
+          class="order-payment-history__item"
+          [class.order-payment-history__item--reversal]="isReversalPayment(payment)"
+        >
+          <div class="order-payment-history__main">
+            <div class="order-payment-history__top">
+              <span class="order-payment-history__kind">{{ getPaymentDirectionLabel(payment) }}</span>
+              <span class="order-payment-history__date">{{ payment.createdAt | date: 'dd.MM.yyyy HH:mm' }}</span>
+            </div>
+            <div class="order-payment-history__comment">{{ getPaymentComment(payment) }}</div>
+          </div>
+
+          <div class="order-payment-history__side">
+            <div class="order-payment-history__amount">{{ getPaymentAmountLabel(payment) }}</div>
+            @if (canReversePayment(payment)) {
+              <button mat-stroked-button type="button" (click)="onReverseClick(payment)">Сторно</button>
+            }
+          </div>
+        </article>
+      }
+    </div>
+  } @else {
+    <div class="order-payment-history__empty">По заказу еще нет записей об оплате.</div>
+  }
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button type="button" mat-dialog-close>Закрыть</button>
+</mat-dialog-actions>

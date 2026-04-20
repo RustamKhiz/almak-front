@@ -20,6 +20,7 @@ import {
   MoldingPlatbandType,
   OrderCreatePayload,
   OrderItemType,
+  OrderPayment,
   OrderStatus,
   PanelingCovering,
   PanelingItem,
@@ -39,6 +40,8 @@ interface BackendOrder {
   deliveryAddress: string;
   comment: string;
   status: BackendOrderStatus;
+  isPaid: boolean;
+  payments?: BackendOrderPayment[];
   interiorDoors?: BackendInteriorDoor[];
   entranceDoors?: BackendEntranceDoor[];
   moldings?: BackendMolding[];
@@ -49,15 +52,27 @@ interface BackendOrder {
   created_at?: string;
 }
 
+interface BackendOrderPayment {
+  id: number;
+  orderId: number;
+  amount: number;
+  comment?: string;
+  createdAt?: string;
+  reversalOfPaymentId?: number | null;
+  reversedByPaymentId?: number | null;
+}
+
 interface BackendInteriorDoor {
   id: number;
   order_id: number;
   model: string;
+  color: string;
   price: number;
   width: number;
   width2?: number | null;
   height: number;
   hasGlass?: boolean;
+  glassComment?: string;
   leafType: string;
   count: number;
   covering?: string;
@@ -67,6 +82,7 @@ interface BackendEntranceDoor {
   id: number;
   order_id: number;
   kind: string;
+  leafType?: string;
   model: string;
   width: number;
   height: number;
@@ -101,6 +117,8 @@ interface BackendExtension {
   covering?: string;
   width: number;
   height: number;
+  quantityPerSet?: number;
+  totalArea?: number;
   comment?: string;
   count: number;
   price: number;
@@ -124,9 +142,10 @@ interface BackendHardware {
   handleColor?: string | null;
   handleCount?: number | null;
   handlePrice?: number | null;
-  mechanismType?: string | null;
-  mechanismCount?: number | null;
-  mechanismPrice?: number | null;
+  lockCount?: number | null;
+  lockPrice?: number | null;
+  fixatorCount?: number | null;
+  fixatorPrice?: number | null;
   thumbturnCount?: number | null;
   thumbturnPrice?: number | null;
   escutcheonCount?: number | null;
@@ -145,8 +164,11 @@ interface BackendPaneling {
   id: number;
   order_id: number;
   color: string;
-  size: string;
+  width: number;
+  height: number;
   covering?: string;
+  quantityPerSet?: number;
+  totalArea?: number;
   count: number;
   price: number;
   comment?: string;
@@ -163,6 +185,7 @@ interface BackendOrderPayload {
   deliveryAddress: string;
   comment: string;
   status: BackendOrderStatus;
+  isPaid: boolean;
   interiorDoors: BackendInteriorDoorPayload[];
   entranceDoors: BackendEntranceDoorPayload[];
   moldings: BackendMoldingPayload[];
@@ -174,11 +197,13 @@ interface BackendOrderPayload {
 
 interface BackendInteriorDoorPayload {
   model: string;
+  color: string;
   price: number;
   width: number;
   width2?: number | null;
   height: number;
   hasGlass: boolean;
+  glassComment: string;
   leafType: string;
   count: number;
   covering: string;
@@ -186,6 +211,7 @@ interface BackendInteriorDoorPayload {
 }
 interface BackendEntranceDoorPayload {
   kind: string;
+  leafType: string;
   model: string;
   width: number;
   height: number;
@@ -216,6 +242,8 @@ interface BackendExtensionPayload {
   covering: string;
   width: number;
   height: number;
+  quantityPerSet: number;
+  totalArea: number;
   comment: string;
   count: number;
   price: number;
@@ -235,9 +263,10 @@ interface BackendHardwarePayload {
   handleColor?: string | null;
   handleCount?: number | null;
   handlePrice?: number | null;
-  mechanismType?: string | null;
-  mechanismCount?: number | null;
-  mechanismPrice?: number | null;
+  lockCount?: number | null;
+  lockPrice?: number | null;
+  fixatorCount?: number | null;
+  fixatorPrice?: number | null;
   thumbturnCount?: number | null;
   thumbturnPrice?: number | null;
   escutcheonCount?: number | null;
@@ -254,14 +283,26 @@ interface BackendHardwarePayload {
 }
 interface BackendPanelingPayload {
   color: string;
-  size: string;
+  width: number;
+  height: number;
   covering: string;
+  quantityPerSet: number;
+  totalArea: number;
   count: number;
   price: number;
   comment: string;
 }
 interface BackendOrderStatusPayload {
   status: number;
+}
+
+interface BackendOrderPaymentStatusPayload {
+  isPaid: boolean;
+}
+
+interface BackendAddOrderPaymentPayload {
+  amount: number;
+  comment: string;
 }
 
 export interface OrderRecord {
@@ -274,6 +315,7 @@ export interface OrderRecord {
   discount: number;
   comment: string;
   status: OrderStatus;
+  isPaid: boolean;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -308,6 +350,26 @@ export class OrdersService {
       } as BackendOrderStatusPayload)
       .pipe(map((order) => this.mapBackendStatusToOrderStatus(order.status)));
   }
+  updateOrderPaymentStatus(id: number, isPaid: boolean): Observable<boolean> {
+    return this.http
+      .patch<BackendOrder>(`${this.coreService.apiBaseUrl}/orders/${id}/payment-status`, {
+        isPaid,
+      } as BackendOrderPaymentStatusPayload)
+      .pipe(map((order) => order.isPaid));
+  }
+  addOrderPayment(id: number, amount: number, comment: string): Observable<OrderCreatePayload> {
+    return this.http
+      .post<BackendOrder>(`${this.coreService.apiBaseUrl}/orders/${id}/payments`, {
+        amount,
+        comment,
+      } as BackendAddOrderPaymentPayload)
+      .pipe(map((order) => this.mapBackendOrderToCreatePayload(order)));
+  }
+  reverseOrderPayment(orderId: number, paymentId: number): Observable<OrderCreatePayload> {
+    return this.http
+      .post<BackendOrder>(`${this.coreService.apiBaseUrl}/orders/${orderId}/payments/${paymentId}/reverse`, {})
+      .pipe(map((order) => this.mapBackendOrderToCreatePayload(order)));
+  }
   deleteOrder(id: number): Observable<void> {
     return this.http.delete<void>(`${this.coreService.apiBaseUrl}/orders/${id}`);
   }
@@ -323,6 +385,7 @@ export class OrdersService {
       discount: order.discount ?? 0,
       comment: order.comment ?? '',
       status: this.mapBackendStatusToOrderStatus(order.status),
+      isPaid: order.isPaid ?? false,
     };
   }
 
@@ -337,6 +400,8 @@ export class OrdersService {
       deliveryAddress: order.deliveryAddress ?? '',
       comment: order.comment ?? '',
       status: this.mapBackendStatusToOrderStatus(order.status),
+      isPaid: order.isPaid ?? false,
+      payments: (order.payments ?? []).map((payment) => this.mapBackendPaymentToItem(payment)),
       interiorDoors: (order.interiorDoors ?? []).map((item) => this.mapBackendDoorToDoorItem(item)),
       entranceDoors: (order.entranceDoors ?? []).map((item) => this.mapBackendEntranceDoorToDoorItem(item)),
       moldings: (order.moldings ?? []).map((item) => this.mapBackendMoldingToItem(item)),
@@ -359,13 +424,16 @@ export class OrdersService {
       deliveryAddress: payload.deliveryAddress,
       comment: payload.comment,
       status: this.mapOrderStatusToBackendStatus(payload.status),
+      isPaid: payload.isPaid,
       interiorDoors: payload.interiorDoors.map((item) => ({
         model: item.model,
+        color: item.color,
         price: item.price,
         width: item.width,
         width2: item.width2,
         height: item.height,
         hasGlass: item.hasGlass,
+        glassComment: item.glassComment,
         leafType: item.leafType,
         count: item.count,
         covering: item.covering,
@@ -373,6 +441,7 @@ export class OrdersService {
       })),
       entranceDoors: payload.entranceDoors.map((item) => ({
         kind: item.kind,
+        leafType: item.leafType,
         model: item.model,
         width: item.width,
         height: item.height,
@@ -403,6 +472,8 @@ export class OrdersService {
         covering: item.covering,
         width: item.width,
         height: item.height,
+        quantityPerSet: item.quantityPerSet,
+        totalArea: item.totalArea,
         comment: item.comment,
         count: item.count,
         price: item.price,
@@ -422,9 +493,10 @@ export class OrdersService {
         handleColor: item.handleColor || null,
         handleCount: item.handleCount,
         handlePrice: item.handlePrice,
-        mechanismType: item.mechanismType,
-        mechanismCount: item.mechanismCount,
-        mechanismPrice: item.mechanismPrice,
+        lockCount: item.lockCount,
+        lockPrice: item.lockPrice,
+        fixatorCount: item.fixatorCount,
+        fixatorPrice: item.fixatorPrice,
         thumbturnCount: item.thumbturnCount,
         thumbturnPrice: item.thumbturnPrice,
         escutcheonCount: item.escutcheonCount,
@@ -441,12 +513,26 @@ export class OrdersService {
       })),
       panelings: payload.panelings.map((item) => ({
         color: item.color,
-        size: item.size,
+        width: item.width,
+        height: item.height,
         covering: item.covering,
+        quantityPerSet: item.quantityPerSet,
+        totalArea: item.totalArea,
         count: item.count,
         price: item.price,
         comment: item.comment,
       })),
+    };
+  }
+
+  private mapBackendPaymentToItem(payment: BackendOrderPayment): OrderPayment {
+    return {
+      id: payment.id,
+      amount: payment.amount,
+      comment: payment.comment ?? '',
+      createdAt: payment.createdAt ?? '',
+      reversalOfPaymentId: payment.reversalOfPaymentId ?? null,
+      reversedByPaymentId: payment.reversedByPaymentId ?? null,
     };
   }
 
@@ -455,11 +541,13 @@ export class OrdersService {
       id: door.id,
       type: OrderItemType.InteriorDoor,
       model: door.model,
+      color: door.color ?? '',
       price: door.price,
       width: door.width,
       width2: door.width2 ?? null,
       height: door.height,
       hasGlass: door.hasGlass ?? false,
+      glassComment: door.glassComment ?? '',
       leafType: door.leafType === DoorLeafType.Double ? DoorLeafType.Double : DoorLeafType.Single,
       count: door.count,
       covering: this.mapInteriorCovering(door.covering),
@@ -471,6 +559,7 @@ export class OrdersService {
       id: door.id,
       type: OrderItemType.EntranceDoor,
       kind: door.kind === EntranceDoorKind.Welded ? EntranceDoorKind.Welded : EntranceDoorKind.Factory,
+      leafType: door.leafType === DoorLeafType.Double ? DoorLeafType.Double : DoorLeafType.Single,
       model: door.model,
       width: door.width,
       height: door.height,
@@ -509,6 +598,8 @@ export class OrdersService {
       covering: this.mapExtensionCovering(item.covering),
       width: item.width,
       height: item.height,
+      quantityPerSet: item.quantityPerSet ?? 0.5,
+      totalArea: item.totalArea ?? Number(((item.width * item.height * 0.5) / 10000).toFixed(2)),
       comment: item.comment ?? '',
       count: item.count,
       price: item.price,
@@ -536,9 +627,10 @@ export class OrdersService {
       handleColor: item.handleColor ?? '',
       handleCount: item.handleCount ?? null,
       handlePrice: item.handlePrice ?? null,
-      mechanismType: this.mapHardwareMechanismType(item.mechanismType),
-      mechanismCount: item.mechanismCount ?? null,
-      mechanismPrice: item.mechanismPrice ?? null,
+      lockCount: item.lockCount ?? null,
+      lockPrice: item.lockPrice ?? null,
+      fixatorCount: item.fixatorCount ?? null,
+      fixatorPrice: item.fixatorPrice ?? null,
       thumbturnCount: item.thumbturnCount ?? null,
       thumbturnPrice: item.thumbturnPrice ?? null,
       escutcheonCount: item.escutcheonCount ?? null,
@@ -559,8 +651,12 @@ export class OrdersService {
       id: item.id,
       type: OrderItemType.Paneling,
       color: item.color ?? '',
-      size: item.size ?? '',
+      size: `${item.width}x${item.height}`,
+      width: item.width,
+      height: item.height,
       covering: this.mapPanelingCovering(item.covering),
+      quantityPerSet: item.quantityPerSet ?? 0.5,
+      totalArea: item.totalArea ?? Number(((item.width * item.height * 0.5) / 10000).toFixed(2)),
       count: item.count,
       price: item.price,
       comment: item.comment ?? '',
@@ -642,8 +738,14 @@ export class OrdersService {
 
   private mapBackendStatusToOrderStatus(status: BackendOrderStatus): OrderStatus {
     switch (status) {
-      case BackendOrderStatus.Progress:
-        return OrderStatus.Progress;
+      case BackendOrderStatus.Ordered:
+        return OrderStatus.Ordered;
+      case BackendOrderStatus.Received:
+        return OrderStatus.Received;
+      case BackendOrderStatus.CustomerNotified:
+        return OrderStatus.CustomerNotified;
+      case BackendOrderStatus.Issued:
+        return OrderStatus.Issued;
       case BackendOrderStatus.Completed:
         return OrderStatus.Completed;
       default:
@@ -652,8 +754,14 @@ export class OrdersService {
   }
   private mapOrderStatusToBackendStatus(status: OrderStatus): BackendOrderStatus {
     switch (status) {
-      case OrderStatus.Progress:
-        return BackendOrderStatus.Progress;
+      case OrderStatus.Ordered:
+        return BackendOrderStatus.Ordered;
+      case OrderStatus.Received:
+        return BackendOrderStatus.Received;
+      case OrderStatus.CustomerNotified:
+        return BackendOrderStatus.CustomerNotified;
+      case OrderStatus.Issued:
+        return BackendOrderStatus.Issued;
       case OrderStatus.Completed:
         return BackendOrderStatus.Completed;
       default:

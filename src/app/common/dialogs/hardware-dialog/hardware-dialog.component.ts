@@ -5,8 +5,8 @@ import { MatButtonModule } from '@angular/material/button';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
-import { HardwareItem, HardwareMechanismType, OrderItemType } from '../../../types/order.types';
+import { HardwareItem, OrderItemType } from '../../../types/order.types';
+import { bindLeadingCapitalization } from '../../utils/form-text';
 
 export interface HardwareDialogData {
   mode: 'create' | 'edit';
@@ -15,19 +15,9 @@ export interface HardwareDialogData {
 
 export type HardwareDialogResult = Omit<HardwareItem, 'id'>;
 
-const HARDWARE_MECHANISM_OPTIONS: readonly HardwareMechanismType[] = [
-  HardwareMechanismType.Lock,
-  HardwareMechanismType.Fixator,
-] as const;
-
-const HARDWARE_MECHANISM_LABELS: Readonly<Record<HardwareMechanismType, string>> = {
-  [HardwareMechanismType.Lock]: 'Замок',
-  [HardwareMechanismType.Fixator]: 'Фиксатор',
-};
-
 @Component({
   selector: 'app-hardware-dialog',
-  imports: [ReactiveFormsModule, MatButtonModule, MatDialogModule, MatFormFieldModule, MatInputModule, MatSelectModule],
+  imports: [ReactiveFormsModule, MatButtonModule, MatDialogModule, MatFormFieldModule, MatInputModule],
   templateUrl: './hardware-dialog.component.html',
   styleUrl: './hardware-dialog.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -38,18 +28,16 @@ export class HardwareDialogComponent {
   private readonly data = inject<HardwareDialogData>(MAT_DIALOG_DATA);
   private readonly destroyRef = inject(DestroyRef);
 
-  protected readonly mechanismOptions = HARDWARE_MECHANISM_OPTIONS;
-  protected readonly mechanismLabels = HARDWARE_MECHANISM_LABELS;
-
   protected readonly form = this.fb.nonNullable.group(
     {
       handleModel: this.data.hardware?.handleModel ?? '',
       handleColor: this.data.hardware?.handleColor ?? '',
       handleCount: this.data.hardware?.handleCount ?? null,
       handlePrice: this.data.hardware?.handlePrice ?? null,
-      mechanismType: this.data.hardware?.mechanismType ?? null,
-      mechanismCount: this.data.hardware?.mechanismCount ?? null,
-      mechanismPrice: this.data.hardware?.mechanismPrice ?? null,
+      lockCount: this.data.hardware?.lockCount ?? null,
+      lockPrice: this.data.hardware?.lockPrice ?? null,
+      fixatorCount: this.data.hardware?.fixatorCount ?? null,
+      fixatorPrice: this.data.hardware?.fixatorPrice ?? null,
       thumbturnCount: this.data.hardware?.thumbturnCount ?? null,
       thumbturnPrice: this.data.hardware?.thumbturnPrice ?? null,
       escutcheonCount: this.data.hardware?.escutcheonCount ?? null,
@@ -72,6 +60,8 @@ export class HardwareDialogComponent {
   );
 
   constructor() {
+    bindLeadingCapitalization(this.form.controls.handleModel, this.destroyRef);
+
     this.form.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
       if (this.form.hasError('emptyHardware')) {
         this.form.updateValueAndValidity({ emitEvent: false });
@@ -96,9 +86,10 @@ export class HardwareDialogComponent {
       handleColor: value.handleColor.trim(),
       handleCount: value.handleCount,
       handlePrice: value.handlePrice,
-      mechanismType: value.mechanismType,
-      mechanismCount: value.mechanismCount,
-      mechanismPrice: value.mechanismPrice,
+      lockCount: value.lockCount,
+      lockPrice: value.lockPrice,
+      fixatorCount: value.fixatorCount,
+      fixatorPrice: value.fixatorPrice,
       thumbturnCount: value.thumbturnCount,
       thumbturnPrice: value.thumbturnPrice,
       escutcheonCount: value.escutcheonCount,
@@ -123,10 +114,7 @@ function hardwareNotEmptyValidator(): ValidatorFn {
       return { emptyHardware: true };
     }
 
-    const hasValue = Object.entries(value).some(([key, fieldValue]) => {
-      if (key === 'mechanismType') {
-        return typeof fieldValue === 'string' && fieldValue.trim() !== '';
-      }
+    const hasValue = Object.values(value).some((fieldValue) => {
       if (typeof fieldValue === 'string') {
         return fieldValue.trim() !== '';
       }

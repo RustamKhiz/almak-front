@@ -16,11 +16,11 @@ export function getMoldingTotal(item: MoldingItem): number {
 }
 
 export function getExtensionTotal(item: ExtensionItem): number {
-  return item.price * item.count;
+  return item.totalArea * item.price * item.count;
 }
 
 export function getPanelingTotal(item: PanelingItem): number {
-  return item.price * item.count;
+  return item.totalArea * item.price * item.count;
 }
 
 export function getCapitalTotal(item: CapitalItem): number {
@@ -30,7 +30,8 @@ export function getCapitalTotal(item: CapitalItem): number {
 export function getHardwareTotal(item: HardwareItem): number {
   return (
     getOptionalTotal(item.handleCount, item.handlePrice) +
-    getOptionalTotal(item.mechanismCount, item.mechanismPrice) +
+    getOptionalTotal(item.lockCount, item.lockPrice) +
+    getOptionalTotal(item.fixatorCount, item.fixatorPrice) +
     getOptionalTotal(item.thumbturnCount, item.thumbturnPrice) +
     getOptionalTotal(item.escutcheonCount, item.escutcheonPrice) +
     getOptionalTotal(item.cylinderCount, item.cylinderPrice) +
@@ -56,6 +57,14 @@ export function getTotalToPay(order: OrderCreatePayload): number {
   return Math.max(getOrderTotal(order) - order.discount, 0);
 }
 
+export function getPaidAmount(order: OrderCreatePayload): number {
+  if (order.payments.length > 0) {
+    return order.payments.reduce((sum, payment) => sum + payment.amount, 0);
+  }
+
+  return order.prepayment;
+}
+
 export function getCustomerDebt(order: OrderCreatePayload): number {
-  return Math.max(getTotalToPay(order) - order.prepayment, 0);
+  return Math.max(getTotalToPay(order) - getPaidAmount(order), 0);
 }

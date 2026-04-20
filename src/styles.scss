@@ -22,13 +22,32 @@ html {
   --app-status-accepted-text: #12408f;
   --app-status-accepted-border: #7ea6ff;
 
-  --app-status-progress-bg: #fff4db;
-  --app-status-progress-text: #8a4b00;
-  --app-status-progress-border: #ffc166;
+  --app-status-ordered-bg: #fff4db;
+  --app-status-ordered-text: #8a4b00;
+  --app-status-ordered-border: #ffc166;
+
+  --app-status-received-bg: #f3e8ff;
+  --app-status-received-text: #6b21a8;
+  --app-status-received-border: #c084fc;
+
+  --app-status-notified-bg: #ffe4e6;
+  --app-status-notified-text: #be123c;
+  --app-status-notified-border: #fb7185;
+
+  --app-status-issued-bg: #dcfce7;
+  --app-status-issued-text: #166534;
+  --app-status-issued-border: #4ade80;
 
   --app-status-completed-bg: #e6f6ec;
   --app-status-completed-text: #1f6a3b;
   --app-status-completed-border: #7bc79b;
+
+  --app-payment-paid-bg: #e6f6ec;
+  --app-payment-paid-text: #1f6a3b;
+  --app-payment-paid-border: #7bc79b;
+  --app-payment-unpaid-bg: #f3f4f6;
+  --app-payment-unpaid-text: #4b5563;
+  --app-payment-unpaid-border: #d1d5db;
 }
 
 body {
@@ -64,6 +83,18 @@ body {
 .mat-mdc-raised-button.mat-primary {
   background-color: var(--mat-sys-primary) !important;
   color: var(--mat-sys-on-primary) !important;
+}
+
+.mat-mdc-unelevated-button.mat-mdc-button-disabled,
+.mat-mdc-raised-button.mat-mdc-button-disabled,
+.mat-mdc-unelevated-button.mat-mdc-button-disabled.mat-primary,
+.mat-mdc-raised-button.mat-mdc-button-disabled.mat-primary,
+.mat-mdc-unelevated-button.mat-mdc-button-disabled.mat-warn,
+.mat-mdc-raised-button.mat-mdc-button-disabled.mat-warn,
+.mat-mdc-unelevated-button.mat-mdc-button-disabled.mat-accent,
+.mat-mdc-raised-button.mat-mdc-button-disabled.mat-accent {
+  background-color: #d1d5db !important;
+  color: #6b7280 !important;
 }
 
 .mat-mdc-unelevated-button.mat-warn,
