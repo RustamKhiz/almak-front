@@ -12,7 +12,7 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatSelectModule } from '@angular/material/select';
 import { Router } from '@angular/router';
 import { Observable, filter, switchMap } from 'rxjs';
-import { ORDER_STATUS_LABELS, ORDER_STATUS_OPTIONS } from '../../common/constants/order-status';
+import { getOrderPaymentLabel, ORDER_STATUS_LABELS, ORDER_STATUS_OPTIONS } from '../../common/constants/order-status';
 import { ConfirmDialogComponent, ConfirmDialogData } from '../../common/confirm-dialog/confirm-dialog.component';
 import {
   CapitalDialogComponent,
@@ -27,13 +27,13 @@ import {
   ExtensionDialogData,
 } from '../../common/dialogs/extension-dialog/extension-dialog.component';
 import {
-  InteriorDoorDialogComponent,
-  InteriorDoorDialogData,
-} from '../../common/dialogs/interior-door-dialog/interior-door-dialog.component';
-import {
   HardwareDialogComponent,
   HardwareDialogData,
 } from '../../common/dialogs/hardware-dialog/hardware-dialog.component';
+import {
+  InteriorDoorDialogComponent,
+  InteriorDoorDialogData,
+} from '../../common/dialogs/interior-door-dialog/interior-door-dialog.component';
 import {
   MoldingDialogComponent,
   MoldingDialogData,
@@ -56,9 +56,9 @@ import {
   OrderStatus,
   PanelingItem,
 } from '../../types/order.types';
-import { OrderItemsListComponent } from './order-items-list/order-items-list.component';
 import { addItem, duplicateItem, findItemById, hasItems, removeItem, updateItem } from './order-item-helpers';
-import { OrderEntityItem, OrderItemActionEvent, OrderItemEntity } from './order-item-types';
+import { OrderItemActionEvent, OrderItemEntity, OrderEntityItem } from './order-item-types';
+import { OrderItemsListComponent } from './order-items-list/order-items-list.component';
 
 interface ItemCollection<T> {
   (): readonly T[];
@@ -117,11 +117,29 @@ export class OrderCreateComponent implements OnInit {
   protected readonly discount = signal(0);
   protected readonly statusOptions = ORDER_STATUS_OPTIONS;
   protected readonly statusLabels = ORDER_STATUS_LABELS;
+  protected readonly paymentOptions = [true, false] as const;
   protected readonly orderItemEntity = OrderItemEntity;
-  protected readonly draftOrder = computed(() => this.buildOrderPayload());
-  protected readonly orderTotal = computed(() => getOrderTotal(this.draftOrder()));
-  protected readonly totalToPay = computed(() => getTotalToPay(this.draftOrder()));
-  protected readonly customerDebt = computed(() => getCustomerDebt(this.draftOrder()));
+  protected readonly orderTotal = computed(() =>
+    getOrderTotal({
+      ...this.buildOrderPayload(),
+      prepayment: this.prepayment(),
+      discount: this.discount(),
+    }),
+  );
+  protected readonly totalToPay = computed(() =>
+    getTotalToPay({
+      ...this.buildOrderPayload(),
+      prepayment: this.prepayment(),
+      discount: this.discount(),
+    }),
+  );
+  protected readonly customerDebt = computed(() =>
+    getCustomerDebt({
+      ...this.buildOrderPayload(),
+      prepayment: this.prepayment(),
+      discount: this.discount(),
+    }),
+  );
 
   protected readonly form = this.fb.nonNullable.group({
     name: ['', [Validators.required]],
@@ -133,6 +151,7 @@ export class OrderCreateComponent implements OnInit {
     deliveryAddress: [''],
     comment: [''],
     status: [OrderStatus.Accepted, [Validators.required]],
+    isPaid: [false, [Validators.required]],
   });
 
   constructor() {
@@ -285,6 +304,10 @@ export class OrderCreateComponent implements OnInit {
     }
   }
 
+  protected getPaymentLabel(isPaid: boolean): string {
+    return getOrderPaymentLabel(isPaid);
+  }
+
   private findById<T extends { id: number }>(items: readonly T[], id: number): T | undefined {
     return findItemById(items, id);
   }
@@ -363,9 +386,7 @@ export class OrderCreateComponent implements OnInit {
 
   private saveOrder(payload: OrderCreatePayload): Observable<number> {
     const id = this.orderId();
-    return this.isEditMode() && id
-      ? this.ordersService.updateOrder(id, payload)
-      : this.ordersService.createOrder(payload);
+    return this.isEditMode() && id ? this.ordersService.updateOrder(id, payload) : this.ordersService.createOrder(payload);
   }
 
   private buildOrderPayload(): OrderCreatePayload {
@@ -381,6 +402,7 @@ export class OrderCreateComponent implements OnInit {
       deliveryAddress: value.deliveryAddress.trim(),
       comment: value.comment.trim(),
       status: value.status,
+      isPaid: value.isPaid,
       interiorDoors: this.interiorDoors(),
       entranceDoors: this.entranceDoors(),
       moldings: this.moldings(),
@@ -409,6 +431,7 @@ export class OrderCreateComponent implements OnInit {
         discount: order.discount,
         comment: order.comment,
         status: order.status,
+        isPaid: order.isPaid,
       },
       { emitEvent: false },
     );

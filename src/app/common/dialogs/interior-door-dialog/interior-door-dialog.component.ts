@@ -66,7 +66,9 @@ export class InteriorDoorDialogComponent {
 
   protected readonly form = this.fb.group({
     model: [this.data.door?.model ?? '', [Validators.required]],
+    color: [this.data.door?.color ?? '', [Validators.required]],
     hasGlass: [this.data.door?.hasGlass ?? false],
+    glassComment: [this.data.door?.glassComment ?? ''],
     width: [this.data.door?.width ?? DEFAULT_INTERIOR_DOOR_WIDTH, [Validators.required, Validators.min(1)]],
     width2: [this.data.door?.width2 ?? (null as number | null)],
     height: [this.data.door?.height ?? DEFAULT_INTERIOR_DOOR_HEIGHT, [Validators.required, Validators.min(1)]],
@@ -83,6 +85,18 @@ export class InteriorDoorDialogComponent {
 
   constructor() {
     bindLeadingCapitalization(this.form.controls.model, this.destroyRef);
+    bindLeadingCapitalization(this.form.controls.color, this.destroyRef);
+
+    this.form.controls.hasGlass.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((hasGlass) => {
+      if (hasGlass) {
+        this.form.controls.glassComment.addValidators([Validators.required]);
+      } else {
+        this.form.controls.glassComment.removeValidators([Validators.required]);
+        this.form.controls.glassComment.setValue('', { emitEvent: false });
+      }
+
+      this.form.controls.glassComment.updateValueAndValidity({ emitEvent: false });
+    });
 
     this.form.controls.leafType.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((leafType) => {
       if (leafType === DoorLeafType.Double) {
@@ -98,6 +112,11 @@ export class InteriorDoorDialogComponent {
     if (this.form.controls.leafType.value === DoorLeafType.Double) {
       this.form.controls.width2.addValidators([Validators.required, Validators.min(1)]);
       this.form.controls.width2.updateValueAndValidity({ emitEvent: false });
+    }
+
+    if (this.form.controls.hasGlass.value === true) {
+      this.form.controls.glassComment.addValidators([Validators.required]);
+      this.form.controls.glassComment.updateValueAndValidity({ emitEvent: false });
     }
   }
 
@@ -115,7 +134,9 @@ export class InteriorDoorDialogComponent {
     this.dialogRef.close({
       type: OrderItemType.InteriorDoor,
       model: value.model!.trim(),
+      color: value.color!.trim(),
       hasGlass: value.hasGlass,
+      glassComment: value.hasGlass ? value.glassComment?.trim() || '' : '',
       width: value.width,
       width2: value.leafType === DoorLeafType.Double ? value.width2! : null,
       height: value.height,

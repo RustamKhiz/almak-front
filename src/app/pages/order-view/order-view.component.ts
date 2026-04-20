@@ -1,5 +1,5 @@
-import { DecimalPipe, NgClass } from '@angular/common';
-import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal } from '@angular/core';
+import { DatePipe, DecimalPipe, NgClass } from '@angular/common';
+import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatChipsModule } from '@angular/material/chips';
@@ -8,6 +8,7 @@ import { MatMenuModule } from '@angular/material/menu';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { filter, switchMap } from 'rxjs';
 import { DOOR_LEAF_TYPE_LABELS } from '../../common/constants/door-catalog';
+import { INTERIOR_DOOR_COVERING_LABELS } from '../../common/constants/interior-door-covering';
 import {
   CAPITAL_COVERING_LABELS,
   EXTENSION_COVERING_LABELS,
@@ -15,8 +16,13 @@ import {
   MOLDING_PLATBAND_TYPE_LABELS,
   PANELING_COVERING_LABELS,
 } from '../../common/constants/molding-catalog';
-import { ORDER_STATUS_OPTIONS, getOrderStatusLabel } from '../../common/constants/order-status';
+import { getOrderPaymentLabel, getOrderStatusLabel, ORDER_STATUS_OPTIONS } from '../../common/constants/order-status';
 import { ConfirmDialogComponent, ConfirmDialogData } from '../../common/confirm-dialog/confirm-dialog.component';
+import {
+  OrderItemDetailsDialogComponent,
+  OrderItemDetailsDialogData,
+  OrderItemDetailsSection,
+} from '../../common/dialogs/order-item-details-dialog/order-item-details-dialog.component';
 import { PhoneFormatPipe } from '../../common/pipes/phone-format.pipe';
 import {
   getCapitalTotal,
@@ -34,8 +40,11 @@ import { OrderPrintService } from '../../services/order-print.service';
 import { OrdersService } from '../../services/orders.service';
 import {
   CapitalItem,
+  EntranceDoorItem,
+  EntranceDoorKind,
   ExtensionItem,
   HardwareItem,
+  InteriorDoorItem,
   MoldingItem,
   OrderCreatePayload,
   OrderStatus,
@@ -47,6 +56,16 @@ interface OrderViewState {
   data: OrderCreatePayload;
 }
 
+interface OrderViewProductCard {
+  key: string;
+  typeLabel: string;
+  title: string;
+  summary: string;
+  countLabel: string;
+  total: number;
+  details: OrderItemDetailsDialogData;
+}
+
 @Component({
   selector: 'app-order-view',
   imports: [
@@ -56,6 +75,7 @@ interface OrderViewState {
     MatMenuModule,
     RouterModule,
     DecimalPipe,
+    DatePipe,
     PhoneFormatPipe,
     NgClass,
   ],
@@ -78,11 +98,16 @@ export class OrderViewComponent {
   protected readonly state = signal<OrderViewState | null>(null);
   protected readonly statusOptions = ORDER_STATUS_OPTIONS;
   protected readonly leafTypesLabels = DOOR_LEAF_TYPE_LABELS;
+  protected readonly doorCoveringLabels = INTERIOR_DOOR_COVERING_LABELS;
   protected readonly moldingPlatbandTypeLabels = MOLDING_PLATBAND_TYPE_LABELS;
   protected readonly moldingCoveringLabels = MOLDING_COVERING_LABELS;
   protected readonly extensionCoveringLabels = EXTENSION_COVERING_LABELS;
   protected readonly capitalCoveringLabels = CAPITAL_COVERING_LABELS;
   protected readonly panelingCoveringLabels = PANELING_COVERING_LABELS;
+  protected readonly productCards = computed(() => {
+    const current = this.state();
+    return current ? this.buildProductCards(current.data) : [];
+  });
 
   constructor() {
     this.fetchOrder(Number(this.route.snapshot.paramMap.get('id') ?? 0));
@@ -90,7 +115,6 @@ export class OrderViewComponent {
 
   protected onDeleteClick(): void {
     const current = this.state();
-
     if (!current) {
       return;
     }
@@ -135,7 +159,6 @@ export class OrderViewComponent {
 
   protected onPrintClick(): void {
     const current = this.state();
-
     if (current) {
       this.orderPrintService.printHtml(this.orderDocumentService.buildOrderHtml(current.id, current.data));
     }
@@ -143,7 +166,6 @@ export class OrderViewComponent {
 
   protected onStatusChange(status: OrderStatus): void {
     const current = this.state();
-
     if (!current || current.data.status === status) {
       return;
     }
@@ -166,8 +188,44 @@ export class OrderViewComponent {
       });
   }
 
+  protected onPaymentStatusChange(isPaid: boolean): void {
+    const current = this.state();
+    if (!current || current.data.isPaid === isPaid) {
+      return;
+    }
+
+    this.ordersService
+      .updateOrderPaymentStatus(current.id, isPaid)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (nextPaymentStatus) => {
+          const state = this.state();
+          if (!state) {
+            return;
+          }
+          this.errorMessage.set(null);
+          this.state.set({ ...state, data: { ...state.data, isPaid: nextPaymentStatus } });
+        },
+        error: () => {
+          this.errorMessage.set('Не удалось обновить статус оплаты.');
+        },
+      });
+  }
+
+  protected onProductDetailsClick(card: OrderViewProductCard): void {
+    this.dialog.open(OrderItemDetailsDialogComponent, {
+      width: '720px',
+      maxWidth: 'calc(100vw - 24px)',
+      data: card.details,
+    });
+  }
+
   protected getStatusLabel(status: OrderStatus): string {
     return getOrderStatusLabel(status);
+  }
+
+  protected getPaymentLabel(isPaid: boolean): string {
+    return getOrderPaymentLabel(isPaid);
   }
 
   protected getOrderTotal(order: OrderCreatePayload): number {
@@ -180,26 +238,6 @@ export class OrderViewComponent {
 
   protected getCustomerDebt(order: OrderCreatePayload): number {
     return getCustomerDebt(order);
-  }
-
-  protected getMoldingTotal(item: MoldingItem): number {
-    return getMoldingTotal(item);
-  }
-
-  protected getExtensionTotal(item: ExtensionItem): number {
-    return getExtensionTotal(item);
-  }
-
-  protected getPanelingTotal(item: PanelingItem): number {
-    return getPanelingTotal(item);
-  }
-
-  protected getHardwareTotal(item: HardwareItem): number {
-    return getHardwareTotal(item);
-  }
-
-  protected getCapitalTotal(item: CapitalItem): number {
-    return getCapitalTotal(item);
   }
 
   private fetchOrder(id: number): void {
@@ -218,5 +256,302 @@ export class OrderViewComponent {
           this.isLoading.set(false);
         },
       });
+  }
+
+  private buildProductCards(order: OrderCreatePayload): OrderViewProductCard[] {
+    return [
+      ...order.interiorDoors.map((item) => this.buildInteriorDoorCard(item)),
+      ...order.entranceDoors.map((item) => this.buildEntranceDoorCard(item)),
+      ...order.moldings.map((item) => this.buildMoldingCard(item)),
+      ...order.extensions.map((item) => this.buildExtensionCard(item)),
+      ...order.capitals.map((item) => this.buildCapitalCard(item)),
+      ...order.hardwares.map((item) => this.buildHardwareCard(item)),
+      ...order.panelings.map((item) => this.buildPanelingCard(item)),
+    ];
+  }
+
+  private buildInteriorDoorCard(item: InteriorDoorItem): OrderViewProductCard {
+    return {
+      key: `interior-${item.id}`,
+      typeLabel: 'Межкомнатная дверь',
+      title: item.model,
+      summary: `${this.formatDoorSize(item.width, item.height, item.width2)} · ${this.leafTypesLabels[item.leafType]} · цвет ${item.color}`,
+      countLabel: `${item.count} шт.`,
+      total: item.price * item.count,
+      details: {
+        title: `Межкомнатная дверь · ${item.model}`,
+        subtitle: 'Полная информация по позиции заказа.',
+        badges: [this.leafTypesLabels[item.leafType], this.doorCoveringLabels[item.covering]],
+        total: item.price * item.count,
+        sections: [
+          this.section('Основное', [
+            ['Модель', item.model],
+            ['Цвет', item.color],
+            ['Размер', this.formatDoorSize(item.width, item.height, item.width2)],
+            ['Тип створки', this.leafTypesLabels[item.leafType]],
+            ['Покрытие', this.doorCoveringLabels[item.covering]],
+            ['Со стеклом', item.hasGlass ? 'Да' : 'Нет'],
+            ['Стекло', item.hasGlass ? item.glassComment || 'Без уточнения' : 'Нет'],
+            ['Количество', `${item.count} шт.`],
+            ['Цена за штуку', this.formatMoney(item.price)],
+            ['Комментарий', item.comment || 'Нет'],
+          ]),
+        ],
+      },
+    };
+  }
+
+  private buildEntranceDoorCard(item: EntranceDoorItem): OrderViewProductCard {
+    const kindLabel = item.kind === EntranceDoorKind.Welded ? 'Сварочная' : 'Фабричная';
+    return {
+      key: `entrance-${item.id}`,
+      typeLabel: 'Входная дверь',
+      title: item.model,
+      summary: `${kindLabel} · ${this.leafTypesLabels[item.leafType]} · ${item.width} × ${item.height} см`,
+      countLabel: `${item.count} шт.`,
+      total: item.price * item.count,
+      details: {
+        title: `Входная дверь · ${item.model}`,
+        subtitle: 'Полная информация по позиции заказа.',
+        badges: [kindLabel, this.leafTypesLabels[item.leafType]],
+        total: item.price * item.count,
+        sections: [
+          this.section('Основное', [
+            ['Исполнение', kindLabel],
+            ['Тип створки', this.leafTypesLabels[item.leafType]],
+            ['Модель', item.model],
+            ['Размер', `${item.width} × ${item.height} см`],
+            ['Цвет двери', item.color],
+            ['Цвет обшивки', item.panelColor || 'Не указан'],
+            ['Покрытие', item.painting || 'Не указано'],
+            ['Глазок', item.hasPeephole === null ? 'Не указан' : item.hasPeephole ? 'Есть' : 'Нет'],
+            ['Количество', `${item.count} шт.`],
+            ['Цена за штуку', this.formatMoney(item.price)],
+            ['Комментарий', item.comment || 'Нет'],
+          ]),
+        ],
+      },
+    };
+  }
+
+  private buildMoldingCard(item: MoldingItem): OrderViewProductCard {
+    return {
+      key: `molding-${item.id}`,
+      typeLabel: 'Погонаж',
+      title: `${item.color} · ${this.moldingCoveringLabels[item.covering]}`,
+      summary: `Коробка ${item.frameCount} шт. · Наличник ${item.platbandCount} шт. · Притворная планка ${item.rebateBarCount} шт.`,
+      countLabel: `${item.frameCount + item.platbandCount + item.rebateBarCount} шт.`,
+      total: getMoldingTotal(item),
+      details: {
+        title: 'Погонаж',
+        subtitle: 'Полная информация по позиции заказа.',
+        badges: [item.color, this.moldingCoveringLabels[item.covering]],
+        total: getMoldingTotal(item),
+        sections: [
+          this.section('Коробка', [
+            ['Длина', item.frameLength !== null ? `${item.frameLength} см` : 'Не указана'],
+            ['Количество', `${item.frameCount} шт.`],
+            ['Цена за штуку', this.formatMoney(item.framePrice)],
+          ]),
+          this.section('Наличник', [
+            ['Тип', this.moldingPlatbandTypeLabels[item.platbandType]],
+            ['Модель', item.platbandFigure || 'Не указана'],
+            ['Длина', item.platbandLength !== null ? `${item.platbandLength} см` : 'Не указана'],
+            ['Количество', `${item.platbandCount} шт.`],
+            ['Цена за штуку', this.formatMoney(item.platbandPrice)],
+          ]),
+          this.section('Дополнительно', [
+            ['Цвет', item.color],
+            ['Покрытие', this.moldingCoveringLabels[item.covering]],
+            ['Притворная планка', `${item.rebateBarCount} шт.`],
+            ['Комментарий', item.comment || 'Нет'],
+          ]),
+        ],
+      },
+    };
+  }
+
+  private buildExtensionCard(item: ExtensionItem): OrderViewProductCard {
+    return {
+      key: `extension-${item.id}`,
+      typeLabel: 'Доборы',
+      title: `${item.color} · ${this.extensionCoveringLabels[item.covering]}`,
+      summary: `${item.width} × ${item.height} см · ${item.quantityPerSet} в комплекте · ${item.count} комплектов`,
+      countLabel: `${item.count} компл.`,
+      total: getExtensionTotal(item),
+      details: {
+        title: 'Доборы',
+        subtitle: 'Расчет общей стоимости учитывает квадратуру, цену за м² и количество комплектов.',
+        badges: [item.color, this.extensionCoveringLabels[item.covering]],
+        total: getExtensionTotal(item),
+        sections: [
+          this.section('Размеры и комплектация', [
+            ['Ширина', `${item.width} см`],
+            ['Высота', `${item.height} см`],
+            ['Доборов в комплекте', `${item.quantityPerSet}`],
+            ['Количество комплектов', `${item.count}`],
+            ['Общая квадратура', `${item.totalArea} м²`],
+          ]),
+          this.section('Стоимость', [
+            ['Цена за квадратный метр', this.formatMoney(item.price)],
+            ['Комментарий', item.comment || 'Нет'],
+          ]),
+        ],
+      },
+    };
+  }
+
+  private buildCapitalCard(item: CapitalItem): OrderViewProductCard {
+    return {
+      key: `capital-${item.id}`,
+      typeLabel: 'Капитель',
+      title: item.name,
+      summary: `${item.width} × ${item.height} см · цвет ${item.color} · ${this.capitalCoveringLabels[item.covering]}`,
+      countLabel: `${item.count} шт.`,
+      total: getCapitalTotal(item),
+      details: {
+        title: `Капитель · ${item.name}`,
+        subtitle: 'Полная информация по позиции заказа.',
+        badges: [item.color, this.capitalCoveringLabels[item.covering]],
+        total: getCapitalTotal(item),
+        sections: [
+          this.section('Основное', [
+            ['Название', item.name],
+            ['Цвет', item.color],
+            ['Покрытие', this.capitalCoveringLabels[item.covering]],
+            ['Ширина', `${item.width} см`],
+            ['Высота', `${item.height} см`],
+            ['Количество', `${item.count} шт.`],
+            ['Цена за штуку', this.formatMoney(item.price)],
+            ['Комментарий', item.comment || 'Нет'],
+          ]),
+        ],
+      },
+    };
+  }
+
+  private buildHardwareCard(item: HardwareItem): OrderViewProductCard {
+    return {
+      key: `hardware-${item.id}`,
+      typeLabel: 'Фурнитура',
+      title: item.handleModel ? `Ручка ${item.handleModel}` : 'Комплект фурнитуры',
+      summary: this.getHardwareSummary(item),
+      countLabel: `${this.getHardwarePositionsCount(item)} поз.`,
+      total: getHardwareTotal(item),
+      details: {
+        title: 'Фурнитура',
+        subtitle: 'Полная раскладка по механизмам и комплектующим.',
+        badges: item.handleColor ? [item.handleColor] : [],
+        total: getHardwareTotal(item),
+        sections: [
+          this.section('Ручка', [
+            ['Модель', item.handleModel || 'Не указана'],
+            ['Цвет', item.handleColor || 'Не указан'],
+            ['Количество', item.handleCount !== null ? `${item.handleCount}` : 'Не указано'],
+            ['Цена', item.handlePrice !== null ? this.formatMoney(item.handlePrice) : 'Не указана'],
+          ]),
+          this.section('Механизмы', [
+            ['Замок', this.formatCountPrice(item.lockCount, item.lockPrice)],
+            ['Фиксатор', this.formatCountPrice(item.fixatorCount, item.fixatorPrice)],
+            ['Крутилка', this.formatCountPrice(item.thumbturnCount, item.thumbturnPrice)],
+            ['Накладка', this.formatCountPrice(item.escutcheonCount, item.escutcheonPrice)],
+            ['Цилиндр', this.formatCountPrice(item.cylinderCount, item.cylinderPrice)],
+            ['Шпингалет', this.formatCountPrice(item.boltCount, item.boltPrice)],
+            ['Петли', this.formatCountPrice(item.hingeCount, item.hingePrice)],
+            ['Ограничитель', this.formatCountPrice(item.doorStopCount, item.doorStopPrice)],
+            ['Комментарий', item.comment || 'Нет'],
+          ]),
+        ],
+      },
+    };
+  }
+
+  private buildPanelingCard(item: PanelingItem): OrderViewProductCard {
+    return {
+      key: `paneling-${item.id}`,
+      typeLabel: 'Обшивка',
+      title: `${item.color} · ${this.panelingCoveringLabels[item.covering]}`,
+      summary: `${item.width} × ${item.height} см · ${item.quantityPerSet} в комплекте · ${item.count} комплектов`,
+      countLabel: `${item.count} компл.`,
+      total: getPanelingTotal(item),
+      details: {
+        title: 'Обшивка',
+        subtitle: 'Расчет общей стоимости учитывает квадратуру, цену за м² и количество комплектов.',
+        badges: [item.color, this.panelingCoveringLabels[item.covering]],
+        total: getPanelingTotal(item),
+        sections: [
+          this.section('Размеры и комплектация', [
+            ['Ширина', `${item.width} см`],
+            ['Высота', `${item.height} см`],
+            ['Количество обшивки в комплекте', `${item.quantityPerSet}`],
+            ['Количество комплектов', `${item.count}`],
+            ['Общая квадратура', `${item.totalArea} м²`],
+          ]),
+          this.section('Стоимость', [
+            ['Цена за квадратный метр', this.formatMoney(item.price)],
+            ['Покрытие', this.panelingCoveringLabels[item.covering]],
+            ['Комментарий', item.comment || 'Нет'],
+          ]),
+        ],
+      },
+    };
+  }
+
+  private section(title: string, rows: [string, string][]): OrderItemDetailsSection {
+    return {
+      title,
+      rows: rows.map(([label, value]) => ({ label, value })),
+    };
+  }
+
+  private formatDoorSize(width: number, height: number, width2: number | null): string {
+    return `${width2 === null ? `${width}` : `${width} + ${width2}`} × ${height} см`;
+  }
+
+  private formatMoney(value: number): string {
+    return `${value.toLocaleString('ru-RU')} ₽`;
+  }
+
+  private formatCountPrice(count: number | null, price: number | null): string {
+    if (count === null && price === null) {
+      return 'Не указано';
+    }
+
+    const countLabel = count !== null ? `${count} шт.` : 'кол-во не указано';
+    const priceLabel = price !== null ? this.formatMoney(price) : 'цена не указана';
+    return `${countLabel} · ${priceLabel}`;
+  }
+
+  private getHardwareSummary(item: HardwareItem): string {
+    const parts: string[] = [];
+
+    if (item.handleColor) {
+      parts.push(`цвет ручки ${item.handleColor}`);
+    }
+    if (item.lockCount !== null) {
+      parts.push(`замков ${item.lockCount}`);
+    }
+    if (item.fixatorCount !== null) {
+      parts.push(`фиксаторов ${item.fixatorCount}`);
+    }
+    if (item.hingeCount !== null) {
+      parts.push(`петель ${item.hingeCount}`);
+    }
+
+    return parts.join(' · ') || 'Набор комплектующих без дополнительных уточнений';
+  }
+
+  private getHardwarePositionsCount(item: HardwareItem): number {
+    return [
+      item.handleCount,
+      item.lockCount,
+      item.fixatorCount,
+      item.thumbturnCount,
+      item.escutcheonCount,
+      item.cylinderCount,
+      item.boltCount,
+      item.hingeCount,
+      item.doorStopCount,
+    ].filter((value) => value !== null && value > 0).length;
   }
 }

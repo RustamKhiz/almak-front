@@ -71,6 +71,19 @@
   font-size: 17px;
 }
 
+.order-create__section-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.order-create__section-header p {
+  margin: 6px 0 0;
+  color: #6b7280;
+  font-size: 14px;
+}
+
 .order-create__form-grid {
   display: grid;
   gap: 12px;
@@ -90,6 +103,23 @@
   align-content: start;
   min-width: 0;
   height: 100%;
+}
+
+.order-create__subcard {
+  display: grid;
+  gap: 12px;
+  height: 100%;
+  padding: 14px;
+  border-radius: 14px;
+  border: 1px solid #e5e7eb;
+  background:
+    linear-gradient(180deg, rgba(248, 250, 252, 0.92), rgba(255, 255, 255, 0.98));
+}
+
+.order-create__subcard-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #111827;
 }
 
 .order-create__comment {

@@ -16,7 +16,7 @@ import { MatSort, MatSortModule } from '@angular/material/sort';
 import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
-import { getOrderStatusLabel, ORDER_STATUS_OPTIONS } from '../../common/constants/order-status';
+import { getOrderPaymentLabel, getOrderStatusLabel, ORDER_STATUS_OPTIONS } from '../../common/constants/order-status';
 import { PhoneFormatPipe } from '../../common/pipes/phone-format.pipe';
 import { OrdersService, OrderRecord } from '../../services/orders.service';
 import { OrderStatus } from '../../types/order.types';
@@ -55,6 +55,7 @@ export class OrdersTableComponent implements OnInit {
     'date',
     'price',
     'prepayment',
+    'payment',
     'comment',
     'status',
   ] as const;
@@ -67,6 +68,7 @@ export class OrdersTableComponent implements OnInit {
     date: (item) => new Date(item.date).getTime(),
     price: (item) => item.price,
     prepayment: (item) => item.prepayment,
+    payment: (item) => (item.isPaid ? 1 : 0),
     customer: (item) => item.customer.toLocaleLowerCase(),
     phone: (item) => item.phone,
     comment: (item) => item.comment.toLocaleLowerCase(),
@@ -125,6 +127,10 @@ export class OrdersTableComponent implements OnInit {
     event.stopPropagation();
   }
 
+  protected onPaymentClick(event: MouseEvent): void {
+    event.stopPropagation();
+  }
+
   protected onStatusChange(orderId: number, status: OrderStatus): void {
     this.ordersService
       .updateOrderStatus(orderId, status)
@@ -142,8 +148,29 @@ export class OrdersTableComponent implements OnInit {
       });
   }
 
+  protected onPaymentStatusChange(orderId: number, isPaid: boolean): void {
+    this.ordersService
+      .updateOrderPaymentStatus(orderId, isPaid)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (nextPaymentStatus) => {
+          this.allOrders = this.allOrders.map((order) =>
+            order.id === orderId ? { ...order, isPaid: nextPaymentStatus } : order,
+          );
+          this.applyFilters();
+        },
+        error: () => {
+          this.loadError.set('Не удалось обновить статус оплаты.');
+        },
+      });
+  }
+
   protected getStatusLabel(status: OrderStatus): string {
     return getOrderStatusLabel(status);
+  }
+
+  protected getPaymentLabel(isPaid: boolean): string {
+    return getOrderPaymentLabel(isPaid);
   }
 
   protected onFiltersApply(filters: OrdersTableFilters): void {

@@ -25,30 +25,35 @@
       </div>
     </div>
 
-    <div class="dialog-section">
-      <div class="dialog-section__title">Механизмы</div>
-      <div class="dialog-row">
-        <mat-form-field appearance="outline">
-          <mat-label>Тип</mat-label>
-          <mat-select formControlName="mechanismType">
-            <mat-option [value]="null">Не выбрано</mat-option>
-            @for (option of mechanismOptions; track option) {
-              <mat-option [value]="option">{{ mechanismLabels[option] }}</mat-option>
-            }
-          </mat-select>
-        </mat-form-field>
-        <mat-form-field appearance="outline">
-          <mat-label>Кол-во</mat-label>
-          <input matInput type="number" formControlName="mechanismCount" />
-        </mat-form-field>
-      </div>
-      <mat-form-field appearance="outline">
-        <mat-label>Цена</mat-label>
-        <input matInput type="number" formControlName="mechanismPrice" placeholder="0" />
-      </mat-form-field>
-    </div>
-
     <div class="dialog-grid">
+      <div class="dialog-section">
+        <div class="dialog-section__title">Замок</div>
+        <div class="dialog-row">
+          <mat-form-field appearance="outline">
+            <mat-label>Кол-во</mat-label>
+            <input matInput type="number" formControlName="lockCount" />
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Цена</mat-label>
+            <input matInput type="number" formControlName="lockPrice" placeholder="0" />
+          </mat-form-field>
+        </div>
+      </div>
+
+      <div class="dialog-section">
+        <div class="dialog-section__title">Фиксатор</div>
+        <div class="dialog-row">
+          <mat-form-field appearance="outline">
+            <mat-label>Кол-во</mat-label>
+            <input matInput type="number" formControlName="fixatorCount" />
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Цена</mat-label>
+            <input matInput type="number" formControlName="fixatorPrice" placeholder="0" />
+          </mat-form-field>
+        </div>
+      </div>
+
       <div class="dialog-section">
         <div class="dialog-section__title">Крутилка</div>
         <div class="dialog-row">
@@ -146,5 +151,5 @@
 </mat-dialog-content>
 <div mat-dialog-actions align="end">
   <button mat-stroked-button type="button" (click)="onCancelClick()">Отмена</button>
-  <button mat-flat-button color="primary" type="button" (click)="onSaveClick()">Сохранить</button>
+  <button mat-flat-button color="primary" type="button" [disabled]="form.invalid" (click)="onSaveClick()">Сохранить</button>
 </div>

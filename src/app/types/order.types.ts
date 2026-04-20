@@ -64,13 +64,19 @@ export enum HardwareMechanismType {
 
 export enum OrderStatus {
   Accepted = 1,
-  Progress = 2,
-  Completed = 3,
+  Ordered = 2,
+  Received = 3,
+  CustomerNotified = 4,
+  Issued = 5,
+  Completed = 6,
 }
 
 export enum BackendOrderStatus {
   Accepted = 'accepted',
-  Progress = 'progress',
+  Ordered = 'ordered',
+  Received = 'received',
+  CustomerNotified = 'customer_notified',
+  Issued = 'issued',
   Completed = 'completed',
 }
 
@@ -78,11 +84,13 @@ export interface InteriorDoorItem {
   id: number;
   type: OrderItemType.InteriorDoor;
   model: string;
+  color: string;
   price: number;
   width: number;
   width2: number | null;
   height: number;
   hasGlass: boolean;
+  glassComment: string;
   leafType: DoorLeafType;
   count: number;
   covering: InteriorDoorCovering;
@@ -93,6 +101,7 @@ export interface EntranceDoorItem {
   id: number;
   type: OrderItemType.EntranceDoor;
   kind: EntranceDoorKind;
+  leafType: DoorLeafType;
   model: string;
   width: number;
   height: number;
@@ -129,6 +138,8 @@ export interface ExtensionItem {
   covering: ExtensionCovering;
   width: number;
   height: number;
+  quantityPerSet: number;
+  totalArea: number;
   comment: string;
   count: number;
   price: number;
@@ -152,7 +163,11 @@ export interface PanelingItem {
   type: OrderItemType.Paneling;
   color: string;
   size: string;
+  width: number;
+  height: number;
   covering: PanelingCovering;
+  quantityPerSet: number;
+  totalArea: number;
   count: number;
   price: number;
   comment: string;
@@ -165,9 +180,10 @@ export interface HardwareItem {
   handleColor: string;
   handleCount: number | null;
   handlePrice: number | null;
-  mechanismType: HardwareMechanismType | null;
-  mechanismCount: number | null;
-  mechanismPrice: number | null;
+  lockCount: number | null;
+  lockPrice: number | null;
+  fixatorCount: number | null;
+  fixatorPrice: number | null;
   thumbturnCount: number | null;
   thumbturnPrice: number | null;
   escutcheonCount: number | null;
@@ -190,6 +206,7 @@ export interface OrderCustomerForm {
   prepayment: number;
   discount: number;
   needsDelivery: boolean;
+  isPaid: boolean;
   deliveryAddress: string;
   comment: string;
   status: OrderStatus;

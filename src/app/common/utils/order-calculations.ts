@@ -16,11 +16,11 @@ export function getMoldingTotal(item: MoldingItem): number {
 }
 
 export function getExtensionTotal(item: ExtensionItem): number {
-  return item.price * item.count;
+  return item.totalArea * item.price * item.count;
 }
 
 export function getPanelingTotal(item: PanelingItem): number {
-  return item.price * item.count;
+  return item.totalArea * item.price * item.count;
 }
 
 export function getCapitalTotal(item: CapitalItem): number {
@@ -30,7 +30,8 @@ export function getCapitalTotal(item: CapitalItem): number {
 export function getHardwareTotal(item: HardwareItem): number {
   return (
     getOptionalTotal(item.handleCount, item.handlePrice) +
-    getOptionalTotal(item.mechanismCount, item.mechanismPrice) +
+    getOptionalTotal(item.lockCount, item.lockPrice) +
+    getOptionalTotal(item.fixatorCount, item.fixatorPrice) +
     getOptionalTotal(item.thumbturnCount, item.thumbturnPrice) +
     getOptionalTotal(item.escutcheonCount, item.escutcheonPrice) +
     getOptionalTotal(item.cylinderCount, item.cylinderPrice) +

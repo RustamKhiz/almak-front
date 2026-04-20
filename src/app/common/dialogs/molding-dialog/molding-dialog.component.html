@@ -14,10 +14,11 @@
         <mat-form-field appearance="outline">
           <mat-label>Цена коробки</mat-label>
           <input matInput type="number" formControlName="framePrice" placeholder="0" />
+          <mat-hint>Необязательно</mat-hint>
         </mat-form-field>
       </div>
 
-      <app-quantity-field formControlName="frameCount" label="Количество коробки" />
+      <app-quantity-field formControlName="frameCount" label="Количество коробки" [min]="0.5" [step]="0.5" />
     </div>
 
     <div class="dialog-section">
@@ -34,7 +35,7 @@
 
       @if (isFigureType()) {
         <mat-form-field appearance="outline">
-          <mat-label>Фигура</mat-label>
+          <mat-label>Модель</mat-label>
           <input matInput formControlName="platbandFigure" />
         </mat-form-field>
       }
@@ -52,7 +53,7 @@
         </mat-form-field>
       </div>
 
-      <app-quantity-field formControlName="platbandCount" label="Количество наличника" />
+      <app-quantity-field formControlName="platbandCount" label="Количество наличника" [min]="0.5" [step]="0.5" />
     </div>
 
     <mat-form-field appearance="outline">

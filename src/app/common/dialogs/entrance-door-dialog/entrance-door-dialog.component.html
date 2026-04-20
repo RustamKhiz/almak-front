@@ -11,6 +11,17 @@
       </mat-radio-group>
     </div>
 
+    <div class="door-kind">
+      <div class="door-kind__label">Створки</div>
+      <mat-radio-group formControlName="leafType">
+        @for (leafType of leafTypeOptions; track leafType) {
+          <mat-radio-button [value]="leafType">
+            {{ leafType === 'Double' ? 'Две створки' : 'Одна створка' }}
+          </mat-radio-button>
+        }
+      </mat-radio-group>
+    </div>
+
     <mat-form-field appearance="outline">
       <mat-label>Модель</mat-label>
       <input matInput formControlName="model" />
@@ -31,19 +42,22 @@
       />
     </div>
 
-    <mat-form-field appearance="outline">
-      <mat-label>Цвет</mat-label>
-      <input matInput formControlName="color" />
-    </mat-form-field>
+    <div class="dialog-row dialog-row--sizes">
+      <mat-form-field appearance="outline">
+        <mat-label>Цвет двери</mat-label>
+        <input matInput formControlName="color" />
+      </mat-form-field>
+
+      <app-catalog-autocomplete-field
+        title="Цвет обшивки"
+        formControlName="panelColor"
+        [options]="panelColorOptions"
+      />
+    </div>
 
     @if (isWelded()) {
       <div class="dialog-row dialog-row--sizes">
         <app-catalog-autocomplete-field title="Покраска" formControlName="painting" [options]="paintingOptions" />
-        <app-catalog-autocomplete-field
-          title="Обшивка цвет"
-          formControlName="panelColor"
-          [options]="panelColorOptions"
-        />
       </div>
 
       <mat-checkbox formControlName="hasPeephole">Глазок есть</mat-checkbox>

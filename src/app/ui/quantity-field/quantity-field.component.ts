@@ -20,6 +20,7 @@ import { MatIconModule } from '@angular/material/icon';
 export class QuantityFieldComponent implements ControlValueAccessor {
   readonly label = input('Количество');
   readonly min = input(1);
+  readonly step = input(1);
 
   protected value = 1;
   protected disabled = false;
@@ -33,7 +34,7 @@ export class QuantityFieldComponent implements ControlValueAccessor {
   };
 
   writeValue(value: number | null): void {
-    this.value = Math.max(this.min(), Math.floor(value ?? this.min()));
+    this.value = this.normalizeValue(value ?? this.min());
   }
 
   registerOnChange(fn: (value: number) => void): void {
@@ -53,7 +54,7 @@ export class QuantityFieldComponent implements ControlValueAccessor {
       return;
     }
 
-    this.updateValue(this.value - 1);
+    this.updateValue(this.value - this.step());
   }
 
   protected increase(): void {
@@ -61,7 +62,7 @@ export class QuantityFieldComponent implements ControlValueAccessor {
       return;
     }
 
-    this.updateValue(this.value + 1);
+    this.updateValue(this.value + this.step());
   }
 
   protected onInput(value: string | number): void {
@@ -73,8 +74,26 @@ export class QuantityFieldComponent implements ControlValueAccessor {
   }
 
   private updateValue(value: number): void {
-    this.value = Math.max(this.min(), Math.floor(value || this.min()));
+    this.value = this.normalizeValue(value);
     this.onChange(this.value);
     this.onTouched();
+  }
+
+  private normalizeValue(value: number): number {
+    const step = this.step();
+    const min = this.min();
+    const normalizedInput = Number.isFinite(value) ? value : min;
+    const clampedValue = Math.max(min, normalizedInput);
+    const steppedValue = Math.round((clampedValue - min) / step) * step + min;
+    const precision = this.getPrecision(step);
+
+    return Number(steppedValue.toFixed(precision));
+  }
+
+  private getPrecision(value: number): number {
+    const normalizedValue = `${value}`;
+    const decimalIndex = normalizedValue.indexOf('.');
+
+    return decimalIndex === -1 ? 0 : normalizedValue.length - decimalIndex - 1;
   }
 }

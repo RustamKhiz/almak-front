@@ -1,4 +1,5 @@
 @let $state = state();
+
 <section class="order-view">
   <header class="order-view__header">
     <div>
@@ -14,323 +15,140 @@
           >
             {{ getStatusLabel($state.data.status) }}
           </button>
+
+          <button
+            mat-button
+            type="button"
+            class="status-chip status-chip-button"
+            [ngClass]="$state.data.isPaid ? 'payment-paid' : 'payment-unpaid'"
+            [matMenuTriggerFor]="paymentMenu"
+          >
+            {{ getPaymentLabel($state.data.isPaid) }}
+          </button>
+
           <mat-menu #statusMenu="matMenu">
             @for (status of statusOptions; track status) {
               <button mat-menu-item type="button" (click)="onStatusChange(status)">{{ getStatusLabel(status) }}</button>
             }
           </mat-menu>
+
+          <mat-menu #paymentMenu="matMenu">
+            <button mat-menu-item type="button" (click)="onPaymentStatusChange(true)">Оплачен</button>
+            <button mat-menu-item type="button" (click)="onPaymentStatusChange(false)">Не оплачен</button>
+          </mat-menu>
         }
       </div>
+
       @if ($state) {
-        <p>Заказ №{{ $state.id }}</p>
+        <p>Заказ №{{ $state.id }} от {{ $state.data.date | date: 'dd.MM.yyyy' }}</p>
       }
     </div>
+
     @if ($state) {
       <div class="order-view__actions">
-        <button mat-flat-button color="warn" (click)="onDeleteClick()">Удалить</button
-        ><button mat-stroked-button (click)="onPrintClick()">Печать</button
-        ><button mat-stroked-button (click)="onDownloadClick()">Скачать .doc</button
-        ><button mat-flat-button color="primary" [routerLink]="['/order', $state.id, 'edit']">Редактировать</button>
+        <button mat-flat-button color="warn" type="button" (click)="onDeleteClick()">Удалить</button>
+        <button mat-stroked-button type="button" (click)="onPrintClick()">Печать</button>
+        <button mat-stroked-button type="button" (click)="onDownloadClick()">Скачать .doc</button>
+        <button mat-flat-button color="primary" type="button" [routerLink]="['/order', $state.id, 'edit']">
+          Редактировать
+        </button>
       </div>
     }
   </header>
 
   @if (isLoading()) {
-    <div class="order-view__loading">Загрузка...</div>
-  } @else {
-    @if ($state) {
-      <div class="order-view__card">
-        <h2>Общие данные</h2>
-        <div class="order-view__grid">
-          <div>
-            <div class="order-view__label">Имя</div>
-            <div class="order-view__value">{{ $state.data.name }}</div>
-          </div>
-          <div>
-            <div class="order-view__label">Телефон</div>
-            <div class="order-view__value">{{ $state.data.phone | phoneFormat }}</div>
-          </div>
-          <div>
-            <div class="order-view__label">Дата</div>
-            <div class="order-view__value">{{ $state.data.date }}</div>
-          </div>
-          <div>
-            <div class="order-view__label">Предоплата</div>
-            <div class="order-view__value">{{ $state.data.prepayment | number: '1.0-0' }} ₽</div>
-          </div>
-          <div>
-            <div class="order-view__label">Скидка</div>
-            <div class="order-view__value">{{ $state.data.discount | number: '1.0-0' }} ₽</div>
-          </div>
-          <div>
-            <div class="order-view__label">Доставка</div>
-            <div class="order-view__value">{{ $state.data.needsDelivery ? 'Нужна' : 'Не нужна' }}</div>
-          </div>
-          @if ($state.data.needsDelivery) {
-            <div>
-              <div class="order-view__label">Адрес доставки</div>
-              <div class="order-view__value">{{ $state.data.deliveryAddress }}</div>
-            </div>
-          }
-          <div>
-            <div class="order-view__label">Комментарий</div>
-            <div class="order-view__value">{{ $state.data.comment }}</div>
-          </div>
-          <div>
-            <div class="order-view__label">Общая стоимость заказа</div>
-            <div class="order-view__value">{{ getOrderTotal($state.data) | number: '1.0-0' }} ₽</div>
-          </div>
-          <div>
-            <div class="order-view__label">Итого к оплате</div>
-            <div class="order-view__value">{{ getTotalToPay($state.data) | number: '1.0-0' }} ₽</div>
-          </div>
-          <div>
-            <div class="order-view__label">Долг клиента</div>
-            <div class="order-view__value">{{ getCustomerDebt($state.data) | number: '1.0-0' }} ₽</div>
-          </div>
+    <div class="order-view__loading">Загрузка заказа...</div>
+  } @else if (errorMessage()) {
+    <div class="order-view__empty">{{ errorMessage() }}</div>
+  } @else if ($state) {
+    <section class="order-view__card">
+      <div class="order-view__section-header">
+        <div>
+          <h2>Общая информация</h2>
+          <p>Клиент, доставка, статусы и расчеты по заказу.</p>
         </div>
       </div>
 
-      <div class="order-view__card">
-        <h2>Товары</h2>
-        @if (
-          $state.data.interiorDoors.length ||
-          $state.data.entranceDoors.length ||
-          $state.data.moldings.length ||
-          $state.data.extensions.length ||
-          $state.data.capitals.length ||
-          $state.data.hardwares.length ||
-          $state.data.panelings.length
-        ) {
-          <div class="order-view__list">
-            @for (door of $state.data.interiorDoors; track door.id) {
-              <div class="order-view__item">
-                <div>
-                  <div class="order-view__value">Межкомнатная дверь · {{ door.model }}</div>
-                  <div class="order-view__meta">
-                    {{ door.width }}
-                    @if (door.width2 !== null) {
-                      + {{ door.width2 }}
-                    }
-                    × {{ door.height }} см · {{ leafTypesLabels[door.leafType] }}
-                    @if (door.hasGlass) {
-                      · со стеклом
-                    }
-                    · количество {{ door.count }}
-                    @if (door.comment) {
-                      · {{ door.comment }}
-                    }
-                  </div>
-                </div>
-                <div class="order-view__price">{{ door.price | number }} ₽</div>
-              </div>
-            }
-            @for (door of $state.data.entranceDoors; track door.id) {
-              <div class="order-view__item">
-                <div>
-                  <div class="order-view__value">
-                    Входная дверь · {{ door.kind === 'welded' ? 'сварочная' : 'фабричная' }} · {{ door.model }}
-                  </div>
-                  <div class="order-view__meta">
-                    {{ door.width }} × {{ door.height }} см · цвет {{ door.color }} · количество {{ door.count }}
-                    @if (door.painting) {
-                      · покраска {{ door.painting }}
-                    }
-                    @if (door.panelColor) {
-                      · обшивка {{ door.panelColor }}
-                    }
-                    @if (door.hasPeephole !== null) {
-                      · глазок {{ door.hasPeephole ? 'есть' : 'нет' }}
-                    }
-                    @if (door.comment) {
-                      · {{ door.comment }}
-                    }
-                  </div>
-                </div>
-                <div class="order-view__price">{{ door.price | number }} ₽</div>
-              </div>
-            }
-            @for (molding of $state.data.moldings; track molding.id) {
-              <div class="order-view__item">
-                <div>
-                  <div class="order-view__value">
-                    Погонаж · {{ molding.color }} · {{ moldingCoveringLabels[molding.covering] }}
-                  </div>
-                  <div class="order-view__meta">
-                    Коробка:
-                    @if (molding.frameLength !== null) {
-                      {{ molding.frameLength }} см,
-                    }
-                    цена {{ molding.framePrice | number: '1.0-0' }} ₽, количество {{ molding.frameCount }} · Наличник
-                    {{ moldingPlatbandTypeLabels[molding.platbandType] }}
-                    @if (molding.platbandFigure) {
-                      ({{ molding.platbandFigure }})
-                    }
-                    :
-                    @if (molding.platbandLength !== null) {
-                      {{ molding.platbandLength }} см,
-                    }
-                    цена {{ molding.platbandPrice | number: '1.0-0' }} ₽, количество {{ molding.platbandCount }} ·
-                    Притворная планка {{ molding.rebateBarCount }}
-                    @if (molding.comment) {
-                      · {{ molding.comment }}
-                    }
-                  </div>
-                </div>
-                <div class="order-view__price">{{ getMoldingTotal(molding) | number: '1.0-0' }} ₽</div>
-              </div>
-            }
-            @for (item of $state.data.extensions; track item.id) {
-              <div class="order-view__item">
-                <div>
-                  <div class="order-view__value">
-                    Доборы · {{ item.color }} · {{ extensionCoveringLabels[item.covering] }}
-                  </div>
-                  <div class="order-view__meta">
-                    {{ item.width }} × {{ item.height }} см · количество {{ item.count }}
-                    @if (item.comment) {
-                      · {{ item.comment }}
-                    }
-                  </div>
-                </div>
-                <div class="order-view__price">{{ getExtensionTotal(item) | number: '1.0-0' }} ₽</div>
-              </div>
-            }
-            @for (item of $state.data.capitals; track item.id) {
-              <div class="order-view__item">
-                <div>
-                  <div class="order-view__value">Капитель · {{ item.name }}</div>
-                  <div class="order-view__meta">
-                    цвет {{ item.color }} · {{ capitalCoveringLabels[item.covering] }} · {{ item.width }} ×
-                    {{ item.height }} см · количество {{ item.count }} · цена {{ item.price | number: '1.0-0' }} ₽
-                    @if (item.comment) {
-                      · {{ item.comment }}
-                    }
-                  </div>
-                </div>
-                <div class="order-view__price">{{ getCapitalTotal(item) | number: '1.0-0' }} ₽</div>
-              </div>
-            }
-            @for (item of $state.data.hardwares; track item.id) {
-              <div class="order-view__item">
-                <div>
-                  <div class="order-view__value">
-                    Фурнитура
-                    @if (item.handleModel) {
-                      · Ручка {{ item.handleModel }}
-                    }
-                  </div>
-                  <div class="order-view__meta">
-                    @if (
-                      item.handleModel || item.handleColor || item.handleCount !== null || item.handlePrice !== null
-                    ) {
-                      Ручка
-                      @if (item.handleModel) {
-                        {{ item.handleModel }}
-                      }
-                      @if (item.handleColor) {
-                        · цвет {{ item.handleColor }}
-                      }
-                      @if (item.handleCount !== null) {
-                        · кол-во {{ item.handleCount }}
-                      }
-                      @if (item.handlePrice !== null) {
-                        · цена {{ item.handlePrice | number: '1.0-0' }} ₽
-                      }
-                    }
-                    @if (item.mechanismType || item.mechanismCount !== null || item.mechanismPrice !== null) {
-                      · Механизм
-                      {{ item.mechanismType === 'fixator' ? 'фиксатор' : item.mechanismType === 'lock' ? 'замок' : '' }}
-                      @if (item.mechanismCount !== null) {
-                        · кол-во {{ item.mechanismCount }}
-                      }
-                      @if (item.mechanismPrice !== null) {
-                        · цена {{ item.mechanismPrice | number: '1.0-0' }} ₽
-                      }
-                    }
-                    @if (item.thumbturnCount !== null || item.thumbturnPrice !== null) {
-                      · Крутилка
-                      @if (item.thumbturnCount !== null) {
-                        · кол-во {{ item.thumbturnCount }}
-                      }
-                      @if (item.thumbturnPrice !== null) {
-                        · цена {{ item.thumbturnPrice | number: '1.0-0' }} ₽
-                      }
-                    }
-                    @if (item.escutcheonCount !== null || item.escutcheonPrice !== null) {
-                      · Накладка
-                      @if (item.escutcheonCount !== null) {
-                        · кол-во {{ item.escutcheonCount }}
-                      }
-                      @if (item.escutcheonPrice !== null) {
-                        · цена {{ item.escutcheonPrice | number: '1.0-0' }} ₽
-                      }
-                    }
-                    @if (item.cylinderCount !== null || item.cylinderPrice !== null) {
-                      · Барабан
-                      @if (item.cylinderCount !== null) {
-                        · кол-во {{ item.cylinderCount }}
-                      }
-                      @if (item.cylinderPrice !== null) {
-                        · цена {{ item.cylinderPrice | number: '1.0-0' }} ₽
-                      }
-                    }
-                    @if (item.boltCount !== null || item.boltPrice !== null) {
-                      · Шпингалет
-                      @if (item.boltCount !== null) {
-                        · кол-во {{ item.boltCount }}
-                      }
-                      @if (item.boltPrice !== null) {
-                        · цена {{ item.boltPrice | number: '1.0-0' }} ₽
-                      }
-                    }
-                    @if (item.hingeCount !== null || item.hingePrice !== null) {
-                      · Петли
-                      @if (item.hingeCount !== null) {
-                        · кол-во {{ item.hingeCount }}
-                      }
-                      @if (item.hingePrice !== null) {
-                        · цена {{ item.hingePrice | number: '1.0-0' }} ₽
-                      }
-                    }
-                    @if (item.doorStopCount !== null || item.doorStopPrice !== null) {
-                      · Ограничитель
-                      @if (item.doorStopCount !== null) {
-                        · кол-во {{ item.doorStopCount }}
-                      }
-                      @if (item.doorStopPrice !== null) {
-                        · цена {{ item.doorStopPrice | number: '1.0-0' }} ₽
-                      }
-                    }
-                    @if (item.comment) {
-                      · {{ item.comment }}
-                    }
-                  </div>
-                </div>
-                <div class="order-view__price">{{ getHardwareTotal(item) | number: '1.0-0' }} ₽</div>
-              </div>
-            }
-            @for (item of $state.data.panelings; track item.id) {
-              <div class="order-view__item">
-                <div>
-                  <div class="order-view__value">
-                    Обшивка · {{ item.color }} · {{ panelingCoveringLabels[item.covering] }}
-                  </div>
-                  <div class="order-view__meta">
-                    размер {{ item.size }} · количество {{ item.count }}
-                    @if (item.comment) {
-                      · {{ item.comment }}
-                    }
-                  </div>
-                </div>
-                <div class="order-view__price">{{ getPanelingTotal(item) | number: '1.0-0' }} ₽</div>
-              </div>
-            }
+      <div class="order-view__summary-grid">
+        <article class="order-view__summary-tile">
+          <div class="order-view__summary-label">Клиент</div>
+          <div class="order-view__summary-title">{{ $state.data.name }}</div>
+          <div class="order-view__summary-text">{{ $state.data.phone | phoneFormat }}</div>
+        </article>
+
+        <article class="order-view__summary-tile">
+          <div class="order-view__summary-label">Дата заказа</div>
+          <div class="order-view__summary-title">{{ $state.data.date | date: 'dd.MM.yyyy' }}</div>
+          <div class="order-view__summary-text">Статус: {{ getStatusLabel($state.data.status) }}</div>
+        </article>
+
+        <article class="order-view__summary-tile">
+          <div class="order-view__summary-label">Оплата</div>
+          <div class="order-view__summary-title">{{ getPaymentLabel($state.data.isPaid) }}</div>
+          <div class="order-view__summary-text">Внесено клиентом: {{ $state.data.prepayment | number: '1.0-0' }} ₽</div>
+        </article>
+
+        <article class="order-view__summary-tile">
+          <div class="order-view__summary-label">Итоги</div>
+          <div class="order-view__summary-title">{{ getTotalToPay($state.data) | number: '1.0-0' }} ₽</div>
+          <div class="order-view__summary-text">
+            Долг клиента: {{ getCustomerDebt($state.data) | number: '1.0-0' }} ₽
           </div>
-        } @else {
-          <div class="order-view__empty">Нет товаров.</div>
-        }
+        </article>
       </div>
-    }
+
+      <div class="order-view__info-grid">
+        <div class="order-view__info-card">
+          <div class="order-view__label">Доставка</div>
+          <div class="order-view__value">{{ $state.data.needsDelivery ? 'Нужна' : 'Не нужна' }}</div>
+          <div class="order-view__meta">
+            {{ $state.data.needsDelivery ? $state.data.deliveryAddress || 'Адрес не указан' : 'Без доставки' }}
+          </div>
+        </div>
+
+        <div class="order-view__info-card">
+          <div class="order-view__label">Комментарий к заказу</div>
+          <div class="order-view__value">{{ $state.data.comment || 'Нет комментария' }}</div>
+        </div>
+
+        <div class="order-view__info-card">
+          <div class="order-view__label">Общая стоимость</div>
+          <div class="order-view__value">{{ getOrderTotal($state.data) | number: '1.0-0' }} ₽</div>
+          <div class="order-view__meta">Скидка: {{ $state.data.discount | number: '1.0-0' }} ₽</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="order-view__card">
+      <div class="order-view__section-header">
+        <div>
+          <h2>Товары</h2>
+          <p>Короткий список позиций. Полная информация открывается по кнопке «Подробнее».</p>
+        </div>
+        <div class="order-view__products-count">{{ productCards().length }} поз.</div>
+      </div>
+
+      @if (productCards().length) {
+        <div class="order-view__list">
+          @for (card of productCards(); track card.key) {
+            <article class="order-view__item">
+              <div class="order-view__item-main">
+                <div class="order-view__item-type">{{ card.typeLabel }}</div>
+                <div class="order-view__item-title">{{ card.title }}</div>
+                <div class="order-view__meta">{{ card.summary }}</div>
+              </div>
+
+              <div class="order-view__item-side">
+                <div class="order-view__item-count">{{ card.countLabel }}</div>
+                <div class="order-view__price">{{ card.total | number: '1.0-0' }} ₽</div>
+                <button mat-stroked-button type="button" (click)="onProductDetailsClick(card)">Подробнее</button>
+              </div>
+            </article>
+          }
+        </div>
+      } @else {
+        <div class="order-view__empty">В заказе пока нет товаров.</div>
+      }
+    </section>
   }
 </section>

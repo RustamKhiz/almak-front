@@ -56,13 +56,13 @@ export class MoldingDialogComponent {
 
   protected readonly form = this.fb.nonNullable.group({
     frameLength: [this.data.molding?.frameLength ?? null, [Validators.min(0)]],
-    framePrice: [this.data.molding?.framePrice ?? null, [Validators.required, Validators.min(0)]],
-    frameCount: [this.data.molding?.frameCount ?? 1, [Validators.required, Validators.min(1)]],
+    framePrice: [this.data.molding?.framePrice ?? null, [Validators.min(0)]],
+    frameCount: [this.data.molding?.frameCount ?? 0.5, [Validators.required, Validators.min(0.5)]],
     platbandType: [this.data.molding?.platbandType ?? DEFAULT_MOLDING_PLATBAND_TYPE, [Validators.required]],
     platbandFigure: this.data.molding?.platbandFigure ?? '',
     platbandLength: [this.data.molding?.platbandLength ?? null, [Validators.min(0)]],
     platbandPrice: [this.data.molding?.platbandPrice ?? null, [Validators.required, Validators.min(0)]],
-    platbandCount: [this.data.molding?.platbandCount ?? 1, [Validators.required, Validators.min(1)]],
+    platbandCount: [this.data.molding?.platbandCount ?? 0.5, [Validators.required, Validators.min(0.5)]],
     rebateBarCount: [this.data.molding?.rebateBarCount ?? 0, [Validators.required, Validators.min(0)]],
     color: [this.data.molding?.color ?? '', [Validators.required]],
     covering: [this.data.molding?.covering ?? DEFAULT_MOLDING_COVERING, [Validators.required]],
@@ -95,7 +95,7 @@ export class MoldingDialogComponent {
     this.dialogRef.close({
       type: OrderItemType.Molding,
       frameLength: value.frameLength == null ? null : Math.max(0, value.frameLength),
-      framePrice: value.framePrice,
+      framePrice: value.framePrice ?? 0,
       frameCount: value.frameCount,
       platbandType: value.platbandType,
       platbandFigure: value.platbandType === MoldingPlatbandType.Figure ? value.platbandFigure.trim() || null : null,

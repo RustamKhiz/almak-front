@@ -29,8 +29,28 @@
       </ng-container>
 
       <ng-container matColumnDef="prepayment">
-        <th mat-header-cell *matHeaderCellDef>Аванс</th>
+        <th mat-header-cell *matHeaderCellDef>Внесено клиентом</th>
         <td mat-cell *matCellDef="let row">{{ row.prepayment | number: '1.0-0' }} ₽</td>
+      </ng-container>
+
+      <ng-container matColumnDef="payment">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>Оплата</th>
+        <td mat-cell *matCellDef="let row">
+          <button
+            mat-button
+            type="button"
+            class="status-chip status-chip-button"
+            [ngClass]="row.isPaid ? 'payment-paid' : 'payment-unpaid'"
+            [matMenuTriggerFor]="paymentMenu"
+            (click)="onPaymentClick($event)"
+          >
+            {{ getPaymentLabel(row.isPaid) }}
+          </button>
+          <mat-menu #paymentMenu="matMenu">
+            <button mat-menu-item type="button" (click)="onPaymentStatusChange(row.id, true)">Оплачен</button>
+            <button mat-menu-item type="button" (click)="onPaymentStatusChange(row.id, false)">Не оплачен</button>
+          </mat-menu>
+        </td>
       </ng-container>
 
       <ng-container matColumnDef="comment">
