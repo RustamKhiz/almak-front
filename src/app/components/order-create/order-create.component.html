@@ -34,7 +34,7 @@
     <div class="order-create__section-header">
       <div>
         <h2>Общая информация</h2>
-        <p>Основные данные по клиенту, оплате, статусам и доставке.</p>
+        <p>Основные данные по клиенту, оплате и доставке.</p>
       </div>
     </div>
 
@@ -79,31 +79,13 @@
         }
       </mat-form-field>
 
-      <mat-form-field appearance="outline">
-        <mat-label>Статус заказа</mat-label>
-        <mat-select formControlName="status">
-          @for (status of statusOptions; track status) {
-            <mat-option [value]="status">{{ statusLabels[status] }}</mat-option>
-          }
-        </mat-select>
-      </mat-form-field>
-
-      <mat-form-field appearance="outline">
-        <mat-label>Статус оплаты</mat-label>
-        <mat-select formControlName="isPaid">
-          @for (isPaid of paymentOptions; track isPaid) {
-            <mat-option [value]="isPaid">{{ getPaymentLabel(isPaid) }}</mat-option>
-          }
-        </mat-select>
-      </mat-form-field>
-
       <div class="order-create__details-row">
         <div class="order-create__details-card">
           <div class="order-create__subcard">
             <div class="order-create__subcard-title">Комментарий к заказу</div>
             <mat-form-field appearance="outline" class="order-create__comment">
               <mat-label>Комментарий</mat-label>
-              <textarea matInput formControlName="comment" rows="6"></textarea>
+              <textarea matInput formControlName="comment" rows="5"></textarea>
             </mat-form-field>
           </div>
         </div>
