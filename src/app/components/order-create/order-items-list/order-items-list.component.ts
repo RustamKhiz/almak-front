@@ -15,6 +15,7 @@ import {
   getCapitalTotal,
   getExtensionTotal,
   getHardwareTotal,
+  getInteriorDoorTotal,
   getMoldingTotal,
   getPanelingTotal,
 } from '../../../common/utils/order-calculations';
@@ -71,6 +72,10 @@ export class OrderItemsListComponent {
 
   protected getMoldingTotal(item: MoldingItem): number {
     return getMoldingTotal(item);
+  }
+
+  protected getInteriorDoorTotal(item: InteriorDoorItem): number {
+    return getInteriorDoorTotal(item);
   }
 
   protected getExtensionTotal(item: ExtensionItem): number {

@@ -67,7 +67,7 @@
         <mat-label>Внесено клиентом</mat-label>
         <input matInput type="number" formControlName="prepayment" placeholder="0" />
         @if (form.controls.prepayment.touched && form.controls.prepayment.invalid) {
-          <mat-error>Введите число больше или равное 0</mat-error>
+          <mat-error>Введите число больше 0</mat-error>
         }
       </mat-form-field>
 
@@ -75,7 +75,7 @@
         <mat-label>Скидка</mat-label>
         <input matInput type="number" formControlName="discount" placeholder="0" />
         @if (form.controls.discount.touched && form.controls.discount.invalid) {
-          <mat-error>Введите число больше или равное 0</mat-error>
+          <mat-error>Введите число больше 0</mat-error>
         }
       </mat-form-field>
 
@@ -85,7 +85,7 @@
             <div class="order-create__subcard-title">Комментарий к заказу</div>
             <mat-form-field appearance="outline" class="order-create__comment">
               <mat-label>Комментарий</mat-label>
-              <textarea matInput formControlName="comment" rows="5"></textarea>
+              <textarea matInput formControlName="comment" rows="2"></textarea>
             </mat-form-field>
           </div>
         </div>
@@ -93,24 +93,23 @@
         <div class="order-create__details-card order-create__delivery-column">
           <div class="order-create__subcard">
             <div class="order-create__subcard-title">Доставка</div>
-            <div class="order-create__delivery-header">
-              <mat-checkbox formControlName="needsDelivery">Нужна доставка</mat-checkbox>
-            </div>
-
-            @if (form.controls.needsDelivery.value) {
-              <mat-form-field appearance="outline" class="order-create__delivery-address">
-                <mat-label>Адрес доставки</mat-label>
-                <textarea matInput formControlName="deliveryAddress" rows="2"></textarea>
-                <mat-hint>Стоимость доставки рассчитывается по тарифу такси.</mat-hint>
-                @if (form.controls.deliveryAddress.touched && form.controls.deliveryAddress.invalid) {
-                  <mat-error>Укажите адрес доставки</mat-error>
-                }
-              </mat-form-field>
-            } @else {
-              <div class="order-create__delivery-placeholder">
-                Включите доставку, если заказ нужно отвезти клиенту. Стоимость считается по тарифу такси.
+            <div class="order-create__delivery-inline">
+              <div class="order-create__delivery-header">
+                <mat-checkbox formControlName="needsDelivery">Нужна доставка</mat-checkbox>
               </div>
-            }
+
+              @if (form.controls.needsDelivery.value) {
+                <mat-form-field appearance="outline" class="order-create__delivery-address">
+                  <mat-label>Адрес доставки</mat-label>
+                  <textarea matInput formControlName="deliveryAddress" rows="1"></textarea>
+                  @if (form.controls.deliveryAddress.touched && form.controls.deliveryAddress.invalid) {
+                    <mat-error>Укажите адрес доставки</mat-error>
+                  }
+                </mat-form-field>
+              } @else {
+                <div class="order-create__delivery-placeholder">Стоимость по тарифу такси</div>
+              }
+            </div>
           </div>
         </div>
       </div>

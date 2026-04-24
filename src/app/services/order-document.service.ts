@@ -6,6 +6,7 @@ import {
   ExtensionCovering,
   ExtensionItem,
   HardwareItem,
+  InteriorDoorItem,
   MoldingCovering,
   MoldingItem,
   MoldingPlatbandType,
@@ -24,7 +25,7 @@ export class OrderDocumentService {
   buildOrderHtml(orderId: number, order: OrderCreatePayload): string {
     const issueDate = this.escapeHtml(order.date);
     const totalAmount =
-      order.interiorDoors.reduce((sum, item) => sum + item.price * item.count, 0) +
+      order.interiorDoors.reduce((sum, item) => sum + this.getInteriorDoorTotal(item), 0) +
       order.entranceDoors.reduce((sum, item) => sum + item.price * item.count, 0) +
       order.moldings.reduce((sum, item) => sum + this.getMoldingTotal(item), 0) +
       order.extensions.reduce((sum, item) => sum + this.getExtensionTotal(item), 0) +
@@ -52,12 +53,12 @@ export class OrderDocumentService {
           rowNumber++,
           'Межкомнатная дверь',
           item.model,
-          this.formatDoorSize(item.width, item.height, item.width2),
+          this.formatInteriorDoorSize(item),
           `${this.getLeafTypeLabel(item.leafType)}, ${item.color}${item.hasGlass ? `, со стеклом${item.glassComment ? `: ${item.glassComment}` : ''}` : ''}`,
           item.comment || '-',
-          item.count,
-          item.price,
-          item.price * item.count,
+          this.getInteriorDoorCount(item),
+          this.getInteriorDoorTotal(item),
+          this.getInteriorDoorTotal(item),
         ),
       )
       .join('');
@@ -455,6 +456,19 @@ export class OrderDocumentService {
     return item.price * item.count;
   }
 
+  private getInteriorDoorTotal(item: InteriorDoorItem): number {
+    const firstLeafTotal = item.price * item.count;
+    if (item.leafType !== DoorLeafType.Double) {
+      return firstLeafTotal;
+    }
+
+    return firstLeafTotal + Number(item.price2 ?? 0) * Number(item.count2 ?? 0);
+  }
+
+  private getInteriorDoorCount(item: InteriorDoorItem): number {
+    return item.count + (item.leafType === DoorLeafType.Double ? Number(item.count2 ?? 0) : 0);
+  }
+
   private getHardwareTitle(item: HardwareItem): string {
     const parts: string[] = [];
     if (item.handleModel) {
@@ -552,6 +566,14 @@ export class OrderDocumentService {
 
   private formatDoorSize(width: number, height: number, width2: number | null): string {
     return `${width2 === null ? `${width}` : `${width}+${width2}`}x${height}`;
+  }
+
+  private formatInteriorDoorSize(item: InteriorDoorItem): string {
+    if (item.leafType !== DoorLeafType.Double) {
+      return `${item.width}x${item.height}`;
+    }
+
+    return `${item.width}x${item.height}+${item.width2 ?? 0}x${item.height2 ?? item.height}`;
   }
 
   private formatCountPrice(count: number | null, price: number | null): string {

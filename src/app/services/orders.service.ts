@@ -68,13 +68,16 @@ interface BackendInteriorDoor {
   model: string;
   color: string;
   price: number;
+  price2?: number | null;
   width: number;
   width2?: number | null;
   height: number;
+  height2?: number | null;
   hasGlass?: boolean;
   glassComment?: string;
   leafType: string;
   count: number;
+  count2?: number | null;
   covering?: string;
   comment?: string;
 }
@@ -199,13 +202,16 @@ interface BackendInteriorDoorPayload {
   model: string;
   color: string;
   price: number;
+  price2?: number | null;
   width: number;
   width2?: number | null;
   height: number;
+  height2?: number | null;
   hasGlass: boolean;
   glassComment: string;
   leafType: string;
   count: number;
+  count2?: number | null;
   covering: string;
   comment: string;
 }
@@ -429,13 +435,16 @@ export class OrdersService {
         model: item.model,
         color: item.color,
         price: item.price,
+        price2: item.price2,
         width: item.width,
         width2: item.width2,
         height: item.height,
+        height2: item.height2,
         hasGlass: item.hasGlass,
         glassComment: item.glassComment,
         leafType: item.leafType,
         count: item.count,
+        count2: item.count2,
         covering: item.covering,
         comment: item.comment,
       })),
@@ -543,13 +552,16 @@ export class OrdersService {
       model: door.model,
       color: door.color ?? '',
       price: door.price,
+      price2: door.price2 ?? null,
       width: door.width,
       width2: door.width2 ?? null,
       height: door.height,
+      height2: door.height2 ?? null,
       hasGlass: door.hasGlass ?? false,
       glassComment: door.glassComment ?? '',
       leafType: door.leafType === DoorLeafType.Double ? DoorLeafType.Double : DoorLeafType.Single,
       count: door.count,
+      count2: door.count2 ?? null,
       covering: this.mapInteriorCovering(door.covering),
       comment: door.comment ?? '',
     };
