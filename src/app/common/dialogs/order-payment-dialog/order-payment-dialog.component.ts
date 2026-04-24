@@ -27,8 +27,8 @@ export class OrderPaymentDialogComponent {
   private readonly dialogRef = inject(MatDialogRef<OrderPaymentDialogComponent, OrderPaymentDialogResult>);
 
   protected readonly data = inject<OrderPaymentDialogData>(MAT_DIALOG_DATA, { optional: true }) ?? {};
-  protected readonly form = this.fb.nonNullable.group({
-    amount: [0, [Validators.required, Validators.min(0.01)]],
+  protected readonly form = this.fb.group({
+    amount: [null as number | null, [Validators.required, Validators.min(0.01)]],
     comment: [''],
   });
 
@@ -40,8 +40,8 @@ export class OrderPaymentDialogComponent {
 
     const value = this.form.getRawValue();
     this.dialogRef.close({
-      amount: value.amount,
-      comment: value.comment.trim(),
+      amount: value.amount!,
+      comment: value.comment?.trim() ?? '',
     });
   }
 }

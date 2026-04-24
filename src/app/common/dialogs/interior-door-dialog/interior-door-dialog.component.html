@@ -12,27 +12,6 @@
       <input matInput formControlName="color" />
     </mat-form-field>
 
-    <mat-checkbox formControlName="hasGlass">Со стеклом</mat-checkbox>
-
-    @if (form.controls.hasGlass.value) {
-      <mat-form-field appearance="outline" class="glass-comment-field">
-        <mat-label>Какое стекло</mat-label>
-        <textarea matInput rows="2" formControlName="glassComment"></textarea>
-      </mat-form-field>
-    }
-
-    <div class="dialog-row dialog-row--sizes">
-      <div class="dialog-column">
-        <app-catalog-autocomplete-field title="Ширина (см)" formControlName="width" [options]="widthOptions" />
-
-        @if (form.controls.leafType.value === doorLeafType.Double) {
-          <app-catalog-autocomplete-field title="Ширина 2 (см)" formControlName="width2" [options]="widthOptions" />
-        }
-      </div>
-
-      <app-catalog-autocomplete-field title="Высота (см)" formControlName="height" [options]="heightOptions" />
-    </div>
-
     <div class="leaf-type">
       <div class="leaf-type__label">Тип створки</div>
       <mat-radio-group formControlName="leafType">
@@ -42,12 +21,34 @@
       </mat-radio-group>
     </div>
 
-    <mat-form-field appearance="outline">
-      <mat-label>Цена</mat-label>
-      <input matInput type="number" formControlName="price" placeholder="0" />
-    </mat-form-field>
+    <div
+      class="dialog-row dialog-row--sizes"
+      [class.dialog-row--single-leaf]="form.controls.leafType.value !== doorLeafType.Double"
+    >
+      <div class="dialog-column leaf-card">
+        <div class="leaf-card__title">Створка 1</div>
+        <app-catalog-autocomplete-field title="Ширина (см)" formControlName="width" [options]="widthOptions" />
+        <app-catalog-autocomplete-field title="Высота (см)" formControlName="height" [options]="heightOptions" />
+        <mat-form-field appearance="outline">
+          <mat-label>Цена</mat-label>
+          <input matInput type="number" formControlName="price" placeholder="0" />
+        </mat-form-field>
+        <app-quantity-field formControlName="count" label="Количество 1" />
+      </div>
 
-    <app-quantity-field formControlName="count" />
+      @if (form.controls.leafType.value === doorLeafType.Double) {
+        <div class="dialog-column leaf-card leaf-card--second">
+          <div class="leaf-card__title">Створка 2</div>
+          <app-catalog-autocomplete-field title="Ширина 2 (см)" formControlName="width2" [options]="widthOptions" />
+          <app-catalog-autocomplete-field title="Высота 2 (см)" formControlName="height2" [options]="heightOptions" />
+          <mat-form-field appearance="outline">
+            <mat-label>Цена 2</mat-label>
+            <input matInput type="number" formControlName="price2" placeholder="0" />
+          </mat-form-field>
+          <app-quantity-field formControlName="count2" label="Количество 2" />
+        </div>
+      }
+    </div>
 
     <mat-form-field appearance="outline">
       <mat-label>Покрытие</mat-label>
@@ -57,6 +58,20 @@
         }
       </mat-select>
     </mat-form-field>
+
+    <div class="total-preview">
+      <span>Стоимость</span>
+      <strong>{{ getDraftTotal() | number: '1.0-0' }} ₽</strong>
+    </div>
+
+    <mat-checkbox formControlName="hasGlass">Со стеклом</mat-checkbox>
+
+    @if (form.controls.hasGlass.value) {
+      <mat-form-field appearance="outline" class="glass-comment-field">
+        <mat-label>Какое стекло</mat-label>
+        <textarea matInput rows="2" formControlName="glassComment"></textarea>
+      </mat-form-field>
+    }
 
     <mat-form-field appearance="outline">
       <mat-label>Комментарий</mat-label>

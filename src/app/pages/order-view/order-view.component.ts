@@ -29,6 +29,7 @@ import {
   getCustomerDebt,
   getExtensionTotal,
   getHardwareTotal,
+  getInteriorDoorTotal,
   getMoldingTotal,
   getOrderTotal,
   getPaidAmount,
@@ -402,25 +403,41 @@ export class OrderViewComponent {
       key: `interior-${item.id}`,
       typeLabel: 'Межкомнатная дверь',
       title: item.model,
-      summary: `${this.formatDoorSize(item.width, item.height, item.width2)} · ${this.leafTypesLabels[item.leafType]} · цвет ${item.color}`,
-      countLabel: `${item.count} шт.`,
-      total: item.price * item.count,
+      summary: `${this.formatInteriorDoorSize(item)} · ${this.leafTypesLabels[item.leafType]} · цвет ${item.color}`,
+      countLabel: `${item.count + (item.leafType === 'Double' ? Number(item.count2 ?? 0) : 0)} шт.`,
+      total: getInteriorDoorTotal(item),
       details: {
         title: `Межкомнатная дверь · ${item.model}`,
         subtitle: 'Полная информация по позиции заказа.',
         badges: [this.leafTypesLabels[item.leafType], this.doorCoveringLabels[item.covering]],
-        total: item.price * item.count,
+        total: getInteriorDoorTotal(item),
         sections: [
           this.section('Основное', [
             ['Модель', item.model],
             ['Цвет', item.color],
-            ['Размер', this.formatDoorSize(item.width, item.height, item.width2)],
             ['Тип створки', this.leafTypesLabels[item.leafType]],
+          ]),
+          this.section('Створка 1', [
+            ['Ширина', `${item.width} см`],
+            ['Высота', `${item.height} см`],
+            ['Цена', this.formatMoney(item.price)],
+            ['Количество', `${item.count} шт.`],
+          ]),
+          ...(item.leafType === 'Double'
+            ? [
+                this.section('Створка 2', [
+                  ['Ширина', `${item.width2 ?? 0} см`],
+                  ['Высота', `${item.height2 ?? item.height} см`],
+                  ['Цена', this.formatMoney(item.price2 ?? 0)],
+                  ['Количество', `${item.count2 ?? 0} шт.`],
+                ]),
+              ]
+            : []),
+          this.section('Дополнительно', [
             ['Покрытие', this.doorCoveringLabels[item.covering]],
             ['Со стеклом', item.hasGlass ? 'Да' : 'Нет'],
             ['Стекло', item.hasGlass ? item.glassComment || 'Без уточнения' : 'Нет'],
-            ['Количество', `${item.count} шт.`],
-            ['Цена за штуку', this.formatMoney(item.price)],
+            ['Стоимость', this.formatMoney(getInteriorDoorTotal(item))],
             ['Комментарий', item.comment || 'Нет'],
           ]),
         ],
@@ -633,6 +650,14 @@ export class OrderViewComponent {
 
   private formatDoorSize(width: number, height: number, width2: number | null): string {
     return `${width2 === null ? `${width}` : `${width} + ${width2}`} × ${height} см`;
+  }
+
+  private formatInteriorDoorSize(item: InteriorDoorItem): string {
+    if (item.leafType !== 'Double') {
+      return `${item.width} × ${item.height} см`;
+    }
+
+    return `${item.width} × ${item.height} см + ${item.width2 ?? 0} × ${item.height2 ?? item.height} см`;
   }
 
   private formatMoney(value: number): string {

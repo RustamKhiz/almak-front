@@ -139,8 +139,8 @@ export class OrderCreateComponent implements OnInit {
     name: ['', [Validators.required]],
     phone: ['', [Validators.required, Validators.pattern(/^7\d{10}$/)]],
     date: [this.todayIso(), [Validators.required]],
-    prepayment: [0, [Validators.required, Validators.min(0)]],
-    discount: [0, [Validators.required, Validators.min(0)]],
+    prepayment: [null as number | null, [Validators.required, Validators.min(0.01)]],
+    discount: [null as number | null, [Validators.min(0.01)]],
     needsDelivery: [false],
     deliveryAddress: [''],
     comment: [''],
@@ -150,11 +150,11 @@ export class OrderCreateComponent implements OnInit {
 
   constructor() {
     this.form.controls.prepayment.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((value) => {
-      this.prepayment.set(value);
+      this.prepayment.set(value ?? 0);
     });
 
     this.form.controls.discount.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((value) => {
-      this.discount.set(value);
+      this.discount.set(value ?? 0);
     });
 
     this.form.controls.needsDelivery.valueChanges
@@ -388,8 +388,8 @@ export class OrderCreateComponent implements OnInit {
       name: value.name.trim(),
       phone: value.phone,
       date: value.date,
-      prepayment: value.prepayment,
-      discount: value.discount,
+      prepayment: value.prepayment ?? 0,
+      discount: value.discount ?? 0,
       needsDelivery: value.needsDelivery,
       deliveryAddress: value.deliveryAddress.trim(),
       comment: value.comment.trim(),
@@ -421,7 +421,7 @@ export class OrderCreateComponent implements OnInit {
         phone: order.phone,
         date: order.date,
         prepayment: order.prepayment,
-        discount: order.discount,
+        discount: order.discount > 0 ? order.discount : null,
         comment: order.comment,
         status: order.status,
         isPaid: order.isPaid,

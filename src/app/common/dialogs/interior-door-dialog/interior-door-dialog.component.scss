@@ -25,9 +25,30 @@ mat-dialog-content {
   align-items: start;
 }
 
+.dialog-row--single-leaf {
+  grid-template-columns: 1fr;
+}
+
 .dialog-column {
   display: grid;
   gap: 12px;
+}
+
+.leaf-card {
+  padding: 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background: #f9fafb;
+}
+
+.leaf-card--second {
+  background: #f3f4f6;
+}
+
+.leaf-card__title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #111827;
 }
 
 .leaf-type {
@@ -46,6 +67,23 @@ mat-dialog-content {
   display: flex;
   flex-wrap: wrap;
   gap: 16px;
+}
+
+.total-preview {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 0;
+  border-top: 1px solid #e5e7eb;
+  border-bottom: 1px solid #e5e7eb;
+  color: #374151;
+}
+
+.total-preview strong {
+  color: #111827;
+  font-size: 18px;
+  font-weight: 700;
 }
 
 mat-form-field {

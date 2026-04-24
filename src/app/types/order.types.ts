@@ -86,13 +86,16 @@ export interface InteriorDoorItem {
   model: string;
   color: string;
   price: number;
+  price2: number | null;
   width: number;
   width2: number | null;
   height: number;
+  height2: number | null;
   hasGlass: boolean;
   glassComment: string;
   leafType: DoorLeafType;
   count: number;
+  count2: number | null;
   covering: InteriorDoorCovering;
   comment: string;
 }

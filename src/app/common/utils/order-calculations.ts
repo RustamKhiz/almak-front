@@ -1,7 +1,9 @@
 import {
   CapitalItem,
+  DoorLeafType,
   ExtensionItem,
   HardwareItem,
+  InteriorDoorItem,
   MoldingItem,
   OrderCreatePayload,
   PanelingItem,
@@ -27,6 +29,15 @@ export function getCapitalTotal(item: CapitalItem): number {
   return item.price * item.count;
 }
 
+export function getInteriorDoorTotal(item: InteriorDoorItem): number {
+  const firstLeafTotal = item.price * item.count;
+  if (item.leafType !== DoorLeafType.Double) {
+    return firstLeafTotal;
+  }
+
+  return firstLeafTotal + Number(item.price2 ?? 0) * Number(item.count2 ?? 0);
+}
+
 export function getHardwareTotal(item: HardwareItem): number {
   return (
     getOptionalTotal(item.handleCount, item.handlePrice) +
@@ -43,7 +54,7 @@ export function getHardwareTotal(item: HardwareItem): number {
 
 export function getOrderTotal(order: OrderCreatePayload): number {
   return (
-    order.interiorDoors.reduce((sum, item) => sum + item.price * item.count, 0) +
+    order.interiorDoors.reduce((sum, item) => sum + getInteriorDoorTotal(item), 0) +
     order.entranceDoors.reduce((sum, item) => sum + item.price * item.count, 0) +
     order.moldings.reduce((sum, item) => sum + getMoldingTotal(item), 0) +
     order.extensions.reduce((sum, item) => sum + getExtensionTotal(item), 0) +

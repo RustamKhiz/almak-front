@@ -86,7 +86,7 @@
 
 .order-create__form-grid {
   display: grid;
-  gap: 12px;
+  gap: 6px 12px;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
 }
 
@@ -106,9 +106,9 @@
 
 .order-create__subcard {
   display: grid;
-  gap: 12px;
-  min-height: 228px;
-  padding: 14px;
+  gap: 8px;
+  min-height: 96px;
+  padding: 10px 12px;
   border-radius: 14px;
   border: 1px solid #e5e7eb;
   background:
@@ -136,11 +136,23 @@
   display: flex;
   align-items: center;
   justify-content: flex-start;
-  min-height: 44px;
-  padding: 8px 14px;
+  min-height: 58px;
+  padding: 0;
+}
+
+.order-create__delivery-inline {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  align-items: start;
+  gap: 12px;
+  min-width: 0;
+}
+
+.order-create__delivery-inline .order-create__delivery-header {
   border: 1px solid #e5e7eb;
   border-radius: 12px;
   background: #f9fafb;
+  padding: 0 10px;
 }
 
 .order-create__delivery-address {
@@ -150,8 +162,8 @@
 .order-create__delivery-placeholder {
   display: flex;
   align-items: center;
-  min-height: 60px;
-  padding: 12px 16px;
+  min-height: 58px;
+  padding: 0 10px;
   border: 1px dashed #d1d5db;
   border-radius: 12px;
   background: #fbfbfc;
@@ -161,7 +173,13 @@
 }
 
 .order-create__comment ::ng-deep textarea.mat-mdc-input-element {
-  min-height: 148px;
+  height: 24px;
+  min-height: 24px;
+  resize: vertical;
+}
+
+.order-create__delivery-address ::ng-deep textarea.mat-mdc-input-element {
+  min-height: 24px;
   resize: vertical;
 }
 
