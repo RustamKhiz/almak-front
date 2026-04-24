@@ -16,11 +16,14 @@
             <div class="door-item__main">
               <div class="door-item__title">Межкомнатная дверь · {{ door.model }}</div>
               <div class="door-item__meta">
-                {{ door.width }} × {{ door.height }} см · {{ door.price | number: '1.0-0' }} ₽ · количество {{ door.count }}
+                {{ door.width }} × {{ door.height }} см · {{ door.price | number: '1.0-0' }} ₽ · количество
+                {{ door.count }}
                 @if (door.width2 !== null) {
-                  · {{ door.width2 }} × {{ door.height2 }} см · {{ door.price2 | number: '1.0-0' }} ₽ · количество {{ door.count2 }}
+                  · {{ door.width2 }} × {{ door.height2 }} см · {{ door.price2 | number: '1.0-0' }} ₽ · количество
+                  {{ door.count2 }}
                 }
-                · {{ doorLeafTypeLabels[door.leafType] }} · {{ doorCoveringLabels[door.covering] }} · цвет {{ door.color }}
+                · {{ doorLeafTypeLabels[door.leafType] }} · {{ doorCoveringLabels[door.covering] }} · цвет
+                {{ door.color }}
                 @if (door.hasGlass) {
                   · со стеклом
                   @if (door.glassComment) {
