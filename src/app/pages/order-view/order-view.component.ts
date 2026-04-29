@@ -403,7 +403,7 @@ export class OrderViewComponent {
       key: `interior-${item.id}`,
       typeLabel: 'Межкомнатная дверь',
       title: item.model,
-      summary: `${this.formatInteriorDoorSize(item)} · ${this.leafTypesLabels[item.leafType]} · цвет ${item.color}`,
+      summary: `${this.formatInteriorDoorSize(item)} · ${this.leafTypesLabels[item.leafType]} · цвет ${item.color} · ${this.getInteriorDoorGlassLabel(item)}`,
       countLabel: `${item.count + (item.leafType === 'Double' ? Number(item.count2 ?? 0) : 0)} шт.`,
       total: getInteriorDoorTotal(item),
       details: {
@@ -435,8 +435,8 @@ export class OrderViewComponent {
             : []),
           this.section('Дополнительно', [
             ['Покрытие', this.doorCoveringLabels[item.covering]],
-            ['Со стеклом', item.hasGlass ? 'Да' : 'Нет'],
-            ['Стекло', item.hasGlass ? item.glassComment || 'Без уточнения' : 'Нет'],
+            ['Тип полотна', this.getInteriorDoorGlassLabel(item)],
+            ['Стекло', item.hasGlass ? item.glassComment || 'Без уточнения' : 'Не используется'],
             ['Стоимость', this.formatMoney(getInteriorDoorTotal(item))],
             ['Комментарий', item.comment || 'Нет'],
           ]),
@@ -658,6 +658,10 @@ export class OrderViewComponent {
     }
 
     return `${item.width} × ${item.height} см + ${item.width2 ?? 0} × ${item.height2 ?? item.height} см`;
+  }
+
+  private getInteriorDoorGlassLabel(item: InteriorDoorItem): string {
+    return item.hasGlass ? 'со стеклом' : 'глухая';
   }
 
   private formatMoney(value: number): string {

@@ -54,7 +54,7 @@ export class OrderDocumentService {
           'Межкомнатная дверь',
           item.model,
           this.formatInteriorDoorSize(item),
-          `${this.getLeafTypeLabel(item.leafType)}, ${item.color}${item.hasGlass ? `, со стеклом${item.glassComment ? `: ${item.glassComment}` : ''}` : ''}`,
+          `${this.getLeafTypeLabel(item.leafType)}, ${item.color}, ${this.getInteriorDoorGlassLabel(item)}`,
           item.comment || '-',
           this.getInteriorDoorCount(item),
           this.getInteriorDoorTotal(item),
@@ -467,6 +467,14 @@ export class OrderDocumentService {
 
   private getInteriorDoorCount(item: InteriorDoorItem): number {
     return item.count + (item.leafType === DoorLeafType.Double ? Number(item.count2 ?? 0) : 0);
+  }
+
+  private getInteriorDoorGlassLabel(item: InteriorDoorItem): string {
+    if (!item.hasGlass) {
+      return 'глухая';
+    }
+
+    return `со стеклом${item.glassComment ? `: ${item.glassComment}` : ''}`;
   }
 
   private getHardwareTitle(item: HardwareItem): string {

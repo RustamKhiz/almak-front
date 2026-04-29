@@ -23,9 +23,8 @@
                   {{ door.count2 }}
                 }
                 · {{ doorLeafTypeLabels[door.leafType] }} · {{ doorCoveringLabels[door.covering] }} · цвет
-                {{ door.color }}
+                {{ door.color }} · {{ door.hasGlass ? 'со стеклом' : 'глухая' }}
                 @if (door.hasGlass) {
-                  · со стеклом
                   @if (door.glassComment) {
                     ({{ door.glassComment }})
                   }

@@ -12,6 +12,30 @@
       <input matInput formControlName="color" />
     </mat-form-field>
 
+    <mat-form-field appearance="outline">
+      <mat-label>Покрытие</mat-label>
+      <mat-select formControlName="covering">
+        @for (covering of coveringOptions; track covering) {
+          <mat-option [value]="covering">{{ coveringLabels[covering] }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
+    <div class="leaf-type">
+      <div class="leaf-type__label">Стекло</div>
+      <mat-radio-group formControlName="hasGlass">
+        <mat-radio-button [value]="false">Глухая</mat-radio-button>
+        <mat-radio-button [value]="true">Со стеклом</mat-radio-button>
+      </mat-radio-group>
+    </div>
+
+    @if (form.controls.hasGlass.value) {
+      <mat-form-field appearance="outline" class="glass-comment-field">
+        <mat-label>Какое стекло</mat-label>
+        <textarea matInput rows="2" formControlName="glassComment"></textarea>
+      </mat-form-field>
+    }
+
     <div class="leaf-type">
       <div class="leaf-type__label">Тип створки</div>
       <mat-radio-group formControlName="leafType">
@@ -50,28 +74,10 @@
       }
     </div>
 
-    <mat-form-field appearance="outline">
-      <mat-label>Покрытие</mat-label>
-      <mat-select formControlName="covering">
-        @for (covering of coveringOptions; track covering) {
-          <mat-option [value]="covering">{{ coveringLabels[covering] }}</mat-option>
-        }
-      </mat-select>
-    </mat-form-field>
-
     <div class="total-preview">
       <span>Стоимость</span>
       <strong>{{ getDraftTotal() | number: '1.0-0' }} ₽</strong>
     </div>
-
-    <mat-checkbox formControlName="hasGlass">Со стеклом</mat-checkbox>
-
-    @if (form.controls.hasGlass.value) {
-      <mat-form-field appearance="outline" class="glass-comment-field">
-        <mat-label>Какое стекло</mat-label>
-        <textarea matInput rows="2" formControlName="glassComment"></textarea>
-      </mat-form-field>
-    }
 
     <mat-form-field appearance="outline">
       <mat-label>Комментарий</mat-label>
