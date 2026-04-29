@@ -13,7 +13,7 @@ import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatSort, MatSortModule } from '@angular/material/sort';
-import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
+import { MatPaginator, MatPaginatorIntl, MatPaginatorModule } from '@angular/material/paginator';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import { getOrderPaymentLabel, getOrderStatusLabel, ORDER_STATUS_OPTIONS } from '../../common/constants/order-status';
@@ -37,6 +37,16 @@ import { OrdersTableFilters, OrdersTableFiltersComponent } from './orders-table-
   templateUrl: './orders-table.component.html',
   styleUrl: './orders-table.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  providers: [
+    {
+      provide: MatPaginatorIntl,
+      useFactory: () => {
+        const intl = new MatPaginatorIntl();
+        intl.itemsPerPageLabel = 'количество элементов на странице';
+        return intl;
+      },
+    },
+  ],
 })
 export class OrdersTableComponent implements OnInit {
   private readonly ordersService = inject(OrdersService);

@@ -10,6 +10,7 @@ import {
   MOLDING_COVERING_LABELS,
   MOLDING_PLATBAND_TYPE_LABELS,
   PANELING_COVERING_LABELS,
+  PANELING_KIND_LABELS,
 } from '../../../common/constants/molding-catalog';
 import {
   getCapitalTotal,
@@ -59,6 +60,7 @@ export class OrderItemsListComponent {
   protected readonly extensionCoveringLabels = EXTENSION_COVERING_LABELS;
   protected readonly capitalCoveringLabels = CAPITAL_COVERING_LABELS;
   protected readonly panelingCoveringLabels = PANELING_COVERING_LABELS;
+  protected readonly panelingKindLabels = PANELING_KIND_LABELS;
   protected readonly hasItems = computed(
     () =>
       this.interiorDoors().length > 0 ||
@@ -92,6 +94,10 @@ export class OrderItemsListComponent {
 
   protected getHardwareTotal(item: HardwareItem): number {
     return getHardwareTotal(item);
+  }
+
+  protected getPanelingSizesLabel(item: PanelingItem): string {
+    return item.sizes.map((size) => `${size.width} × ${size.height} см`).join(' · ');
   }
 
   protected onEditClick(entity: OrderItemEntity, id: number): void {

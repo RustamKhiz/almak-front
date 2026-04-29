@@ -1,3 +1,4 @@
+import { DecimalPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, DestroyRef, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -8,10 +9,13 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import {
   DEFAULT_PANELING_COVERING,
+  DEFAULT_PANELING_KIND,
   PANELING_COVERING_LABELS,
   PANELING_COVERING_OPTIONS,
+  PANELING_KIND_LABELS,
+  PANELING_KIND_OPTIONS,
 } from '../../constants/molding-catalog';
-import { OrderItemType, PanelingItem } from '../../../types/order.types';
+import { OrderItemType, PanelingItem, PanelingSize } from '../../../types/order.types';
 import { QuantityFieldComponent } from '../../../ui/quantity-field/quantity-field.component';
 
 export interface PanelingDialogData {
@@ -30,6 +34,7 @@ export type PanelingDialogResult = Omit<PanelingItem, 'id'>;
     MatFormFieldModule,
     MatInputModule,
     MatSelectModule,
+    DecimalPipe,
     QuantityFieldComponent,
   ],
   templateUrl: './paneling-dialog.component.html',
@@ -41,46 +46,34 @@ export class PanelingDialogComponent {
   private readonly destroyRef = inject(DestroyRef);
   private readonly dialogRef = inject(MatDialogRef<PanelingDialogComponent, PanelingDialogResult>);
   private readonly data = inject<PanelingDialogData>(MAT_DIALOG_DATA);
-  private lastAutoTotalArea = 0;
 
   protected readonly coveringOptions = PANELING_COVERING_OPTIONS;
   protected readonly coveringLabels = PANELING_COVERING_LABELS;
+  protected readonly kindOptions = PANELING_KIND_OPTIONS;
+  protected readonly kindLabels = PANELING_KIND_LABELS;
 
   protected readonly form = this.fb.group({
     color: [this.data.paneling?.color ?? '', [Validators.required]],
     count: [this.data.paneling?.count ?? 1, [Validators.required, Validators.min(1)]],
     price: [this.data.paneling?.price ?? null, [Validators.required, Validators.min(0)]],
     covering: [this.data.paneling?.covering ?? DEFAULT_PANELING_COVERING, [Validators.required]],
-    width: [this.data.paneling?.width ?? null, [Validators.required, Validators.min(1)]],
-    height: [this.data.paneling?.height ?? null, [Validators.required, Validators.min(1)]],
-    quantityPerSet: [this.data.paneling?.quantityPerSet ?? 0.5, [Validators.required, Validators.min(0.5)]],
-    totalArea: [this.data.paneling?.totalArea ?? null, [Validators.required, Validators.min(0)]],
+    kind: [this.data.paneling?.kind ?? DEFAULT_PANELING_KIND, [Validators.required]],
+    sizes: this.fb.array(this.getInitialSizes().map((size) => this.createSizeGroup(size))),
     comment: [this.data.paneling?.comment ?? ''],
   });
 
   protected readonly title = computed(() => (this.data.mode === 'edit' ? 'Редактировать обшивку' : 'Добавить обшивку'));
 
   constructor() {
-    this.lastAutoTotalArea = this.calculateArea(
-      this.form.controls.width.value,
-      this.form.controls.height.value,
-      this.form.controls.quantityPerSet.value,
-    );
+    this.syncSizeControls(this.form.controls.count.value ?? 1);
 
-    if (this.form.controls.totalArea.value == null) {
-      this.form.controls.totalArea.setValue(this.lastAutoTotalArea, { emitEvent: false });
-    }
-
-    this.form.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(({ width, height, quantityPerSet }) => {
-      const nextAutoTotalArea = this.calculateArea(width ?? null, height ?? null, quantityPerSet ?? null);
-      const currentTotalArea = this.form.controls.totalArea.value;
-
-      if (currentTotalArea == null || currentTotalArea === this.lastAutoTotalArea) {
-        this.form.controls.totalArea.setValue(nextAutoTotalArea, { emitEvent: false });
-      }
-
-      this.lastAutoTotalArea = nextAutoTotalArea;
+    this.form.controls.count.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((count) => {
+      this.syncSizeControls(count ?? 1);
     });
+  }
+
+  protected get sizeControls() {
+    return this.form.controls.sizes.controls;
   }
 
   protected onCancelClick(): void {
@@ -94,26 +87,80 @@ export class PanelingDialogComponent {
     }
 
     const value = this.form.getRawValue();
+    const sizes = value.sizes.map((size) => ({
+      width: Number(size.width),
+      height: Number(size.height),
+    }));
+    const firstSize = sizes[0];
+
     this.dialogRef.close({
       type: OrderItemType.Paneling,
-      color: value.color?.trim(),
-      size: `${value.width}x${value.height}`,
-      count: value.count,
-      price: value.price,
-      covering: value.covering,
-      width: value.width,
-      height: value.height,
-      quantityPerSet: value.quantityPerSet,
-      totalArea: value.totalArea,
-      comment: value.comment?.trim(),
+      color: value.color!.trim(),
+      size: this.formatSizes(sizes),
+      count: value.count!,
+      price: value.price!,
+      covering: value.covering!,
+      kind: value.kind!,
+      width: firstSize.width,
+      height: firstSize.height,
+      sizes,
+      totalArea: this.calculateTotalArea(sizes),
+      comment: value.comment?.trim() || '',
     });
   }
 
-  private calculateArea(width: number | null, height: number | null, quantityPerSet: number | null): number {
-    if (width == null || height == null || quantityPerSet == null) {
+  protected calculateSizeArea(width: number | null, height: number | null): number {
+    if (width == null || height == null) {
       return 0;
     }
 
-    return Number(((width * height * quantityPerSet) / 10000).toFixed(2));
+    return Number(((width * height) / 10000).toFixed(2));
+  }
+
+  protected getTotalArea(): number {
+    return this.calculateTotalArea(this.form.controls.sizes.getRawValue());
+  }
+
+  private getInitialSizes(): PanelingSize[] {
+    const sizes = this.data.paneling?.sizes;
+    if (sizes?.length) {
+      return sizes.map((size) => ({ width: size.width, height: size.height }));
+    }
+
+    if (this.data.paneling?.width && this.data.paneling.height) {
+      return [{ width: this.data.paneling.width, height: this.data.paneling.height }];
+    }
+
+    return [{ width: 0, height: 0 }];
+  }
+
+  private createSizeGroup(size: PanelingSize) {
+    return this.fb.group({
+      width: [size.width || null, [Validators.required, Validators.min(1)]],
+      height: [size.height || null, [Validators.required, Validators.min(1)]],
+    });
+  }
+
+  private syncSizeControls(count: number): void {
+    const normalizedCount = Math.max(1, Math.floor(Number(count) || 1));
+    const sizes = this.form.controls.sizes;
+
+    while (sizes.length < normalizedCount) {
+      sizes.push(this.createSizeGroup({ width: 0, height: 0 }));
+    }
+
+    while (sizes.length > normalizedCount) {
+      sizes.removeAt(sizes.length - 1);
+    }
+  }
+
+  private calculateTotalArea(sizes: readonly Partial<PanelingSize>[]): number {
+    const total = sizes.reduce((sum, size) => sum + this.calculateSizeArea(size.width ?? null, size.height ?? null), 0);
+
+    return Number(total.toFixed(2));
+  }
+
+  private formatSizes(sizes: readonly PanelingSize[]): string {
+    return sizes.map((size) => `${size.width}x${size.height}`).join('; ');
   }
 }

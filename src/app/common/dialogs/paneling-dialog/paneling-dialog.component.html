@@ -6,12 +6,7 @@
       <input matInput formControlName="color" />
     </mat-form-field>
 
-    <app-quantity-field formControlName="count" label="Количество комплектов" [min]="1" [step]="1" />
-
-    <mat-form-field appearance="outline">
-      <mat-label>Цена за квадратный метр</mat-label>
-      <input matInput type="number" formControlName="price" placeholder="0" />
-    </mat-form-field>
+    <app-quantity-field formControlName="count" label="Количество" [min]="1" [step]="1" />
 
     <mat-form-field appearance="outline">
       <mat-label>Покрытие</mat-label>
@@ -22,28 +17,47 @@
       </mat-select>
     </mat-form-field>
 
-    <div class="dialog-row">
-      <mat-form-field appearance="outline">
-        <mat-label>Ширина</mat-label>
-        <input matInput type="number" formControlName="width" placeholder="0" />
-      </mat-form-field>
+    <mat-form-field appearance="outline">
+      <mat-label>Тип обшивки</mat-label>
+      <mat-select formControlName="kind">
+        @for (kind of kindOptions; track kind) {
+          <mat-option [value]="kind">{{ kindLabels[kind] }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
 
-      <mat-form-field appearance="outline">
-        <mat-label>Высота</mat-label>
-        <input matInput type="number" formControlName="height" placeholder="0" />
-      </mat-form-field>
+    <div class="sizes-list" formArrayName="sizes">
+      @for (sizeGroup of sizeControls; track $index; let index = $index) {
+        <div class="size-row" [formGroupName]="index">
+          <mat-form-field appearance="outline">
+            <mat-label>Ширина {{ index + 1 }}</mat-label>
+            <input matInput type="number" formControlName="width" placeholder="0" />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Высота {{ index + 1 }}</mat-label>
+            <input matInput type="number" formControlName="height" placeholder="0" />
+          </mat-form-field>
+
+          <div class="size-row__area">
+            <span>Квадратура</span>
+            <strong>
+              {{ calculateSizeArea(sizeGroup.controls.width.value, sizeGroup.controls.height.value) | number: '1.0-2' }}
+              м²
+            </strong>
+          </div>
+        </div>
+      }
     </div>
 
-    <app-quantity-field
-      formControlName="quantityPerSet"
-      label="Количество обшивки в комплекте"
-      [min]="0.5"
-      [step]="0.5"
-    />
+    <div class="total-area">
+      <span>Общая квадратура</span>
+      <strong>{{ getTotalArea() | number: '1.0-2' }} м²</strong>
+    </div>
 
     <mat-form-field appearance="outline">
-      <mat-label>Общая квадратура</mat-label>
-      <input matInput type="number" formControlName="totalArea" step="0.01" placeholder="0" />
+      <mat-label>Цена за квадратный метр</mat-label>
+      <input matInput type="number" formControlName="price" placeholder="0" />
     </mat-form-field>
 
     <mat-form-field appearance="outline">

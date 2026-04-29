@@ -28,6 +28,15 @@
     </mat-form-field>
 
     <div class="dialog-row dialog-row--sizes">
+      <mat-form-field appearance="outline">
+        <mat-label>Цвет двери</mat-label>
+        <input matInput formControlName="color" />
+      </mat-form-field>
+
+      <app-catalog-autocomplete-field title="Цвет обшивки" formControlName="panelColor" [options]="panelColorOptions" />
+    </div>
+
+    <div class="dialog-row dialog-row--sizes">
       <app-catalog-autocomplete-field
         title="Ширина (см)"
         mode="number"
@@ -40,15 +49,6 @@
         formControlName="height"
         [options]="heightOptions"
       />
-    </div>
-
-    <div class="dialog-row dialog-row--sizes">
-      <mat-form-field appearance="outline">
-        <mat-label>Цвет двери</mat-label>
-        <input matInput formControlName="color" />
-      </mat-form-field>
-
-      <app-catalog-autocomplete-field title="Цвет обшивки" formControlName="panelColor" [options]="panelColorOptions" />
     </div>
 
     @if (isWelded()) {

@@ -18,11 +18,11 @@ export function getMoldingTotal(item: MoldingItem): number {
 }
 
 export function getExtensionTotal(item: ExtensionItem): number {
-  return item.totalArea * item.price * item.count;
+  return item.totalArea * item.price;
 }
 
 export function getPanelingTotal(item: PanelingItem): number {
-  return item.totalArea * item.price * item.count;
+  return item.totalArea * item.price;
 }
 
 export function getCapitalTotal(item: CapitalItem): number {

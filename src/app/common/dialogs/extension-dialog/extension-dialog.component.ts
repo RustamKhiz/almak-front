@@ -1,3 +1,4 @@
+import { DecimalPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, DestroyRef, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -30,6 +31,7 @@ export type ExtensionDialogResult = Omit<ExtensionItem, 'id'>;
     MatFormFieldModule,
     MatInputModule,
     MatSelectModule,
+    DecimalPipe,
     QuantityFieldComponent,
   ],
   templateUrl: './extension-dialog.component.html',
@@ -53,7 +55,6 @@ export class ExtensionDialogComponent {
     height: [this.data.extension?.height ?? null, [Validators.required, Validators.min(1)]],
     quantityPerSet: [this.data.extension?.quantityPerSet ?? 0.5, [Validators.required, Validators.min(0.5)]],
     totalArea: [this.data.extension?.totalArea ?? null, [Validators.required, Validators.min(0)]],
-    count: [this.data.extension?.count ?? 1, [Validators.required, Validators.min(1)]],
     price: [this.data.extension?.price ?? null, [Validators.required, Validators.min(0)]],
     comment: [this.data.extension?.comment ?? ''],
   });
@@ -103,9 +104,15 @@ export class ExtensionDialogComponent {
       quantityPerSet: value.quantityPerSet,
       totalArea: value.totalArea,
       comment: value.comment?.trim(),
-      count: value.count,
+      count: 1,
       price: value.price,
     });
+  }
+
+  protected getDraftTotal(): number {
+    const value = this.form.getRawValue();
+
+    return Number(value.totalArea ?? 0) * Number(value.price ?? 0);
   }
 
   private calculateArea(width: number | null, height: number | null, quantityPerSet: number | null): number {
