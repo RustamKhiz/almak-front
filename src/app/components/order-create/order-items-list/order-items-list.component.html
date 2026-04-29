@@ -209,9 +209,8 @@
                 Доборы · {{ item.color }} · {{ extensionCoveringLabels[item.covering] }}
               </div>
               <div class="door-item__meta">
-                {{ item.width }} × {{ item.height }} см · {{ item.quantityPerSet }} в комплекте ·
-                {{ item.count }} комплектов · общая квадратура {{ item.totalArea | number: '1.0-2' }} м² ·
-                {{ item.price | number: '1.0-0' }} ₽/м²
+                {{ item.width }} × {{ item.height }} см · доборов {{ item.quantityPerSet }} · общая квадратура
+                {{ item.totalArea | number: '1.0-2' }} м² · {{ item.price | number: '1.0-0' }} ₽/м²
                 @if (item.comment) {
                   · {{ item.comment }}
                 }
@@ -394,12 +393,10 @@
         @for (item of panelingItems; track item.id) {
           <div class="door-item">
             <div class="door-item__main">
-              <div class="door-item__title">
-                Обшивка · {{ item.color }} · {{ panelingCoveringLabels[item.covering] }}
-              </div>
+              <div class="door-item__title">Обшивка · {{ item.color }} · {{ panelingKindLabels[item.kind] }}</div>
               <div class="door-item__meta">
-                {{ item.width }} × {{ item.height }} см · {{ item.quantityPerSet }} в комплекте ·
-                {{ item.count }} комплектов · общая квадратура {{ item.totalArea | number: '1.0-2' }} м² ·
+                {{ getPanelingSizesLabel(item) }} · {{ panelingCoveringLabels[item.covering] }} · количество
+                {{ item.count }} · общая квадратура {{ item.totalArea | number: '1.0-2' }} м² ·
                 {{ item.price | number: '1.0-0' }} ₽/м²
                 @if (item.comment) {
                   · {{ item.comment }}

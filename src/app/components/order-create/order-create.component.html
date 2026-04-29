@@ -64,17 +64,17 @@
       </mat-form-field>
 
       <mat-form-field appearance="outline">
-        <mat-label>Внесено клиентом</mat-label>
-        <input matInput type="number" formControlName="prepayment" placeholder="0" />
-        @if (form.controls.prepayment.touched && form.controls.prepayment.invalid) {
+        <mat-label>Скидка</mat-label>
+        <input matInput type="number" formControlName="discount" placeholder="0" />
+        @if (form.controls.discount.touched && form.controls.discount.invalid) {
           <mat-error>Введите число больше 0</mat-error>
         }
       </mat-form-field>
 
       <mat-form-field appearance="outline">
-        <mat-label>Скидка</mat-label>
-        <input matInput type="number" formControlName="discount" placeholder="0" />
-        @if (form.controls.discount.touched && form.controls.discount.invalid) {
+        <mat-label>Внесено клиентом</mat-label>
+        <input matInput type="number" formControlName="prepayment" placeholder="0" />
+        @if (form.controls.prepayment.touched && form.controls.prepayment.invalid) {
           <mat-error>Введите число больше 0</mat-error>
         }
       </mat-form-field>

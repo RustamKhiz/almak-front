@@ -24,6 +24,8 @@ import {
   OrderStatus,
   PanelingCovering,
   PanelingItem,
+  PanelingKind,
+  PanelingSize,
 } from '../types/order.types';
 import { getOrderTotal } from '../common/utils/order-calculations';
 import { CoreService } from './core.service';
@@ -167,14 +169,21 @@ interface BackendPaneling {
   id: number;
   order_id: number;
   color: string;
+  size?: string;
   width: number;
   height: number;
   covering?: string;
+  kind?: string;
+  sizes?: BackendPanelingSize[];
   quantityPerSet?: number;
   totalArea?: number;
   count: number;
   price: number;
   comment?: string;
+}
+interface BackendPanelingSize {
+  width: number;
+  height: number;
 }
 
 interface BackendOrderPayload {
@@ -292,7 +301,8 @@ interface BackendPanelingPayload {
   width: number;
   height: number;
   covering: string;
-  quantityPerSet: number;
+  kind: string;
+  sizes: readonly PanelingSize[];
   totalArea: number;
   count: number;
   price: number;
@@ -525,7 +535,8 @@ export class OrdersService {
         width: item.width,
         height: item.height,
         covering: item.covering,
-        quantityPerSet: item.quantityPerSet,
+        kind: item.kind,
+        sizes: item.sizes,
         totalArea: item.totalArea,
         count: item.count,
         price: item.price,
@@ -659,6 +670,11 @@ export class OrdersService {
     };
   }
   private mapBackendPanelingToItem(item: BackendPaneling): PanelingItem {
+    const sizes = this.normalizePanelingSizes(item);
+    const totalArea = item.sizes?.length
+      ? this.calculatePanelingTotalArea(sizes)
+      : Number(((item.totalArea ?? this.calculatePanelingTotalArea(sizes)) * (item.count ?? 1)).toFixed(2));
+
     return {
       id: item.id,
       type: OrderItemType.Paneling,
@@ -667,8 +683,9 @@ export class OrdersService {
       width: item.width,
       height: item.height,
       covering: this.mapPanelingCovering(item.covering),
-      quantityPerSet: item.quantityPerSet ?? 0.5,
-      totalArea: item.totalArea ?? Number(((item.width * item.height * 0.5) / 10000).toFixed(2)),
+      kind: this.mapPanelingKind(item.kind),
+      sizes,
+      totalArea,
       count: item.count,
       price: item.price,
       comment: item.comment ?? '',
@@ -727,6 +744,58 @@ export class OrdersService {
       default:
         return PanelingCovering.Enamel;
     }
+  }
+  private mapPanelingKind(value?: string): PanelingKind {
+    switch (value) {
+      case PanelingKind.Smooth:
+      case PanelingKind.Figure:
+      case PanelingKind.Baguette:
+        return value;
+      default:
+        return PanelingKind.Smooth;
+    }
+  }
+  private normalizePanelingSizes(item: BackendPaneling): PanelingSize[] {
+    const parsedSizes = this.parsePanelingSizeList(item.size);
+    if (parsedSizes.length > 1) {
+      return parsedSizes;
+    }
+
+    if (item.sizes?.length) {
+      return item.sizes.map((size) => ({ width: size.width, height: size.height }));
+    }
+
+    if (parsedSizes.length === 1) {
+      return parsedSizes;
+    }
+
+    return [{ width: item.width, height: item.height }];
+  }
+  private parsePanelingSizeList(value?: string): PanelingSize[] {
+    if (!value) {
+      return [];
+    }
+
+    return value
+      .split(';')
+      .map((part) => part.trim())
+      .map((part) => {
+        const match = part.match(/^(\d+)\s*[xх×]\s*(\d+)$/i);
+        if (!match) {
+          return null;
+        }
+
+        return {
+          width: Number(match[1]),
+          height: Number(match[2]),
+        };
+      })
+      .filter((size): size is PanelingSize => !!size && size.width > 0 && size.height > 0);
+  }
+  private calculatePanelingTotalArea(sizes: readonly PanelingSize[]): number {
+    const totalArea = sizes.reduce((sum, size) => sum + (size.width * size.height) / 10000, 0);
+
+    return Number(totalArea.toFixed(2));
   }
   private mapMoldingPlatbandType(value?: string): MoldingPlatbandType {
     switch (value) {

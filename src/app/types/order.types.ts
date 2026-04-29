@@ -57,6 +57,12 @@ export enum PanelingCovering {
   PVC = 'PVC',
 }
 
+export enum PanelingKind {
+  Smooth = 'smooth',
+  Figure = 'figure',
+  Baguette = 'baguette',
+}
+
 export enum HardwareMechanismType {
   Lock = 'lock',
   Fixator = 'fixator',
@@ -169,11 +175,17 @@ export interface PanelingItem {
   width: number;
   height: number;
   covering: PanelingCovering;
-  quantityPerSet: number;
+  kind: PanelingKind;
+  sizes: readonly PanelingSize[];
   totalArea: number;
   count: number;
   price: number;
   comment: string;
+}
+
+export interface PanelingSize {
+  width: number;
+  height: number;
 }
 
 export interface HardwareItem {

@@ -15,6 +15,7 @@ import {
   MOLDING_COVERING_LABELS,
   MOLDING_PLATBAND_TYPE_LABELS,
   PANELING_COVERING_LABELS,
+  PANELING_KIND_LABELS,
 } from '../../common/constants/molding-catalog';
 import { getOrderPaymentLabel, getOrderStatusLabel, ORDER_STATUS_OPTIONS } from '../../common/constants/order-status';
 import { ConfirmDialogComponent, ConfirmDialogData } from '../../common/confirm-dialog/confirm-dialog.component';
@@ -112,6 +113,7 @@ export class OrderViewComponent {
   protected readonly extensionCoveringLabels = EXTENSION_COVERING_LABELS;
   protected readonly capitalCoveringLabels = CAPITAL_COVERING_LABELS;
   protected readonly panelingCoveringLabels = PANELING_COVERING_LABELS;
+  protected readonly panelingKindLabels = PANELING_KIND_LABELS;
   protected readonly productCards = computed(() => {
     const current = this.state();
     return current ? this.buildProductCards(current.data) : [];
@@ -520,20 +522,19 @@ export class OrderViewComponent {
       key: `extension-${item.id}`,
       typeLabel: 'Доборы',
       title: `${item.color} · ${this.extensionCoveringLabels[item.covering]}`,
-      summary: `${item.width} × ${item.height} см · ${item.quantityPerSet} в комплекте · ${item.count} комплектов`,
-      countLabel: `${item.count} компл.`,
+      summary: `${item.width} × ${item.height} см · доборов ${item.quantityPerSet} · ${item.totalArea} м²`,
+      countLabel: `${item.quantityPerSet} шт.`,
       total: getExtensionTotal(item),
       details: {
         title: 'Доборы',
-        subtitle: 'Расчет общей стоимости учитывает квадратуру, цену за м² и количество комплектов.',
+        subtitle: 'Расчет общей стоимости учитывает общую квадратуру и цену за м².',
         badges: [item.color, this.extensionCoveringLabels[item.covering]],
         total: getExtensionTotal(item),
         sections: [
           this.section('Размеры и комплектация', [
             ['Ширина', `${item.width} см`],
             ['Высота', `${item.height} см`],
-            ['Доборов в комплекте', `${item.quantityPerSet}`],
-            ['Количество комплектов', `${item.count}`],
+            ['Количество доборов', `${item.quantityPerSet}`],
             ['Общая квадратура', `${item.totalArea} м²`],
           ]),
           this.section('Стоимость', [
@@ -614,25 +615,26 @@ export class OrderViewComponent {
     return {
       key: `paneling-${item.id}`,
       typeLabel: 'Обшивка',
-      title: `${item.color} · ${this.panelingCoveringLabels[item.covering]}`,
-      summary: `${item.width} × ${item.height} см · ${item.quantityPerSet} в комплекте · ${item.count} комплектов`,
-      countLabel: `${item.count} компл.`,
+      title: `${item.color} · ${this.panelingKindLabels[item.kind]}`,
+      summary: `${this.formatPanelingSizes(item)} · ${this.panelingCoveringLabels[item.covering]} · ${item.totalArea} м²`,
+      countLabel: `${item.count} шт.`,
       total: getPanelingTotal(item),
       details: {
         title: 'Обшивка',
-        subtitle: 'Расчет общей стоимости учитывает квадратуру, цену за м² и количество комплектов.',
-        badges: [item.color, this.panelingCoveringLabels[item.covering]],
+        subtitle: 'Расчет общей стоимости учитывает общую квадратуру и цену за м².',
+        badges: [item.color, this.panelingKindLabels[item.kind], this.panelingCoveringLabels[item.covering]],
         total: getPanelingTotal(item),
         sections: [
-          this.section('Размеры и комплектация', [
-            ['Ширина', `${item.width} см`],
-            ['Высота', `${item.height} см`],
-            ['Количество обшивки в комплекте', `${item.quantityPerSet}`],
-            ['Количество комплектов', `${item.count}`],
-            ['Общая квадратура', `${item.totalArea} м²`],
+          this.section('Размеры и квадратура', [
+            ...item.sizes.map((size, index): [string, string] => [
+              `Размер ${index + 1}`,
+              `${size.width} × ${size.height} см · ${this.formatArea(this.getPanelingSizeArea(size.width, size.height))}`,
+            ]),
+            ['Общая квадратура', this.formatArea(item.totalArea)],
           ]),
           this.section('Стоимость', [
             ['Цена за квадратный метр', this.formatMoney(item.price)],
+            ['Тип обшивки', this.panelingKindLabels[item.kind]],
             ['Покрытие', this.panelingCoveringLabels[item.covering]],
             ['Комментарий', item.comment || 'Нет'],
           ]),
@@ -658,6 +660,18 @@ export class OrderViewComponent {
     }
 
     return `${item.width} × ${item.height} см + ${item.width2 ?? 0} × ${item.height2 ?? item.height} см`;
+  }
+
+  private formatPanelingSizes(item: PanelingItem): string {
+    return item.sizes.map((size) => `${size.width} × ${size.height} см`).join(' · ');
+  }
+
+  private getPanelingSizeArea(width: number, height: number): number {
+    return Number(((width * height) / 10000).toFixed(2));
+  }
+
+  private formatArea(value: number): string {
+    return `${value.toLocaleString('ru-RU', { maximumFractionDigits: 2 })} м²`;
   }
 
   private getInteriorDoorGlassLabel(item: InteriorDoorItem): string {

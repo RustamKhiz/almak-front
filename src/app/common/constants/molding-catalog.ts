@@ -4,6 +4,7 @@ import {
   MoldingCovering,
   MoldingPlatbandType,
   PanelingCovering,
+  PanelingKind,
 } from '../../types/order.types';
 
 export const MOLDING_PLATBAND_TYPE_OPTIONS: readonly MoldingPlatbandType[] = [
@@ -70,8 +71,21 @@ export const PANELING_COVERING_LABELS: Readonly<Record<PanelingCovering, string>
   [PanelingCovering.PVC]: 'ПВХ',
 };
 
+export const PANELING_KIND_OPTIONS: readonly PanelingKind[] = [
+  PanelingKind.Smooth,
+  PanelingKind.Figure,
+  PanelingKind.Baguette,
+] as const;
+
+export const PANELING_KIND_LABELS: Readonly<Record<PanelingKind, string>> = {
+  [PanelingKind.Smooth]: 'Гладкая',
+  [PanelingKind.Figure]: 'Фигурная',
+  [PanelingKind.Baguette]: 'С багетом',
+};
+
 export const DEFAULT_MOLDING_COVERING = MoldingCovering.Enamel;
 export const DEFAULT_MOLDING_PLATBAND_TYPE = MoldingPlatbandType.Oval;
 export const DEFAULT_EXTENSION_COVERING = ExtensionCovering.Enamel;
 export const DEFAULT_CAPITAL_COVERING = CapitalCovering.Enamel;
 export const DEFAULT_PANELING_COVERING = PanelingCovering.Enamel;
+export const DEFAULT_PANELING_KIND = PanelingKind.Smooth;

@@ -13,6 +13,7 @@ import {
   OrderCreatePayload,
   PanelingCovering,
   PanelingItem,
+  PanelingKind,
 } from '../types/order.types';
 
 @Injectable({ providedIn: 'root' })
@@ -99,9 +100,9 @@ export class OrderDocumentService {
           'Доборы',
           `Доборы ${item.color}`,
           `${item.width}x${item.height}`,
-          `${item.color}, ${this.getExtensionCoveringLabel(item.covering)}, ${item.quantityPerSet} в компл., общ. кв.м ${item.totalArea}`,
+          `${item.color}, ${this.getExtensionCoveringLabel(item.covering)}, доборов ${item.quantityPerSet}, общ. кв.м ${item.totalArea}`,
           item.comment || '-',
-          item.count,
+          item.quantityPerSet,
           item.price,
           this.getExtensionTotal(item),
         ),
@@ -143,8 +144,8 @@ export class OrderDocumentService {
           rowNumber++,
           'Обшивка',
           `Обшивка ${item.color}`,
-          `${item.width}x${item.height}`,
-          `${item.color}, ${this.getPanelingCoveringLabel(item.covering)}, ${item.quantityPerSet} в компл., общ. кв.м ${item.totalArea}`,
+          this.formatPanelingSize(item),
+          `${item.color}, ${this.getPanelingKindLabel(item.kind)}, ${this.getPanelingCoveringLabel(item.covering)}, общ. кв.м ${item.totalArea}`,
           item.comment || '-',
           item.count,
           item.price,
@@ -283,8 +284,7 @@ export class OrderDocumentService {
         (sum, item) =>
           sum +
           item.color.length +
-          `${item.width}x${item.height}`.length +
-          `${item.quantityPerSet}`.length +
+          this.formatPanelingSize(item).length +
           `${item.totalArea}`.length +
           item.comment.length,
         0,
@@ -440,16 +440,29 @@ export class OrderDocumentService {
     }
   }
 
+  private getPanelingKindLabel(value: PanelingKind): string {
+    switch (value) {
+      case PanelingKind.Smooth:
+        return 'Гладкая';
+      case PanelingKind.Figure:
+        return 'Фигурная';
+      case PanelingKind.Baguette:
+        return 'С багетом';
+      default:
+        return value;
+    }
+  }
+
   private getMoldingTotal(item: MoldingItem): number {
     return item.framePrice * item.frameCount + item.platbandPrice * item.platbandCount;
   }
 
   private getExtensionTotal(item: ExtensionItem): number {
-    return item.totalArea * item.price * item.count;
+    return item.totalArea * item.price;
   }
 
   private getPanelingTotal(item: PanelingItem): number {
-    return item.totalArea * item.price * item.count;
+    return item.totalArea * item.price;
   }
 
   private getCapitalTotal(item: { price: number; count: number }): number {
@@ -582,6 +595,10 @@ export class OrderDocumentService {
     }
 
     return `${item.width}x${item.height}+${item.width2 ?? 0}x${item.height2 ?? item.height}`;
+  }
+
+  private formatPanelingSize(item: PanelingItem): string {
+    return item.sizes.map((size) => `${size.width}x${size.height}`).join('; ');
   }
 
   private formatCountPrice(count: number | null, price: number | null): string {
