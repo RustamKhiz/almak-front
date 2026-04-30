@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, forwardRef, input } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, forwardRef, inject, input } from '@angular/core';
 import { ControlValueAccessor, FormsModule, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -18,6 +18,8 @@ import { MatIconModule } from '@angular/material/icon';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class QuantityFieldComponent implements ControlValueAccessor {
+  private readonly cdr = inject(ChangeDetectorRef);
+
   readonly label = input('Количество');
   readonly min = input(1);
   readonly step = input(1);
@@ -35,6 +37,7 @@ export class QuantityFieldComponent implements ControlValueAccessor {
 
   writeValue(value: number | null): void {
     this.value = this.normalizeValue(value ?? this.min());
+    this.cdr.markForCheck();
   }
 
   registerOnChange(fn: (value: number) => void): void {
