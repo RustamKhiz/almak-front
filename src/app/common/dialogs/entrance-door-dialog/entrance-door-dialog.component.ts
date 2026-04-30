@@ -23,6 +23,7 @@ import { bindLeadingCapitalization } from '../../utils/form-text';
 export interface EntranceDoorDialogData {
   mode: 'create' | 'edit';
   door?: EntranceDoorItem;
+  defaultColor?: string;
 }
 
 export type EntranceDoorDialogResult = Omit<EntranceDoorItem, 'id'>;
@@ -65,7 +66,7 @@ export class EntranceDoorDialogComponent {
     model: [this.data.door?.model ?? '', [Validators.required]],
     width: [this.data.door?.width ?? this.widthOptions[0], [Validators.required, Validators.min(1)]],
     height: [this.data.door?.height ?? this.heightOptions[2], [Validators.required, Validators.min(1)]],
-    color: [this.data.door?.color ?? '', [Validators.required]],
+    color: [this.data.door?.color ?? this.data.defaultColor ?? '', [Validators.required]],
     painting: [this.data.door?.painting ?? ''],
     panelColor: [this.data.door?.panelColor ?? ''],
     hasPeephole: this.data.door?.hasPeephole ?? true,

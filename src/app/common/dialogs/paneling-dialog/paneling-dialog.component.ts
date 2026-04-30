@@ -15,12 +15,15 @@ import {
   PANELING_KIND_LABELS,
   PANELING_KIND_OPTIONS,
 } from '../../constants/molding-catalog';
-import { OrderItemType, PanelingItem, PanelingSize } from '../../../types/order.types';
+import { OrderItemType, PanelingCovering, PanelingItem, PanelingSize } from '../../../types/order.types';
 import { QuantityFieldComponent } from '../../../ui/quantity-field/quantity-field.component';
+import { bindLeadingCapitalization } from '../../utils/form-text';
 
 export interface PanelingDialogData {
   mode: 'create' | 'edit';
   paneling?: PanelingItem;
+  defaultColor?: string;
+  defaultCovering?: PanelingCovering;
 }
 
 export type PanelingDialogResult = Omit<PanelingItem, 'id'>;
@@ -53,10 +56,13 @@ export class PanelingDialogComponent {
   protected readonly kindLabels = PANELING_KIND_LABELS;
 
   protected readonly form = this.fb.group({
-    color: [this.data.paneling?.color ?? '', [Validators.required]],
+    color: [this.data.paneling?.color ?? this.data.defaultColor ?? '', [Validators.required]],
     count: [this.data.paneling?.count ?? 1, [Validators.required, Validators.min(1)]],
     price: [this.data.paneling?.price ?? null, [Validators.required, Validators.min(0)]],
-    covering: [this.data.paneling?.covering ?? DEFAULT_PANELING_COVERING, [Validators.required]],
+    covering: [
+      this.data.paneling?.covering ?? this.data.defaultCovering ?? DEFAULT_PANELING_COVERING,
+      [Validators.required],
+    ],
     kind: [this.data.paneling?.kind ?? DEFAULT_PANELING_KIND, [Validators.required]],
     sizes: this.fb.array(this.getInitialSizes().map((size) => this.createSizeGroup(size))),
     comment: [this.data.paneling?.comment ?? ''],
@@ -65,6 +71,8 @@ export class PanelingDialogComponent {
   protected readonly title = computed(() => (this.data.mode === 'edit' ? 'Редактировать обшивку' : 'Добавить обшивку'));
 
   constructor() {
+    bindLeadingCapitalization(this.form.controls.color, this.destroyRef);
+
     this.syncSizeControls(this.form.controls.count.value ?? 1);
 
     this.form.controls.count.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((count) => {
@@ -119,6 +127,10 @@ export class PanelingDialogComponent {
 
   protected getTotalArea(): number {
     return this.calculateTotalArea(this.form.controls.sizes.getRawValue());
+  }
+
+  protected getDraftTotal(): number {
+    return this.getTotalArea() * Number(this.form.controls.price.value ?? 0);
   }
 
   private getInitialSizes(): PanelingSize[] {

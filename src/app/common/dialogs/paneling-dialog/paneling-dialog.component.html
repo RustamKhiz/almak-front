@@ -6,8 +6,6 @@
       <input matInput formControlName="color" />
     </mat-form-field>
 
-    <app-quantity-field formControlName="count" label="Количество" [min]="1" [step]="1" />
-
     <mat-form-field appearance="outline">
       <mat-label>Покрытие</mat-label>
       <mat-select formControlName="covering">
@@ -25,6 +23,8 @@
         }
       </mat-select>
     </mat-form-field>
+
+    <app-quantity-field formControlName="count" label="Количество" [min]="1" [step]="1" />
 
     <div class="sizes-list" formArrayName="sizes">
       @for (sizeGroup of sizeControls; track $index; let index = $index) {
@@ -59,6 +59,11 @@
       <mat-label>Цена за квадратный метр</mat-label>
       <input matInput type="number" formControlName="price" placeholder="0" />
     </mat-form-field>
+
+    <div class="total-area">
+      <span>Стоимость</span>
+      <strong>{{ getDraftTotal() | number: '1.0-0' }} ₽</strong>
+    </div>
 
     <mat-form-field appearance="outline">
       <mat-label>Комментарий</mat-label>

@@ -9,9 +9,20 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatMenuModule } from '@angular/material/menu';
+import { MatSelectModule } from '@angular/material/select';
 import { Router } from '@angular/router';
 import { Observable, filter, switchMap } from 'rxjs';
 import { ConfirmDialogComponent, ConfirmDialogData } from '../../common/confirm-dialog/confirm-dialog.component';
+import {
+  INTERIOR_DOOR_COVERING_LABELS,
+  INTERIOR_DOOR_COVERING_OPTIONS,
+} from '../../common/constants/interior-door-covering';
+import {
+  CAPITAL_COVERING_OPTIONS,
+  EXTENSION_COVERING_OPTIONS,
+  MOLDING_COVERING_OPTIONS,
+  PANELING_COVERING_OPTIONS,
+} from '../../common/constants/molding-catalog';
 import {
   CapitalDialogComponent,
   CapitalDialogData,
@@ -48,6 +59,7 @@ import {
   EntranceDoorItem,
   ExtensionItem,
   HardwareItem,
+  InteriorDoorCovering,
   InteriorDoorItem,
   MoldingItem,
   OrderCreatePayload,
@@ -83,6 +95,7 @@ interface OrderItemEntityConfig {
     MatIconModule,
     MatInputModule,
     MatMenuModule,
+    MatSelectModule,
     PhoneMaskDirective,
     OrderItemsListComponent,
   ],
@@ -111,6 +124,8 @@ export class OrderCreateComponent implements OnInit {
   protected readonly isLoadingOrder = signal(false);
   protected readonly isSaving = signal(false);
   protected readonly submitError = signal<string | null>(null);
+  protected readonly defaultCoveringOptions = INTERIOR_DOOR_COVERING_OPTIONS;
+  protected readonly defaultCoveringLabels = INTERIOR_DOOR_COVERING_LABELS;
   protected readonly prepayment = signal(0);
   protected readonly discount = signal(0);
   protected readonly orderItemEntity = OrderItemEntity;
@@ -140,25 +155,18 @@ export class OrderCreateComponent implements OnInit {
     name: ['', [Validators.required]],
     phone: ['', [Validators.required, Validators.pattern(/^7\d{10}$/)]],
     date: [this.todayIso(), [Validators.required]],
-    prepayment: [null as number | null, [Validators.required, Validators.min(0.01)]],
-    discount: [null as number | null, [Validators.min(0.01)]],
     needsDelivery: [false],
     deliveryAddress: [''],
     comment: [''],
     status: [OrderStatus.Accepted, [Validators.required]],
     isPaid: [false, [Validators.required]],
+    defaultColor: [''],
+    defaultCovering: [null as InteriorDoorCovering | null],
   });
 
   constructor() {
     bindLeadingCapitalization(this.form.controls.name, this.destroyRef);
-
-    this.form.controls.prepayment.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((value) => {
-      this.prepayment.set(value ?? 0);
-    });
-
-    this.form.controls.discount.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((value) => {
-      this.discount.set(value ?? 0);
-    });
+    bindLeadingCapitalization(this.form.controls.defaultColor, this.destroyRef);
 
     this.form.controls.needsDelivery.valueChanges
       .pipe(takeUntilDestroyed(this.destroyRef))
@@ -311,52 +319,75 @@ export class OrderCreateComponent implements OnInit {
         return {
           collection: this.interiorDoors as ItemCollection<OrderEntityItem>,
           dialogComponent: InteriorDoorDialogComponent,
-          createData: { mode: 'create' } as InteriorDoorDialogData,
+          createData: {
+            mode: 'create',
+            ...this.getDefaultDialogData(INTERIOR_DOOR_COVERING_OPTIONS),
+          } as InteriorDoorDialogData,
           getEditData: (item) => ({ mode: 'edit', door: item as InteriorDoorItem }) as InteriorDoorDialogData,
         };
       case OrderItemEntity.EntranceDoor:
         return {
           collection: this.entranceDoors as ItemCollection<OrderEntityItem>,
           dialogComponent: EntranceDoorDialogComponent,
-          createData: { mode: 'create' } as EntranceDoorDialogData,
+          createData: { mode: 'create', ...this.getDefaultDialogData() } as EntranceDoorDialogData,
           getEditData: (item) => ({ mode: 'edit', door: item as EntranceDoorItem }) as EntranceDoorDialogData,
         };
       case OrderItemEntity.Molding:
         return {
           collection: this.moldings as ItemCollection<OrderEntityItem>,
           dialogComponent: MoldingDialogComponent,
-          createData: { mode: 'create' } as MoldingDialogData,
+          createData: { mode: 'create', ...this.getDefaultDialogData(MOLDING_COVERING_OPTIONS) } as MoldingDialogData,
           getEditData: (item) => ({ mode: 'edit', molding: item as MoldingItem }) as MoldingDialogData,
         };
       case OrderItemEntity.Extension:
         return {
           collection: this.extensions as ItemCollection<OrderEntityItem>,
           dialogComponent: ExtensionDialogComponent,
-          createData: { mode: 'create' } as ExtensionDialogData,
+          createData: {
+            mode: 'create',
+            ...this.getDefaultDialogData(EXTENSION_COVERING_OPTIONS),
+          } as ExtensionDialogData,
           getEditData: (item) => ({ mode: 'edit', extension: item as ExtensionItem }) as ExtensionDialogData,
         };
       case OrderItemEntity.Capital:
         return {
           collection: this.capitals as ItemCollection<OrderEntityItem>,
           dialogComponent: CapitalDialogComponent,
-          createData: { mode: 'create' } as CapitalDialogData,
+          createData: { mode: 'create', ...this.getDefaultDialogData(CAPITAL_COVERING_OPTIONS) } as CapitalDialogData,
           getEditData: (item) => ({ mode: 'edit', capital: item as CapitalItem }) as CapitalDialogData,
         };
       case OrderItemEntity.Hardware:
         return {
           collection: this.hardwares as ItemCollection<OrderEntityItem>,
           dialogComponent: HardwareDialogComponent,
-          createData: { mode: 'create' } as HardwareDialogData,
+          createData: { mode: 'create', ...this.getDefaultDialogData() } as HardwareDialogData,
           getEditData: (item) => ({ mode: 'edit', hardware: item as HardwareItem }) as HardwareDialogData,
         };
       case OrderItemEntity.Paneling:
         return {
           collection: this.panelings as ItemCollection<OrderEntityItem>,
           dialogComponent: PanelingDialogComponent,
-          createData: { mode: 'create' } as PanelingDialogData,
+          createData: { mode: 'create', ...this.getDefaultDialogData(PANELING_COVERING_OPTIONS) } as PanelingDialogData,
           getEditData: (item) => ({ mode: 'edit', paneling: item as PanelingItem }) as PanelingDialogData,
         };
     }
+  }
+
+  private getDefaultDialogData<TCovering extends string>(
+    coveringOptions?: readonly TCovering[],
+  ): {
+    defaultColor?: string;
+    defaultCovering?: TCovering;
+  } {
+    const defaultColor = this.form.controls.defaultColor.value.trim();
+    const defaultCovering = this.form.controls.defaultCovering.value;
+
+    return {
+      ...(defaultColor ? { defaultColor } : {}),
+      ...(defaultCovering && coveringOptions?.includes(defaultCovering as TCovering)
+        ? { defaultCovering: defaultCovering as TCovering }
+        : {}),
+    };
   }
 
   private hasOrderItems(): boolean {
@@ -391,8 +422,8 @@ export class OrderCreateComponent implements OnInit {
       name: value.name.trim(),
       phone: value.phone,
       date: value.date,
-      prepayment: value.prepayment ?? 0,
-      discount: value.discount ?? 0,
+      prepayment: this.prepayment(),
+      discount: this.discount(),
       needsDelivery: value.needsDelivery,
       deliveryAddress: value.deliveryAddress.trim(),
       comment: value.comment.trim(),
@@ -423,8 +454,6 @@ export class OrderCreateComponent implements OnInit {
         name: order.name,
         phone: order.phone,
         date: order.date,
-        prepayment: order.prepayment,
-        discount: order.discount > 0 ? order.discount : null,
         comment: order.comment,
         status: order.status,
         isPaid: order.isPaid,

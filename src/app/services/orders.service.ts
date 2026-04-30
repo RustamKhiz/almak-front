@@ -151,6 +151,8 @@ interface BackendHardware {
   lockPrice?: number | null;
   fixatorCount?: number | null;
   fixatorPrice?: number | null;
+  clickCount?: number | null;
+  clickPrice?: number | null;
   thumbturnCount?: number | null;
   thumbturnPrice?: number | null;
   escutcheonCount?: number | null;
@@ -282,6 +284,8 @@ interface BackendHardwarePayload {
   lockPrice?: number | null;
   fixatorCount?: number | null;
   fixatorPrice?: number | null;
+  clickCount?: number | null;
+  clickPrice?: number | null;
   thumbturnCount?: number | null;
   thumbturnPrice?: number | null;
   escutcheonCount?: number | null;
@@ -319,6 +323,10 @@ interface BackendOrderPaymentStatusPayload {
 interface BackendAddOrderPaymentPayload {
   amount: number;
   comment: string;
+}
+
+interface BackendAddOrderDiscountPayload {
+  amount: number;
 }
 
 export interface OrderRecord {
@@ -384,6 +392,13 @@ export class OrdersService {
   reverseOrderPayment(orderId: number, paymentId: number): Observable<OrderCreatePayload> {
     return this.http
       .post<BackendOrder>(`${this.coreService.apiBaseUrl}/orders/${orderId}/payments/${paymentId}/reverse`, {})
+      .pipe(map((order) => this.mapBackendOrderToCreatePayload(order)));
+  }
+  addOrderDiscount(id: number, amount: number): Observable<OrderCreatePayload> {
+    return this.http
+      .post<BackendOrder>(`${this.coreService.apiBaseUrl}/orders/${id}/discounts`, {
+        amount,
+      } as BackendAddOrderDiscountPayload)
       .pipe(map((order) => this.mapBackendOrderToCreatePayload(order)));
   }
   deleteOrder(id: number): Observable<void> {
@@ -516,6 +531,8 @@ export class OrdersService {
         lockPrice: item.lockPrice,
         fixatorCount: item.fixatorCount,
         fixatorPrice: item.fixatorPrice,
+        clickCount: item.clickCount,
+        clickPrice: item.clickPrice,
         thumbturnCount: item.thumbturnCount,
         thumbturnPrice: item.thumbturnPrice,
         escutcheonCount: item.escutcheonCount,
@@ -654,6 +671,8 @@ export class OrdersService {
       lockPrice: item.lockPrice ?? null,
       fixatorCount: item.fixatorCount ?? null,
       fixatorPrice: item.fixatorPrice ?? null,
+      clickCount: item.clickCount ?? null,
+      clickPrice: item.clickPrice ?? null,
       thumbturnCount: item.thumbturnCount ?? null,
       thumbturnPrice: item.thumbturnPrice ?? null,
       escutcheonCount: item.escutcheonCount ?? null,

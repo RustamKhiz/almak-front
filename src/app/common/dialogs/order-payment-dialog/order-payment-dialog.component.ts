@@ -8,6 +8,8 @@ import { MatInputModule } from '@angular/material/input';
 export interface OrderPaymentDialogData {
   title?: string;
   confirmText?: string;
+  commentLabel?: string;
+  commentPlaceholder?: string;
 }
 
 export interface OrderPaymentDialogResult {
