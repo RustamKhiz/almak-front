@@ -12,10 +12,13 @@ import { OrderCreateComponent } from '../../components/order-create/order-create
 export class OrderComponent {
   private readonly route = inject(ActivatedRoute);
 
-  protected readonly orderId = signal<number>(null);
+  protected readonly orderId = signal<number | null>(null);
+  protected readonly draftId = signal<number | null>(null);
 
   constructor() {
     const id = this.route.snapshot.paramMap.get('id');
     this.orderId.set(id ? Number(id) : null);
+    const draftId = this.route.snapshot.paramMap.get('draftId');
+    this.draftId.set(draftId ? Number(draftId) : null);
   }
 }

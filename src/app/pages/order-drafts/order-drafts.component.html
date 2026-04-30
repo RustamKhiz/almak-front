@@ -1,0 +1,36 @@
+<section class="drafts-page">
+  <header class="drafts-page__header">
+    <div>
+      <h1>Черновики</h1>
+      <p>Локально сохраненные заказы, которые можно продолжить оформлять без авторизации.</p>
+    </div>
+
+    @if (hasDrafts()) {
+      <button mat-stroked-button color="warn" type="button" (click)="onDeleteAllClick()">Удалить все</button>
+    }
+  </header>
+
+  @if (hasDrafts()) {
+    <div class="drafts-page__table">
+      @for (draft of drafts(); track draft.temporaryId) {
+        <a class="drafts-page__row" [routerLink]="['/drafts', draft.temporaryId]">
+          <div>
+            <div class="drafts-page__title">{{ getDraftTitle(draft) }}</div>
+            <div class="drafts-page__meta">
+              {{ draft.payload.phone || 'Телефон не указан' }} · позиций: {{ getDraftItemsCount(draft) }}
+            </div>
+          </div>
+
+          <div class="drafts-page__date">{{ draft.updatedAt | date: 'dd.MM.yyyy HH:mm' }}</div>
+          <div class="drafts-page__total">{{ getDraftTotal(draft) | number: '1.0-0' }} ₽</div>
+
+          <button mat-stroked-button color="warn" type="button" (click)="onDeleteClick($event, draft.temporaryId)">
+            Удалить
+          </button>
+        </a>
+      }
+    </div>
+  } @else {
+    <div class="drafts-page__empty">Черновиков пока нет.</div>
+  }
+</section>

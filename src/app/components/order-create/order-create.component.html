@@ -10,6 +10,12 @@
         <h1>{{ isEditMode() ? 'Редактировать заказ' : 'Создать заказ' }}</h1>
       </div>
       <p>Заполните данные клиента, добавьте товары и проверьте итог перед сохранением.</p>
+      @if (draftMessage()) {
+        <div class="order-create__notice">{{ draftMessage() }}</div>
+      }
+      @if (submitError()) {
+        <div class="order-create__error">{{ submitError() }}</div>
+      }
     </div>
 
     <div class="order-create__header-actions" [formGroup]="form">
@@ -145,6 +151,9 @@
       </div>
     </div>
 
-    <button mat-flat-button color="primary" (click)="onSaveClick()">Сохранить</button>
+    <div class="order-create__save-actions">
+      <button mat-stroked-button type="button" (click)="onSaveDraftClick()">Сохранить черновик</button>
+      <button mat-flat-button color="primary" type="button" (click)="onSaveClick()">Сохранить</button>
+    </div>
   </div>
 </section>

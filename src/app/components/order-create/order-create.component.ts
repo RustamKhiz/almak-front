@@ -1,4 +1,5 @@
 import { DecimalPipe } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, computed, inject, input, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -53,6 +54,7 @@ import {
 } from '../../common/dialogs/paneling-dialog/paneling-dialog.component';
 import { PhoneMaskDirective } from '../../common/directives/phone-mask.directive';
 import { getCustomerDebt, getOrderTotal, getTotalToPay } from '../../common/utils/order-calculations';
+import { OrderDraftsService } from '../../services/order-drafts.service';
 import { OrdersService } from '../../services/orders.service';
 import {
   CapitalItem,
@@ -107,10 +109,12 @@ export class OrderCreateComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly dialog = inject(MatDialog);
   private readonly ordersService = inject(OrdersService);
+  private readonly draftsService = inject(OrderDraftsService);
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
 
   readonly orderId = input<number | null>(null);
+  readonly draftId = input<number | null>(null);
 
   protected readonly interiorDoors = signal<readonly InteriorDoorItem[]>([]);
   protected readonly entranceDoors = signal<readonly EntranceDoorItem[]>([]);
@@ -124,6 +128,8 @@ export class OrderCreateComponent implements OnInit {
   protected readonly isLoadingOrder = signal(false);
   protected readonly isSaving = signal(false);
   protected readonly submitError = signal<string | null>(null);
+  protected readonly draftMessage = signal<string | null>(null);
+  protected readonly activeDraftId = signal<number | null>(null);
   protected readonly defaultCoveringOptions = INTERIOR_DOOR_COVERING_OPTIONS;
   protected readonly defaultCoveringLabels = INTERIOR_DOOR_COVERING_LABELS;
   protected readonly prepayment = signal(0);
@@ -176,6 +182,12 @@ export class OrderCreateComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    const draftId = this.draftId();
+    if (draftId) {
+      this.applyDraft(draftId);
+      return;
+    }
+
     const id = this.orderId();
     if (!id) {
       return;
@@ -293,13 +305,28 @@ export class OrderCreateComponent implements OnInit {
       .subscribe({
         next: (savedOrderId) => {
           this.isSaving.set(false);
+          const activeDraftId = this.activeDraftId();
+          if (activeDraftId) {
+            this.draftsService.deleteDraft(activeDraftId);
+          }
           this.router.navigate(['/order', savedOrderId]);
         },
-        error: () => {
+        error: (error: unknown) => {
           this.isSaving.set(false);
+          if (error instanceof HttpErrorResponse && error.status === 401) {
+            const draft = this.saveDraft();
+            this.submitError.set(`Сессия истекла. Заказ сохранен как черновик #${draft.temporaryId}.`);
+            return;
+          }
           this.submitError.set('Не удалось сохранить заказ.');
         },
       });
+  }
+
+  protected onSaveDraftClick(): void {
+    const draft = this.saveDraft();
+    this.draftMessage.set(`Черновик #${draft.temporaryId} сохранен.`);
+    this.submitError.set(null);
   }
 
   protected onBackToOrderClick(): void {
@@ -469,6 +496,25 @@ export class OrderCreateComponent implements OnInit {
 
     this.syncDeliveryState(order.needsDelivery, { clearAddressWhenDisabled: false });
     this.syncQuantity();
+  }
+
+  private applyDraft(draftId: number): void {
+    const draft = this.draftsService.getDraft(draftId);
+    if (!draft) {
+      this.submitError.set('Черновик не найден.');
+      return;
+    }
+
+    this.activeDraftId.set(draft.temporaryId);
+    this.applyOrder(draft.payload);
+    this.isEditMode.set(false);
+    this.draftMessage.set(`Открыт черновик #${draft.temporaryId}.`);
+  }
+
+  private saveDraft() {
+    const draft = this.draftsService.saveDraft(this.buildOrderPayload(), this.activeDraftId());
+    this.activeDraftId.set(draft.temporaryId);
+    return draft;
   }
 
   private syncDeliveryState(needsDelivery: boolean, options?: { clearAddressWhenDisabled?: boolean }): void {
