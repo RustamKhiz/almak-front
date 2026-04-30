@@ -65,6 +65,21 @@
   font-size: 14px;
 }
 
+.order-create__notice,
+.order-create__error {
+  margin-top: 8px;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.order-create__notice {
+  color: #047857;
+}
+
+.order-create__error {
+  color: #b91c1c;
+}
+
 .order-create__form {
   display: grid;
   gap: 12px;
@@ -227,6 +242,14 @@
   color: #111827;
 }
 
+.order-create__save-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
 @media (max-width: 720px) {
   .order-create {
     max-height: calc(100vh - 88px);
@@ -236,6 +259,11 @@
   .order-create__actions {
     flex-direction: column;
     align-items: stretch;
+  }
+
+  .order-create__save-actions,
+  .order-create__save-actions button {
+    width: 100%;
   }
 
   .order-create__header-actions {

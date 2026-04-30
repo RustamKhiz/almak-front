@@ -1,6 +1,6 @@
-import { inject, Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { inject, Injectable } from '@angular/core';
+import { Observable, throwError } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
 import { CoreService } from './core.service';
 
@@ -9,8 +9,9 @@ interface LoginRequest {
   password: string;
 }
 
-interface LoginResponse {
+interface TokenPairResponse {
   token: string;
+  refreshToken: string;
 }
 
 @Injectable({
@@ -21,31 +22,54 @@ export class AuthService {
   private readonly coreService = inject(CoreService);
 
   private readonly tokenKey = 'auth_token';
+  private readonly refreshTokenKey = 'auth_refresh_token';
 
   login(payload: LoginRequest): Observable<string> {
-    return this.http.post<LoginResponse>(`${this.coreService.apiBaseUrl}/login`, payload).pipe(
+    return this.http.post<TokenPairResponse>(`${this.coreService.apiBaseUrl}/login`, payload).pipe(
+      tap((response) => this.setTokens(response.token, response.refreshToken)),
       map((response) => response.token),
-      tap((token) => this.setToken(token)),
+    );
+  }
+
+  refreshToken(): Observable<string> {
+    const refreshToken = this.getRefreshToken();
+    if (!refreshToken) {
+      return throwError(() => new Error('Missing refresh token'));
+    }
+
+    return this.http.post<TokenPairResponse>(`${this.coreService.apiBaseUrl}/refresh`, { refreshToken }).pipe(
+      tap((response) => this.setTokens(response.token, response.refreshToken)),
+      map((response) => response.token),
     );
   }
 
   logout(): void {
-    this.clearToken();
+    this.clearTokens();
   }
 
   hasToken(): boolean {
-    return !!this.getToken();
+    return !!this.getToken() || !!this.getRefreshToken();
   }
 
   getToken(): string | null {
     return localStorage.getItem(this.tokenKey);
   }
 
-  clearToken(): void {
-    localStorage.removeItem(this.tokenKey);
+  getRefreshToken(): string | null {
+    return localStorage.getItem(this.refreshTokenKey);
   }
 
-  private setToken(token: string): void {
+  clearToken(): void {
+    this.clearTokens();
+  }
+
+  private setTokens(token: string, refreshToken: string): void {
     localStorage.setItem(this.tokenKey, token);
+    localStorage.setItem(this.refreshTokenKey, refreshToken);
+  }
+
+  private clearTokens(): void {
+    localStorage.removeItem(this.tokenKey);
+    localStorage.removeItem(this.refreshTokenKey);
   }
 }
