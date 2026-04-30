@@ -11,6 +11,7 @@ import { bindLeadingCapitalization } from '../../utils/form-text';
 export interface HardwareDialogData {
   mode: 'create' | 'edit';
   hardware?: HardwareItem;
+  defaultColor?: string;
 }
 
 export type HardwareDialogResult = Omit<HardwareItem, 'id'>;
@@ -31,13 +32,15 @@ export class HardwareDialogComponent {
   protected readonly form = this.fb.nonNullable.group(
     {
       handleModel: this.data.hardware?.handleModel ?? '',
-      handleColor: this.data.hardware?.handleColor ?? '',
+      handleColor: this.data.hardware?.handleColor ?? this.data.defaultColor ?? '',
       handleCount: this.data.hardware?.handleCount ?? null,
       handlePrice: this.data.hardware?.handlePrice ?? null,
       lockCount: this.data.hardware?.lockCount ?? null,
       lockPrice: this.data.hardware?.lockPrice ?? null,
       fixatorCount: this.data.hardware?.fixatorCount ?? null,
       fixatorPrice: this.data.hardware?.fixatorPrice ?? null,
+      clickCount: this.data.hardware?.clickCount ?? null,
+      clickPrice: this.data.hardware?.clickPrice ?? null,
       thumbturnCount: this.data.hardware?.thumbturnCount ?? null,
       thumbturnPrice: this.data.hardware?.thumbturnPrice ?? null,
       escutcheonCount: this.data.hardware?.escutcheonCount ?? null,
@@ -61,6 +64,7 @@ export class HardwareDialogComponent {
 
   constructor() {
     bindLeadingCapitalization(this.form.controls.handleModel, this.destroyRef);
+    bindLeadingCapitalization(this.form.controls.handleColor, this.destroyRef);
 
     this.form.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
       if (this.form.hasError('emptyHardware')) {
@@ -90,6 +94,8 @@ export class HardwareDialogComponent {
       lockPrice: value.lockPrice,
       fixatorCount: value.fixatorCount,
       fixatorPrice: value.fixatorPrice,
+      clickCount: value.clickCount,
+      clickPrice: value.clickPrice,
       thumbturnCount: value.thumbturnCount,
       thumbturnPrice: value.thumbturnPrice,
       escutcheonCount: value.escutcheonCount,

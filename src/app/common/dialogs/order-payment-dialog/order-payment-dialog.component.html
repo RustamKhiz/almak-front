@@ -10,10 +10,17 @@
       }
     </mat-form-field>
 
-    <mat-form-field appearance="outline">
-      <mat-label>Комментарий</mat-label>
-      <textarea matInput rows="3" formControlName="comment" placeholder="Например: доплата по заказу"></textarea>
-    </mat-form-field>
+    @if (data.commentLabel !== '') {
+      <mat-form-field appearance="outline">
+        <mat-label>{{ data.commentLabel || 'Комментарий' }}</mat-label>
+        <textarea
+          matInput
+          rows="3"
+          formControlName="comment"
+          [placeholder]="data.commentPlaceholder || 'Например: доплата по заказу'"
+        ></textarea>
+      </mat-form-field>
+    }
   </form>
 </mat-dialog-content>
 

@@ -10,13 +10,15 @@ import {
   CAPITAL_COVERING_OPTIONS,
   DEFAULT_CAPITAL_COVERING,
 } from '../../constants/molding-catalog';
-import { CapitalItem, OrderItemType } from '../../../types/order.types';
+import { CapitalCovering, CapitalItem, OrderItemType } from '../../../types/order.types';
 import { QuantityFieldComponent } from '../../../ui/quantity-field/quantity-field.component';
 import { bindLeadingCapitalization } from '../../utils/form-text';
 
 export interface CapitalDialogData {
   mode: 'create' | 'edit';
   capital?: CapitalItem;
+  defaultColor?: string;
+  defaultCovering?: CapitalCovering;
 }
 
 export type CapitalDialogResult = Omit<CapitalItem, 'id'>;
@@ -47,8 +49,11 @@ export class CapitalDialogComponent {
 
   protected readonly form = this.fb.group({
     name: [this.data.capital?.name ?? '', [Validators.required]],
-    color: [this.data.capital?.color ?? '', [Validators.required]],
-    covering: [this.data.capital?.covering ?? DEFAULT_CAPITAL_COVERING, [Validators.required]],
+    color: [this.data.capital?.color ?? this.data.defaultColor ?? '', [Validators.required]],
+    covering: [
+      this.data.capital?.covering ?? this.data.defaultCovering ?? DEFAULT_CAPITAL_COVERING,
+      [Validators.required],
+    ],
     width: [this.data.capital?.width ?? null, [Validators.required, Validators.min(1)]],
     height: [this.data.capital?.height ?? null, [Validators.required, Validators.min(1)]],
     price: [this.data.capital?.price ?? null, [Validators.required, Validators.min(0)]],
@@ -58,6 +63,7 @@ export class CapitalDialogComponent {
 
   constructor() {
     bindLeadingCapitalization(this.form.controls.name, this.destroyRef);
+    bindLeadingCapitalization(this.form.controls.color, this.destroyRef);
   }
 
   protected readonly title = computed(() =>

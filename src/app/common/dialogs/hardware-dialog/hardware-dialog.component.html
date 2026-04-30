@@ -55,6 +55,20 @@
       </div>
 
       <div class="dialog-section">
+        <div class="dialog-section__title">Щелчок</div>
+        <div class="dialog-row">
+          <mat-form-field appearance="outline">
+            <mat-label>Кол-во</mat-label>
+            <input matInput type="number" formControlName="clickCount" />
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Цена</mat-label>
+            <input matInput type="number" formControlName="clickPrice" placeholder="0" />
+          </mat-form-field>
+        </div>
+      </div>
+
+      <div class="dialog-section">
         <div class="dialog-section__title">Крутилка</div>
         <div class="dialog-row">
           <mat-form-field appearance="outline">

@@ -268,6 +268,39 @@ export class OrderViewComponent {
       });
   }
 
+  protected onAddDiscountClick(): void {
+    const current = this.state();
+    if (!current) {
+      return;
+    }
+
+    this.dialog
+      .open(OrderPaymentDialogComponent, {
+        width: '460px',
+        maxWidth: 'calc(100vw - 24px)',
+        data: {
+          title: 'Добавить скидку',
+          confirmText: 'Добавить скидку',
+          commentLabel: '',
+        },
+      })
+      .afterClosed()
+      .pipe(
+        filter((result): result is OrderPaymentDialogResult => !!result),
+        switchMap((result) => this.ordersService.addOrderDiscount(current.id, result.amount)),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe({
+        next: (data) => {
+          this.errorMessage.set(null);
+          this.state.set({ id: current.id, data });
+        },
+        error: () => {
+          this.errorMessage.set('Не удалось добавить скидку.');
+        },
+      });
+  }
+
   protected onReversePaymentClick(payment: OrderPayment): void {
     const current = this.state();
     if (!current || !this.canReversePayment(payment)) {
@@ -598,6 +631,7 @@ export class OrderViewComponent {
           this.section('Механизмы', [
             ['Замок', this.formatCountPrice(item.lockCount, item.lockPrice)],
             ['Фиксатор', this.formatCountPrice(item.fixatorCount, item.fixatorPrice)],
+            ['Щелчок', this.formatCountPrice(item.clickCount, item.clickPrice)],
             ['Крутилка', this.formatCountPrice(item.thumbturnCount, item.thumbturnPrice)],
             ['Накладка', this.formatCountPrice(item.escutcheonCount, item.escutcheonPrice)],
             ['Цилиндр', this.formatCountPrice(item.cylinderCount, item.cylinderPrice)],
@@ -704,6 +738,9 @@ export class OrderViewComponent {
     if (item.fixatorCount !== null) {
       parts.push(`фиксаторов ${item.fixatorCount}`);
     }
+    if (item.clickCount !== null) {
+      parts.push(`щелчков ${item.clickCount}`);
+    }
     if (item.hingeCount !== null) {
       parts.push(`петель ${item.hingeCount}`);
     }
@@ -716,6 +753,7 @@ export class OrderViewComponent {
       item.handleCount,
       item.lockCount,
       item.fixatorCount,
+      item.clickCount,
       item.thumbturnCount,
       item.escutcheonCount,
       item.cylinderCount,

@@ -43,6 +43,7 @@ export function getHardwareTotal(item: HardwareItem): number {
     getOptionalTotal(item.handleCount, item.handlePrice) +
     getOptionalTotal(item.lockCount, item.lockPrice) +
     getOptionalTotal(item.fixatorCount, item.fixatorPrice) +
+    getOptionalTotal(item.clickCount, item.clickPrice) +
     getOptionalTotal(item.thumbturnCount, item.thumbturnPrice) +
     getOptionalTotal(item.escutcheonCount, item.escutcheonPrice) +
     getOptionalTotal(item.cylinderCount, item.cylinderPrice) +

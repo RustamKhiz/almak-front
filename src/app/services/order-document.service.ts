@@ -501,6 +501,9 @@ export class OrderDocumentService {
     if (item.fixatorCount !== null || item.fixatorPrice !== null) {
       parts.push('Фиксатор');
     }
+    if (item.clickCount !== null || item.clickPrice !== null) {
+      parts.push('Щелчок');
+    }
     if (item.thumbturnCount !== null) {
       parts.push('Крутилка');
     }
@@ -536,6 +539,9 @@ export class OrderDocumentService {
     if (item.fixatorCount !== null || item.fixatorPrice !== null) {
       details.push(`фиксатор ${this.formatCountPrice(item.fixatorCount, item.fixatorPrice)}`);
     }
+    if (item.clickCount !== null || item.clickPrice !== null) {
+      details.push(`щелчок ${this.formatCountPrice(item.clickCount, item.clickPrice)}`);
+    }
     if (item.thumbturnCount !== null || item.thumbturnPrice !== null) {
       details.push(`крутилка ${this.formatCountPrice(item.thumbturnCount, item.thumbturnPrice)}`);
     }
@@ -562,6 +568,7 @@ export class OrderDocumentService {
       Number(item.handleCount ?? 0) +
       Number(item.lockCount ?? 0) +
       Number(item.fixatorCount ?? 0) +
+      Number(item.clickCount ?? 0) +
       Number(item.thumbturnCount ?? 0) +
       Number(item.escutcheonCount ?? 0) +
       Number(item.cylinderCount ?? 0) +
@@ -576,6 +583,7 @@ export class OrderDocumentService {
       this.getOptionalTotal(item.handleCount, item.handlePrice) +
       this.getOptionalTotal(item.lockCount, item.lockPrice) +
       this.getOptionalTotal(item.fixatorCount, item.fixatorPrice) +
+      this.getOptionalTotal(item.clickCount, item.clickPrice) +
       this.getOptionalTotal(item.thumbturnCount, item.thumbturnPrice) +
       this.getOptionalTotal(item.escutcheonCount, item.escutcheonPrice) +
       this.getOptionalTotal(item.cylinderCount, item.cylinderPrice) +

@@ -91,11 +91,9 @@
         </article>
 
         <article class="order-view__summary-tile">
-          <div class="order-view__summary-label">Итого</div>
-          <div class="order-view__summary-title">{{ getTotalToPay($state.data) | number: '1.0-0' }} ₽</div>
-          <div class="order-view__summary-text">
-            Долг клиента: {{ getCustomerDebt($state.data) | number: '1.0-0' }} ₽
-          </div>
+          <div class="order-view__summary-label">Общая стоимость</div>
+          <div class="order-view__summary-title">{{ getOrderTotal($state.data) | number: '1.0-0' }} ₽</div>
+          <div class="order-view__summary-text">Скидка: {{ $state.data.discount | number: '1.0-0' }} ₽</div>
         </article>
       </div>
 
@@ -128,6 +126,7 @@
           <p>Доплаты по заказу и история внесения средств клиента.</p>
         </div>
         <div class="order-view__actions">
+          <button mat-stroked-button type="button" (click)="onAddDiscountClick()">Добавить скидку</button>
           <button mat-stroked-button type="button" (click)="onPaymentHistoryClick()">Посмотреть историю</button>
           <button mat-flat-button color="primary" type="button" (click)="onAddPaymentClick()">Внести оплату</button>
         </div>
