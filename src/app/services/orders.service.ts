@@ -325,7 +325,7 @@ interface BackendAddOrderPaymentPayload {
   comment: string;
 }
 
-interface BackendAddOrderDiscountPayload {
+interface BackendUpdateOrderDiscountPayload {
   amount: number;
 }
 
@@ -394,11 +394,11 @@ export class OrdersService {
       .post<BackendOrder>(`${this.coreService.apiBaseUrl}/orders/${orderId}/payments/${paymentId}/reverse`, {})
       .pipe(map((order) => this.mapBackendOrderToCreatePayload(order)));
   }
-  addOrderDiscount(id: number, amount: number): Observable<OrderCreatePayload> {
+  updateOrderDiscount(id: number, amount: number): Observable<OrderCreatePayload> {
     return this.http
-      .post<BackendOrder>(`${this.coreService.apiBaseUrl}/orders/${id}/discounts`, {
+      .patch<BackendOrder>(`${this.coreService.apiBaseUrl}/orders/${id}/discounts`, {
         amount,
-      } as BackendAddOrderDiscountPayload)
+      } as BackendUpdateOrderDiscountPayload)
       .pipe(map((order) => this.mapBackendOrderToCreatePayload(order)));
   }
   deleteOrder(id: number): Observable<void> {

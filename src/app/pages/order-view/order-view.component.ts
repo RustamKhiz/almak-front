@@ -268,7 +268,7 @@ export class OrderViewComponent {
       });
   }
 
-  protected onAddDiscountClick(): void {
+  protected onChangeDiscountClick(): void {
     const current = this.state();
     if (!current) {
       return;
@@ -279,15 +279,16 @@ export class OrderViewComponent {
         width: '460px',
         maxWidth: 'calc(100vw - 24px)',
         data: {
-          title: 'Добавить скидку',
-          confirmText: 'Добавить скидку',
+          title: 'Изменить скидку',
+          confirmText: 'Сохранить скидку',
           commentLabel: '',
+          initialAmount: current.data.discount,
         },
       })
       .afterClosed()
       .pipe(
         filter((result): result is OrderPaymentDialogResult => !!result),
-        switchMap((result) => this.ordersService.addOrderDiscount(current.id, result.amount)),
+        switchMap((result) => this.ordersService.updateOrderDiscount(current.id, result.amount)),
         takeUntilDestroyed(this.destroyRef),
       )
       .subscribe({
@@ -296,7 +297,7 @@ export class OrderViewComponent {
           this.state.set({ id: current.id, data });
         },
         error: () => {
-          this.errorMessage.set('Не удалось добавить скидку.');
+          this.errorMessage.set('Не удалось изменить скидку.');
         },
       });
   }
