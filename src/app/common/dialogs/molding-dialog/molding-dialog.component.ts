@@ -64,9 +64,9 @@ export class MoldingDialogComponent {
     platbandType: [this.data.molding?.platbandType ?? DEFAULT_MOLDING_PLATBAND_TYPE, [Validators.required]],
     platbandFigure: this.data.molding?.platbandFigure ?? '',
     platbandLength: [this.data.molding?.platbandLength ?? null, [Validators.min(0)]],
-    platbandPrice: [this.data.molding?.platbandPrice ?? null, [Validators.required, Validators.min(0)]],
+    platbandPrice: [this.data.molding?.platbandPrice ?? null, [Validators.min(0)]],
     platbandCount: [this.data.molding?.platbandCount ?? 2.5, [Validators.required, Validators.min(0.5)]],
-    rebateBarCount: [this.data.molding?.rebateBarCount ?? 1, [Validators.required, Validators.min(0)]],
+    rebateBarCount: [this.data.molding?.rebateBarCount ?? 0, [Validators.required, Validators.min(0)]],
     color: [this.data.molding?.color ?? this.data.defaultColor ?? '', [Validators.required]],
     covering: [
       this.data.molding?.covering ?? this.data.defaultCovering ?? DEFAULT_MOLDING_COVERING,

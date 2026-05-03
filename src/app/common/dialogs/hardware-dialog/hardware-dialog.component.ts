@@ -11,7 +11,6 @@ import { bindLeadingCapitalization } from '../../utils/form-text';
 export interface HardwareDialogData {
   mode: 'create' | 'edit';
   hardware?: HardwareItem;
-  defaultColor?: string;
 }
 
 export type HardwareDialogResult = Omit<HardwareItem, 'id'>;
@@ -32,7 +31,7 @@ export class HardwareDialogComponent {
   protected readonly form = this.fb.nonNullable.group(
     {
       handleModel: this.data.hardware?.handleModel ?? '',
-      handleColor: this.data.hardware?.handleColor ?? this.data.defaultColor ?? '',
+      handleColor: this.data.hardware?.handleColor ?? '',
       handleCount: this.data.hardware?.handleCount ?? null,
       handlePrice: this.data.hardware?.handlePrice ?? null,
       lockCount: this.data.hardware?.lockCount ?? null,

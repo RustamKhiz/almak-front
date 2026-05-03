@@ -387,7 +387,7 @@ export class OrderCreateComponent implements OnInit {
         return {
           collection: this.hardwares as ItemCollection<OrderEntityItem>,
           dialogComponent: HardwareDialogComponent,
-          createData: { mode: 'create', ...this.getDefaultDialogData() } as HardwareDialogData,
+          createData: { mode: 'create' } as HardwareDialogData,
           getEditData: (item) => ({ mode: 'edit', hardware: item as HardwareItem }) as HardwareDialogData,
         };
       case OrderItemEntity.Paneling:
