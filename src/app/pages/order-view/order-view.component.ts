@@ -42,6 +42,8 @@ import {
   OrderPaymentDialogResult,
 } from '../../common/dialogs/order-payment-dialog/order-payment-dialog.component';
 import { OrderPaymentHistoryDialogComponent } from '../../common/dialogs/order-payment-history-dialog/order-payment-history-dialog.component';
+import { PrintConstructorDialogComponent } from '../../common/dialogs/print-constructor-dialog/print-constructor-dialog.component';
+import { PrintConstructorDialogResult } from '../../common/dialogs/print-constructor-dialog/print-constructor.types';
 import { FileDownloadService } from '../../services/file-download.service';
 import { OrderDocumentService } from '../../services/order-document.service';
 import { OrderPrintService } from '../../services/order-print.service';
@@ -180,6 +182,41 @@ export class OrderViewComponent {
     }
   }
 
+  protected onPrintConstructorClick(): void {
+    const current = this.state();
+    if (!current) {
+      return;
+    }
+
+    this.dialog
+      .open(PrintConstructorDialogComponent, {
+        width: '900px',
+        maxWidth: 'calc(100vw - 24px)',
+        data: {
+          orderId: current.id,
+          order: current.data,
+        },
+      })
+      .afterClosed()
+      .pipe(
+        filter((result): result is PrintConstructorDialogResult => !!result),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe((result) => {
+        if (result.action === 'print') {
+          this.orderPrintService.printHtml(
+            this.orderDocumentService.buildCustomOrderHtml(current.id, current.data, result.options),
+          );
+          return;
+        }
+
+        this.fileDownloadService.download(
+          this.orderDocumentService.createCustomDocBlob(current.id, current.data, result.options),
+          `order-${current.id}-custom.doc`,
+        );
+      });
+  }
+
   protected onStatusChange(status: OrderStatus): void {
     const current = this.state();
     if (!current || current.data.status === status) {
@@ -200,30 +237,6 @@ export class OrderViewComponent {
         },
         error: () => {
           this.errorMessage.set('Не удалось обновить статус заказа.');
-        },
-      });
-  }
-
-  protected onPaymentStatusChange(isPaid: boolean): void {
-    const current = this.state();
-    if (!current || current.data.isPaid === isPaid) {
-      return;
-    }
-
-    this.ordersService
-      .updateOrderPaymentStatus(current.id, isPaid)
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: (nextPaymentStatus) => {
-          const state = this.state();
-          if (!state) {
-            return;
-          }
-          this.errorMessage.set(null);
-          this.state.set({ ...state, data: { ...state.data, isPaid: nextPaymentStatus } });
-        },
-        error: () => {
-          this.errorMessage.set('Не удалось обновить статус оплаты.');
         },
       });
   }
@@ -279,10 +292,10 @@ export class OrderViewComponent {
         width: '460px',
         maxWidth: 'calc(100vw - 24px)',
         data: {
-          title: 'Изменить скидку',
+          title: 'Скидка',
           confirmText: 'Сохранить скидку',
           commentLabel: '',
-          initialAmount: current.data.discount,
+          initialAmount: current.data.discount === 0 ? null : current.data.discount,
         },
       })
       .afterClosed()
@@ -544,6 +557,7 @@ export class OrderViewComponent {
             ['Цвет', item.color],
             ['Покрытие', this.moldingCoveringLabels[item.covering]],
             ['Притворная планка', `${item.rebateBarCount} шт.`],
+            ['Цена притворной планки', this.formatMoney(item.rebateBarPrice)],
             ['Комментарий', item.comment || 'Нет'],
           ]),
         ],

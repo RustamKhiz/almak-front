@@ -14,7 +14,11 @@ export function getOptionalTotal(count: number | null, price: number | null): nu
 }
 
 export function getMoldingTotal(item: MoldingItem): number {
-  return item.framePrice * item.frameCount + item.platbandPrice * item.platbandCount;
+  return (
+    item.framePrice * item.frameCount +
+    item.platbandPrice * item.platbandCount +
+    item.rebateBarPrice * item.rebateBarCount
+  );
 }
 
 export function getExtensionTotal(item: ExtensionItem): number {

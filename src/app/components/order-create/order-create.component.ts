@@ -356,7 +356,7 @@ export class OrderCreateComponent implements OnInit {
         return {
           collection: this.entranceDoors as ItemCollection<OrderEntityItem>,
           dialogComponent: EntranceDoorDialogComponent,
-          createData: { mode: 'create', ...this.getDefaultDialogData() } as EntranceDoorDialogData,
+          createData: { mode: 'create' } as EntranceDoorDialogData,
           getEditData: (item) => ({ mode: 'edit', door: item as EntranceDoorItem }) as EntranceDoorDialogData,
         };
       case OrderItemEntity.Molding:
