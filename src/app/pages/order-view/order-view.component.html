@@ -21,7 +21,6 @@
             type="button"
             class="status-chip status-chip-button"
             [ngClass]="$state.data.isPaid ? 'payment-paid' : 'payment-unpaid'"
-            [matMenuTriggerFor]="paymentMenu"
           >
             {{ getPaymentLabel($state.data.isPaid) }}
           </button>
@@ -30,11 +29,6 @@
             @for (status of statusOptions; track status) {
               <button mat-menu-item type="button" (click)="onStatusChange(status)">{{ getStatusLabel(status) }}</button>
             }
-          </mat-menu>
-
-          <mat-menu #paymentMenu="matMenu">
-            <button mat-menu-item type="button" (click)="onPaymentStatusChange(true)">Оплачен</button>
-            <button mat-menu-item type="button" (click)="onPaymentStatusChange(false)">Не оплачен</button>
           </mat-menu>
         }
       </div>
@@ -49,6 +43,7 @@
         <button mat-flat-button color="warn" type="button" (click)="onDeleteClick()">Удалить</button>
         <button mat-stroked-button type="button" (click)="onPrintClick()">Печать</button>
         <button mat-stroked-button type="button" (click)="onDownloadClick()">Скачать .doc</button>
+        <button mat-stroked-button type="button" (click)="onPrintConstructorClick()">Конструктор печати</button>
         <button mat-flat-button color="primary" type="button" [routerLink]="['/order', $state.id, 'edit']">
           Редактировать
         </button>
@@ -126,7 +121,7 @@
           <p>Доплаты по заказу и история внесения средств клиента.</p>
         </div>
         <div class="order-view__actions">
-          <button mat-stroked-button type="button" (click)="onChangeDiscountClick()">Изменить скидку</button>
+          <button mat-stroked-button type="button" (click)="onChangeDiscountClick()">Скидка</button>
           <button mat-stroked-button type="button" (click)="onPaymentHistoryClick()">Посмотреть историю</button>
           <button mat-flat-button color="primary" type="button" (click)="onAddPaymentClick()">Внести оплату</button>
         </div>

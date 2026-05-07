@@ -15,11 +15,29 @@ import {
   PanelingItem,
   PanelingKind,
 } from '../types/order.types';
+import { PrintConstructorOptions } from '../common/dialogs/print-constructor-dialog/print-constructor.types';
+
+interface CustomDocumentRow {
+  key: string;
+  type: string;
+  title: string;
+  size: string;
+  color: string;
+  comment: string;
+  count: number;
+  price: number;
+  amount: number;
+}
 
 @Injectable({ providedIn: 'root' })
 export class OrderDocumentService {
   createDocBlob(orderId: number, order: OrderCreatePayload): Blob {
     const html = this.buildOrderHtml(orderId, order);
+    return new Blob(['\ufeff', html], { type: 'application/msword' });
+  }
+
+  createCustomDocBlob(orderId: number, order: OrderCreatePayload, options: PrintConstructorOptions): Blob {
+    const html = this.buildCustomOrderHtml(orderId, order, options);
     return new Blob(['\ufeff', html], { type: 'application/msword' });
   }
 
@@ -87,7 +105,7 @@ export class OrderDocumentService {
           this.getMoldingSizeLabel(item),
           `${item.color}, ${this.getMoldingCoveringLabel(item.covering)}`,
           item.comment || '-',
-          item.frameCount + item.platbandCount,
+          item.frameCount + item.platbandCount + item.rebateBarCount,
           this.getMoldingTotal(item),
           this.getMoldingTotal(item),
         ),
@@ -98,9 +116,9 @@ export class OrderDocumentService {
         this.buildRow(
           rowNumber++,
           'Доборы',
-          `Доборы ${item.color}`,
+          '-',
           `${item.width}x${item.height}`,
-          `${item.color}, ${this.getExtensionCoveringLabel(item.covering)}, доборов ${item.quantityPerSet}, общ. кв.м ${item.totalArea}`,
+          `${item.color}, ${this.getExtensionCoveringLabel(item.covering)}`,
           item.comment || '-',
           item.quantityPerSet,
           item.price,
@@ -186,8 +204,9 @@ export class OrderDocumentService {
             .totals { margin-top: 8px; width: 260px; margin-left: auto; border: 1px solid #111; padding: 6px 8px; }
             .totals-row { display: flex; justify-content: space-between; gap: 12px; margin: 2px 0; }
             .comment { margin-top: 8px; min-height: 34px; border: 1px solid #111; padding: 6px 8px; }
-            .footer { margin-top: 10px; display: grid; grid-template-columns: 1fr 1fr 110px; gap: 12px; align-items: end; }
+            .footer { margin-top: 10px; display: grid; grid-template-columns: 1fr 110px 1fr; gap: 12px; align-items: end; }
             .sign-block { min-height: 42px; }
+            .sign-block--manager { text-align: right; }
             .sign-line { border-bottom: 1px solid #111; height: 22px; margin-bottom: 4px; }
             .stamp { border: 1px dashed #111; height: 54px; display: flex; align-items: center; justify-content: center; font-weight: bold; }
             .muted { color: #444; font-size: 10px; margin-top: 6px; }
@@ -210,7 +229,7 @@ export class OrderDocumentService {
             .ultra-compact .meta-grid { grid-template-columns: 1fr 1fr 1fr; }
             .ultra-compact .totals { width: 220px; }
             .ultra-compact .comment { min-height: 24px; }
-            .ultra-compact .footer { grid-template-columns: 1fr 1fr 90px; }
+            .ultra-compact .footer { grid-template-columns: 1fr 90px 1fr; }
             .ultra-compact .stamp { height: 40px; }
           </style>
         </head>
@@ -229,10 +248,87 @@ export class OrderDocumentService {
               <thead><tr><th style="width: 28px;">№</th><th style="width: 110px;">Товар</th><th>Модель / позиция</th><th style="width: 68px;">Размер</th><th style="width: 138px;">Цвет / покрытие</th><th style="width: 120px;">Комментарий</th><th style="width: 48px;">Кол-во</th><th style="width: 64px;">Цена</th><th style="width: 68px;">Сумма</th></tr></thead>
               <tbody>${rows}</tbody>
             </table>
-            <div class="totals"><div class="totals-row"><span>Общая сумма:</span><strong>${totalAmount}</strong></div><div class="totals-row"><span>Скидка:</span><strong>${order.discount}</strong></div><div class="totals-row"><span>Итого к оплате:</span><strong>${totalToPay}</strong></div><div class="totals-row"><span>Внесено клиентом:</span><strong>${paidAmount}</strong></div><div class="totals-row"><span>Долг клиента:</span><strong>${customerDebt}</strong></div></div>
+            <div class="totals"><div class="totals-row"><span>Общая сумма:</span><strong>${this.formatMoney(totalAmount)}</strong></div><div class="totals-row"><span>Скидка:</span><strong>${this.formatMoney(order.discount)}</strong></div><div class="totals-row"><span>Итого к оплате:</span><strong>${this.formatMoney(totalToPay)}</strong></div><div class="totals-row"><span>Внесено клиентом:</span><strong>${this.formatMoney(paidAmount)}</strong></div><div class="totals-row"><span>Долг клиента:</span><strong>${this.formatMoney(customerDebt)}</strong></div></div>
             <div class="comment"><strong>Комментарий:</strong> ${this.escapeHtml(order.comment)}</div>
-            <div class="footer"><div class="sign-block"><div class="sign-line"></div><div>Подпись клиента</div></div><div class="sign-block"><div class="sign-line"></div><div>Подпись менеджера</div></div><div class="stamp">М.П.</div></div>
+            <div class="footer"><div class="sign-block"><div class="sign-line"></div><div>Подпись клиента</div></div><div class="stamp">М.П.</div><div class="sign-block sign-block--manager"><div class="sign-line"></div><div>Подпись менеджера</div></div></div>
             <div class="muted">Документ сформирован автоматически в информационной системе.</div>
+          </div>
+        </body>
+      </html>
+    `;
+  }
+
+  buildCustomOrderHtml(orderId: number, order: OrderCreatePayload, options: PrintConstructorOptions): string {
+    const normalizedOptions = this.normalizePrintOptions(options);
+    const selectedKeys = new Set(normalizedOptions.selectedItemKeys);
+    const rows = this.buildCustomRows(order).filter((row) => selectedKeys.has(row.key));
+    const issueDate = this.escapeHtml(order.date);
+    const selectedTotal = rows.reduce((sum, row) => sum + row.amount, 0);
+    const totalToPay = Math.max(selectedTotal - (normalizedOptions.showDiscount ? order.discount : 0), 0);
+    const paidAmount =
+      order.payments.length > 0 ? order.payments.reduce((sum, payment) => sum + payment.amount, 0) : order.prepayment;
+    const customerDebt = Math.max(totalToPay - paidAmount, 0);
+    const layoutMode = rows.length >= 12 ? 'compact' : '';
+    const hasPriceColumns = normalizedOptions.showPrices;
+    const hasCommentColumn = normalizedOptions.showComments;
+
+    return `
+      <html>
+        <head>
+          <meta charset="utf-8" />
+          <title>Заказ-наряд №${orderId}</title>
+          <style>
+            @page { size: A4 landscape; margin: 8mm; }
+            * { box-sizing: border-box; }
+            html, body { width: 100%; }
+            body { font-family: "Times New Roman", serif; font-size: 11px; line-height: 1.15; color: #111; margin: 0; padding: 0; }
+            .doc { border: 1px solid #111; padding: 10px 12px; }
+            .doc-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; margin-bottom: 8px; border-bottom: 1px solid #111; padding-bottom: 6px; }
+            .company-wrap { display: flex; align-items: flex-start; gap: 12px; }
+            .logo { width: 72px; height: auto; object-fit: contain; }
+            .company { font-size: 11px; }
+            .company strong { font-size: 13px; }
+            .order-title { text-align: right; }
+            .order-title h1 { margin: 0; font-size: 18px; letter-spacing: 0.2px; }
+            .order-title .num { margin-top: 2px; font-size: 12px; }
+            .section-title { margin: 8px 0 4px; font-size: 12px; font-weight: bold; text-transform: uppercase; }
+            .meta-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px 12px; margin-bottom: 4px; }
+            .meta-line { border-bottom: 1px dashed #666; padding-bottom: 2px; }
+            table { width: 100%; border-collapse: collapse; margin-top: 6px; table-layout: fixed; }
+            th, td { border: 1px solid #111; padding: 3px 4px; vertical-align: top; word-break: break-word; overflow-wrap: anywhere; }
+            th { text-align: center; font-weight: bold; font-size: 10px; line-height: 1.05; }
+            td { font-size: 10px; line-height: 1.05; }
+            td.num { text-align: center; white-space: nowrap; }
+            td.money { text-align: right; white-space: nowrap; }
+            .totals { margin-top: 8px; width: 290px; margin-left: auto; border: 1px solid #111; padding: 6px 8px; }
+            .totals-row { display: flex; justify-content: space-between; gap: 12px; margin: 2px 0; }
+            .comment { margin-top: 8px; min-height: 34px; border: 1px solid #111; padding: 6px 8px; }
+            .footer { margin-top: 10px; display: grid; grid-template-columns: 1fr 110px 1fr; gap: 12px; align-items: end; }
+            .sign-block { min-height: 42px; }
+            .sign-block--manager { text-align: right; }
+            .sign-line { border-bottom: 1px solid #111; height: 22px; margin-bottom: 4px; }
+            .stamp { border: 1px dashed #111; height: 54px; display: flex; align-items: center; justify-content: center; font-weight: bold; }
+            .muted { color: #444; font-size: 10px; margin-top: 6px; }
+            .compact .doc { padding: 8px 10px; }
+            .compact th, .compact td { padding: 2px 3px; font-size: 9px; line-height: 1; }
+            .compact .totals { width: 260px; padding: 4px 6px; }
+            .compact .footer { margin-top: 8px; gap: 8px; }
+            .compact .stamp { height: 46px; }
+          </style>
+        </head>
+        <body class="${layoutMode}">
+          <div class="doc">
+            <div class="doc-header"><div class="company-wrap"><img class="logo" src="/logo.jpg" alt="Логотип" /><div class="company"><div><strong>Двери Алмак</strong></div><div>ИП Хизриев С.С.</div></div></div><div class="order-title"><h1>ЗАКАЗ-НАРЯД</h1><div class="num">№ ${orderId} от ${issueDate}</div></div></div>
+            ${this.buildCustomMetaBlock(order, normalizedOptions)}
+            <div class="section-title">Спецификация</div>
+            <table>
+              ${this.buildCustomTableHead(hasPriceColumns, hasCommentColumn)}
+              <tbody>${rows.map((row, index) => this.buildCustomTableRow(index + 1, row, hasPriceColumns, hasCommentColumn)).join('')}</tbody>
+            </table>
+            ${this.buildCustomTotalsBlock(selectedTotal, totalToPay, paidAmount, customerDebt, order.discount, normalizedOptions)}
+            ${normalizedOptions.showComments ? `<div class="comment"><strong>Комментарий:</strong> ${this.escapeHtml(order.comment || '-')}</div>` : ''}
+            ${normalizedOptions.showSignatures ? '<div class="footer"><div class="sign-block"><div class="sign-line"></div><div>Подпись клиента</div></div><div class="stamp">М.П.</div><div class="sign-block sign-block--manager"><div class="sign-line"></div><div>Подпись менеджера</div></div></div>' : ''}
+            <div class="muted">Документ сформирован через конструктор печати.</div>
           </div>
         </body>
       </html>
@@ -250,7 +346,170 @@ export class OrderDocumentService {
     price: number,
     amount: number,
   ): string {
-    return `<tr><td class="num">${index}</td><td>${this.escapeHtml(type)}</td><td>${this.escapeHtml(title)}</td><td class="num">${this.escapeHtml(size)}</td><td>${this.escapeHtml(color)}</td><td>${this.escapeHtml(comment)}</td><td class="num">${count}</td><td class="money">${price}</td><td class="money">${amount}</td></tr>`;
+    return `<tr><td class="num">${index}</td><td>${this.escapeHtml(type)}</td><td>${this.escapeHtml(title)}</td><td class="num">${this.escapeHtml(size)}</td><td>${this.escapeHtml(color)}</td><td>${this.escapeHtml(comment)}</td><td class="num">${count}</td><td class="money">${this.formatMoney(price)}</td><td class="money">${this.formatMoney(amount)}</td></tr>`;
+  }
+
+  private normalizePrintOptions(options: PrintConstructorOptions): PrintConstructorOptions {
+    return {
+      ...options,
+      showTotals: options.showPrices && options.showTotals,
+      showDiscount: options.showPrices && options.showTotals && options.showDiscount,
+      showPayments: options.showPrices && options.showTotals && options.showPayments,
+    };
+  }
+
+  private buildCustomMetaBlock(order: OrderCreatePayload, options: PrintConstructorOptions): string {
+    if (!options.showCustomerInfo && !options.showDeliveryInfo) {
+      return '';
+    }
+
+    const customerInfo = options.showCustomerInfo
+      ? `<div class="meta-line"><strong>ФИО:</strong> ${this.escapeHtml(order.name)}</div><div class="meta-line"><strong>Телефон:</strong> ${this.escapeHtml(order.phone)}</div>`
+      : '';
+    const deliveryInfo = options.showDeliveryInfo
+      ? `<div class="meta-line"><strong>Доставка:</strong> ${order.needsDelivery ? 'Да' : 'Нет'}</div><div class="meta-line"><strong>Адрес доставки:</strong> ${this.escapeHtml(order.deliveryAddress || '-')}</div>`
+      : '';
+
+    return `<div class="section-title">Данные клиента</div><div class="meta-grid">${customerInfo}${deliveryInfo}</div>`;
+  }
+
+  private buildCustomTableHead(showPrices: boolean, showComments: boolean): string {
+    const commentHead = showComments ? '<th style="width: 120px;">Комментарий</th>' : '';
+    const priceHeads = showPrices ? '<th style="width: 76px;">Цена</th><th style="width: 82px;">Сумма</th>' : '';
+
+    return `<thead><tr><th style="width: 28px;">№</th><th style="width: 110px;">Товар</th><th>Модель / позиция</th><th style="width: 78px;">Размер</th><th style="width: 150px;">Цвет / покрытие</th>${commentHead}<th style="width: 52px;">Кол-во</th>${priceHeads}</tr></thead>`;
+  }
+
+  private buildCustomTableRow(
+    index: number,
+    row: CustomDocumentRow,
+    showPrices: boolean,
+    showComments: boolean,
+  ): string {
+    const commentCell = showComments ? `<td>${this.escapeHtml(row.comment)}</td>` : '';
+    const priceCells = showPrices
+      ? `<td class="money">${this.formatMoney(row.price)}</td><td class="money">${this.formatMoney(row.amount)}</td>`
+      : '';
+
+    return `<tr><td class="num">${index}</td><td>${this.escapeHtml(row.type)}</td><td>${this.escapeHtml(row.title)}</td><td class="num">${this.escapeHtml(row.size)}</td><td>${this.escapeHtml(row.color)}</td>${commentCell}<td class="num">${row.count}</td>${priceCells}</tr>`;
+  }
+
+  private buildCustomTotalsBlock(
+    selectedTotal: number,
+    totalToPay: number,
+    paidAmount: number,
+    customerDebt: number,
+    discount: number,
+    options: PrintConstructorOptions,
+  ): string {
+    if (!options.showPrices || !options.showTotals) {
+      return '';
+    }
+
+    const discountRow = options.showDiscount
+      ? `<div class="totals-row"><span>Скидка:</span><strong>${this.formatMoney(discount)}</strong></div>`
+      : '';
+    const paymentRows = options.showPayments
+      ? `<div class="totals-row"><span>Внесено клиентом:</span><strong>${this.formatMoney(paidAmount)}</strong></div><div class="totals-row"><span>Долг клиента:</span><strong>${this.formatMoney(customerDebt)}</strong></div>`
+      : '';
+
+    return `<div class="totals"><div class="totals-row"><span>Сумма выбранных товаров:</span><strong>${this.formatMoney(selectedTotal)}</strong></div>${discountRow}<div class="totals-row"><span>Итого к оплате:</span><strong>${this.formatMoney(totalToPay)}</strong></div>${paymentRows}</div>`;
+  }
+
+  private buildCustomRows(order: OrderCreatePayload): readonly CustomDocumentRow[] {
+    return [
+      ...order.interiorDoors.map(
+        (item): CustomDocumentRow => ({
+          key: `interiorDoor:${item.id}`,
+          type: 'Межкомнатная дверь',
+          title: item.model,
+          size: this.formatInteriorDoorSize(item),
+          color: `${this.getLeafTypeLabel(item.leafType)}, ${item.color}, ${this.getInteriorDoorGlassLabel(item)}`,
+          comment: item.comment || '-',
+          count: this.getInteriorDoorCount(item),
+          price: this.getInteriorDoorTotal(item),
+          amount: this.getInteriorDoorTotal(item),
+        }),
+      ),
+      ...order.entranceDoors.map(
+        (item): CustomDocumentRow => ({
+          key: `entranceDoor:${item.id}`,
+          type: 'Входная дверь',
+          title: item.model,
+          size: this.formatDoorSize(item.width, item.height, null),
+          color: this.getEntranceColorLabel(item),
+          comment: item.comment || '-',
+          count: item.count,
+          price: item.price,
+          amount: item.price * item.count,
+        }),
+      ),
+      ...order.moldings.map(
+        (item): CustomDocumentRow => ({
+          key: `molding:${item.id}`,
+          type: 'Погонаж',
+          title: this.getMoldingTitle(item),
+          size: this.getMoldingSizeLabel(item),
+          color: `${item.color}, ${this.getMoldingCoveringLabel(item.covering)}`,
+          comment: item.comment || '-',
+          count: item.frameCount + item.platbandCount + item.rebateBarCount,
+          price: this.getMoldingTotal(item),
+          amount: this.getMoldingTotal(item),
+        }),
+      ),
+      ...order.extensions.map(
+        (item): CustomDocumentRow => ({
+          key: `extension:${item.id}`,
+          type: 'Доборы',
+          title: '-',
+          size: `${item.width}x${item.height}`,
+          color: `${item.color}, ${this.getExtensionCoveringLabel(item.covering)}`,
+          comment: item.comment || '-',
+          count: item.quantityPerSet,
+          price: item.price,
+          amount: this.getExtensionTotal(item),
+        }),
+      ),
+      ...order.capitals.map(
+        (item): CustomDocumentRow => ({
+          key: `capital:${item.id}`,
+          type: 'Капитель',
+          title: item.name,
+          size: `${item.width}x${item.height}`,
+          color: `${item.color}, ${this.getCapitalCoveringLabel(item.covering)}`,
+          comment: item.comment || '-',
+          count: item.count,
+          price: item.price,
+          amount: this.getCapitalTotal(item),
+        }),
+      ),
+      ...order.hardwares.map(
+        (item): CustomDocumentRow => ({
+          key: `hardware:${item.id}`,
+          type: 'Фурнитура',
+          title: this.getHardwareTitle(item),
+          size: '-',
+          color: this.getHardwareExecutionLabel(item),
+          comment: item.comment || '-',
+          count: this.getHardwareCount(item),
+          price: this.getHardwareTotal(item),
+          amount: this.getHardwareTotal(item),
+        }),
+      ),
+      ...order.panelings.map(
+        (item): CustomDocumentRow => ({
+          key: `paneling:${item.id}`,
+          type: 'Обшивка',
+          title: `Обшивка ${item.color}`,
+          size: this.formatPanelingSize(item),
+          color: `${item.color}, ${this.getPanelingKindLabel(item.kind)}, ${this.getPanelingCoveringLabel(item.covering)}, общ. кв.м ${item.totalArea}`,
+          comment: item.comment || '-',
+          count: item.count,
+          price: item.price,
+          amount: this.getPanelingTotal(item),
+        }),
+      ),
+    ];
   }
 
   private getLayoutMode(order: OrderCreatePayload, rowCount: number): string {
@@ -454,7 +713,11 @@ export class OrderDocumentService {
   }
 
   private getMoldingTotal(item: MoldingItem): number {
-    return item.framePrice * item.frameCount + item.platbandPrice * item.platbandCount;
+    return (
+      item.framePrice * item.frameCount +
+      item.platbandPrice * item.platbandCount +
+      item.rebateBarPrice * item.rebateBarCount
+    );
   }
 
   private getExtensionTotal(item: ExtensionItem): number {
@@ -491,38 +754,7 @@ export class OrderDocumentService {
   }
 
   private getHardwareTitle(item: HardwareItem): string {
-    const parts: string[] = [];
-    if (item.handleModel) {
-      parts.push(`Ручка ${item.handleModel}`);
-    }
-    if (item.lockCount !== null || item.lockPrice !== null) {
-      parts.push('Замок');
-    }
-    if (item.fixatorCount !== null || item.fixatorPrice !== null) {
-      parts.push('Фиксатор');
-    }
-    if (item.clickCount !== null || item.clickPrice !== null) {
-      parts.push('Щелчок');
-    }
-    if (item.thumbturnCount !== null) {
-      parts.push('Крутилка');
-    }
-    if (item.escutcheonCount !== null) {
-      parts.push('Накладка');
-    }
-    if (item.cylinderCount !== null) {
-      parts.push('Барабан');
-    }
-    if (item.boltCount !== null) {
-      parts.push('Шпингалет');
-    }
-    if (item.hingeCount !== null) {
-      parts.push('Петли');
-    }
-    if (item.doorStopCount !== null) {
-      parts.push('Ограничитель');
-    }
-    return parts.join(', ') || 'Фурнитура';
+    return item.handleModel ? `Ручка ${item.handleModel}` : 'Ручка';
   }
 
   private getHardwareExecutionLabel(item: HardwareItem): string {
@@ -610,7 +842,11 @@ export class OrderDocumentService {
   }
 
   private formatCountPrice(count: number | null, price: number | null): string {
-    return `${count ?? 0} x ${price ?? 0}`;
+    return `${count ?? 0} x ${this.formatMoney(price ?? 0)}`;
+  }
+
+  private formatMoney(value: number): string {
+    return `${value.toLocaleString('ru-RU', { maximumFractionDigits: 2 })} ₽`;
   }
 
   private getOptionalTotal(count: number | null, price: number | null): number {

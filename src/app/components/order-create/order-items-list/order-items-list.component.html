@@ -158,6 +158,9 @@
                   · {{ molding.platbandLength }} см
                 }
                 · притворная планка {{ molding.rebateBarCount }} шт.
+                @if (molding.rebateBarPrice > 0) {
+                  · {{ molding.rebateBarPrice | number: '1.0-0' }} ₽
+                }
                 @if (molding.comment) {
                   · {{ molding.comment }}
                 }

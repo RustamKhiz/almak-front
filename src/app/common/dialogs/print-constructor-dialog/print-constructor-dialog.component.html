@@ -1,0 +1,96 @@
+<h2 mat-dialog-title>Конструктор печати</h2>
+
+<mat-dialog-content>
+  <div class="print-constructor">
+    <section class="print-constructor__section">
+      <div class="print-constructor__title">Шаблоны</div>
+      <div class="print-constructor__presets">
+        @for (preset of presets; track preset.id) {
+          <button mat-stroked-button type="button" class="print-constructor__preset" (click)="applyPreset(preset)">
+            <span>{{ preset.label }}</span>
+            <small>{{ preset.description }}</small>
+          </button>
+        }
+      </div>
+    </section>
+
+    <section class="print-constructor__section">
+      <div class="print-constructor__title">Состав документа</div>
+      <div class="print-constructor__options">
+        <mat-checkbox [checked]="showPrices()" (change)="togglePrices($event.checked)">Показывать цены</mat-checkbox>
+        <mat-checkbox [checked]="showTotals()" [disabled]="!showPrices()" (change)="toggleTotals($event.checked)">
+          Показывать итоги
+        </mat-checkbox>
+        <mat-checkbox
+          [checked]="showDiscount()"
+          [disabled]="!showPrices() || !showTotals()"
+          (change)="showDiscount.set($event.checked)"
+        >
+          Показывать скидку
+        </mat-checkbox>
+        <mat-checkbox
+          [checked]="showPayments()"
+          [disabled]="!showPrices() || !showTotals()"
+          (change)="showPayments.set($event.checked)"
+        >
+          Показывать оплату и долг
+        </mat-checkbox>
+        <mat-checkbox [checked]="showCustomerInfo()" (change)="showCustomerInfo.set($event.checked)">
+          Показывать клиента
+        </mat-checkbox>
+        <mat-checkbox [checked]="showDeliveryInfo()" (change)="showDeliveryInfo.set($event.checked)">
+          Показывать доставку
+        </mat-checkbox>
+        <mat-checkbox [checked]="showComments()" (change)="showComments.set($event.checked)">
+          Показывать комментарии
+        </mat-checkbox>
+        <mat-checkbox [checked]="showSignatures()" (change)="showSignatures.set($event.checked)">
+          Показывать подписи
+        </mat-checkbox>
+      </div>
+    </section>
+
+    <section class="print-constructor__section">
+      <div class="print-constructor__items-header">
+        <div>
+          <div class="print-constructor__title">Товары</div>
+          <div class="print-constructor__meta">
+            Выбрано {{ selectedCount() }} из {{ items.length }} · {{ selectedTotal() | number: '1.0-0' }} ₽
+          </div>
+        </div>
+        <mat-checkbox [checked]="allSelected()" [indeterminate]="someSelected()" (change)="toggleAll($event.checked)">
+          Все
+        </mat-checkbox>
+      </div>
+
+      <div class="print-constructor__items">
+        @for (item of items; track item.key) {
+          <div class="print-constructor__item">
+            <mat-checkbox [checked]="isSelected(item.key)" (change)="toggleItem(item.key, $event.checked)" />
+            <span class="print-constructor__item-main">
+              <strong>{{ item.typeLabel }} · {{ item.title }}</strong>
+              <small>{{ item.summary }}</small>
+            </span>
+            @if (showPrices()) {
+              <span class="print-constructor__item-price">{{ item.total | number: '1.0-0' }} ₽</span>
+            }
+          </div>
+        }
+      </div>
+
+      @if (selectedCount() === 0) {
+        <div class="print-constructor__error">Выберите хотя бы один товар для печати.</div>
+      }
+    </section>
+  </div>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button type="button" mat-dialog-close>Отмена</button>
+  <button mat-stroked-button type="button" [disabled]="selectedCount() === 0" (click)="close('download')">
+    Скачать .doc
+  </button>
+  <button mat-flat-button color="primary" type="button" [disabled]="selectedCount() === 0" (click)="close('print')">
+    Печать
+  </button>
+</mat-dialog-actions>

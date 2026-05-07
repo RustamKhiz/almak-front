@@ -111,6 +111,7 @@ interface BackendMolding {
   platbandPrice: number;
   platbandCount: number;
   rebateBarCount: number;
+  rebateBarPrice?: number;
   color: string;
   covering?: string;
   comment?: string;
@@ -250,6 +251,7 @@ interface BackendMoldingPayload {
   platbandPrice: number;
   platbandCount: number;
   rebateBarCount: number;
+  rebateBarPrice: number;
   color: string;
   covering: string;
   comment: string;
@@ -316,10 +318,6 @@ interface BackendOrderStatusPayload {
   status: number;
 }
 
-interface BackendOrderPaymentStatusPayload {
-  isPaid: boolean;
-}
-
 interface BackendAddOrderPaymentPayload {
   amount: number;
   comment: string;
@@ -373,13 +371,6 @@ export class OrdersService {
         status,
       } as BackendOrderStatusPayload)
       .pipe(map((order) => this.mapBackendStatusToOrderStatus(order.status)));
-  }
-  updateOrderPaymentStatus(id: number, isPaid: boolean): Observable<boolean> {
-    return this.http
-      .patch<BackendOrder>(`${this.coreService.apiBaseUrl}/orders/${id}/payment-status`, {
-        isPaid,
-      } as BackendOrderPaymentStatusPayload)
-      .pipe(map((order) => order.isPaid));
   }
   addOrderPayment(id: number, amount: number, comment: string): Observable<OrderCreatePayload> {
     return this.http
@@ -497,6 +488,7 @@ export class OrdersService {
         platbandPrice: item.platbandPrice,
         platbandCount: item.platbandCount,
         rebateBarCount: item.rebateBarCount,
+        rebateBarPrice: item.rebateBarPrice,
         color: item.color,
         covering: item.covering,
         comment: item.comment,
@@ -625,6 +617,7 @@ export class OrdersService {
       platbandPrice: item.platbandPrice,
       platbandCount: item.platbandCount,
       rebateBarCount: item.rebateBarCount ?? 0,
+      rebateBarPrice: item.rebateBarPrice ?? 0,
       color: item.color ?? '',
       covering: this.mapMoldingCovering(item.covering),
       comment: item.comment ?? '',

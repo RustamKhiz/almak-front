@@ -10,7 +10,7 @@ export interface OrderPaymentDialogData {
   confirmText?: string;
   commentLabel?: string;
   commentPlaceholder?: string;
-  initialAmount?: number;
+  initialAmount?: number | null;
 }
 
 export interface OrderPaymentDialogResult {

@@ -135,6 +135,7 @@ export interface MoldingItem {
   platbandPrice: number;
   platbandCount: number;
   rebateBarCount: number;
+  rebateBarPrice: number;
   color: string;
   covering: MoldingCovering;
   comment: string;

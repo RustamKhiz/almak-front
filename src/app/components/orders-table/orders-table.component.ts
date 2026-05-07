@@ -76,7 +76,7 @@ export class OrdersTableComponent implements OnInit {
   private readonly sortAccessors: Record<string, (item: OrderRecord) => string | number> = {
     id: (item) => item.id,
     date: (item) => new Date(item.date).getTime(),
-    price: (item) => item.price,
+    price: (item) => this.getTotalToPay(item),
     prepayment: (item) => item.prepayment,
     payment: (item) => (item.isPaid ? 1 : 0),
     customer: (item) => item.customer.toLocaleLowerCase(),
@@ -158,29 +158,16 @@ export class OrdersTableComponent implements OnInit {
       });
   }
 
-  protected onPaymentStatusChange(orderId: number, isPaid: boolean): void {
-    this.ordersService
-      .updateOrderPaymentStatus(orderId, isPaid)
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: (nextPaymentStatus) => {
-          this.allOrders = this.allOrders.map((order) =>
-            order.id === orderId ? { ...order, isPaid: nextPaymentStatus } : order,
-          );
-          this.applyFilters();
-        },
-        error: () => {
-          this.loadError.set('Не удалось обновить статус оплаты.');
-        },
-      });
-  }
-
   protected getStatusLabel(status: OrderStatus): string {
     return getOrderStatusLabel(status);
   }
 
   protected getPaymentLabel(isPaid: boolean): string {
     return getOrderPaymentLabel(isPaid);
+  }
+
+  protected getTotalToPay(order: OrderRecord): number {
+    return Math.max(order.price - order.discount, 0);
   }
 
   protected onFiltersApply(filters: OrdersTableFilters): void {
