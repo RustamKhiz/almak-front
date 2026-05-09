@@ -10,14 +10,31 @@ import {
   viewChild,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { MatButtonModule } from '@angular/material/button';
+import { MatNativeDateModule } from '@angular/material/core';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
 import { Chart, ChartConfiguration, ChartType, registerables } from 'chart.js';
 import { getOrderStatusLabel, ORDER_STATUS_OPTIONS } from '../../common/constants/order-status';
 import { OrderRecord, OrdersService } from '../../services/orders.service';
+import { OrderStatus } from '../../types/order.types';
 
 @Component({
   selector: 'app-order-chart',
-  imports: [CommonModule],
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    MatButtonModule,
+    MatDatepickerModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatNativeDateModule,
+    MatSelectModule,
+  ],
   templateUrl: './order-chart.component.html',
   styleUrl: './order-chart.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -30,13 +47,22 @@ export class OrderChartComponent implements OnDestroy {
 
   private readonly ordersService = inject(OrdersService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly fb = inject(FormBuilder);
   private readonly charts: Chart[] = [];
-  private orders: readonly OrderRecord[] = [];
+  private allOrders: readonly OrderRecord[] = [];
 
   protected readonly isLoading = signal(true);
   protected readonly loadError = signal<string | null>(null);
   protected readonly metrics = signal<readonly ChartMetric[]>([]);
   protected readonly hasData = signal(false);
+  protected readonly filteredOrders = signal<readonly OrderRecord[]>([]);
+  protected readonly statusOptions = ORDER_STATUS_OPTIONS;
+  protected readonly filterForm = this.fb.group({
+    dateFrom: [null as Date | null],
+    dateTo: [null as Date | null],
+    status: [null as OrderStatus | null],
+    payment: ['all' as PaymentFilter],
+  });
 
   constructor() {
     Chart.register(...registerables);
@@ -45,6 +71,7 @@ export class OrderChartComponent implements OnDestroy {
       this.isLoading();
       this.loadError();
       this.hasData();
+      this.filteredOrders();
       this.revenueCanvas();
       this.ordersCanvas();
       this.statusCanvas();
@@ -58,9 +85,9 @@ export class OrderChartComponent implements OnDestroy {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (orders) => {
-          this.orders = orders;
+          this.allOrders = orders;
           this.hasData.set(orders.length > 0);
-          this.metrics.set(this.buildMetrics(orders));
+          this.applyFilters();
           this.loadError.set(null);
           this.isLoading.set(false);
         },
@@ -77,20 +104,48 @@ export class OrderChartComponent implements OnDestroy {
 
   private renderChartsIfReady(): void {
     const canvases = this.getCanvases();
+    const orders = this.filteredOrders();
 
-    if (this.isLoading() || this.loadError() || this.orders.length === 0 || !canvases) {
+    if (this.isLoading() || this.loadError() || this.allOrders.length === 0) {
+      return;
+    }
+
+    if (orders.length === 0) {
+      this.destroyCharts();
+      return;
+    }
+
+    if (!canvases) {
       return;
     }
 
     this.destroyCharts();
-    this.renderRevenueChart(canvases.revenue);
-    this.renderOrdersChart(canvases.orders);
-    this.renderStatusChart(canvases.status);
-    this.renderPaymentChart(canvases.payment);
+    this.renderRevenueChart(canvases.revenue, orders);
+    this.renderOrdersChart(canvases.orders, orders);
+    this.renderStatusChart(canvases.status, orders);
+    this.renderPaymentChart(canvases.payment, orders);
   }
 
-  private renderRevenueChart(canvas: HTMLCanvasElement): void {
-    const monthly = this.getMonthlyGroups(this.orders);
+  protected onApplyFilters(): void {
+    this.applyFilters();
+  }
+
+  protected onClearFilters(): void {
+    this.filterForm.reset({
+      dateFrom: null,
+      dateTo: null,
+      status: null,
+      payment: 'all',
+    });
+    this.applyFilters();
+  }
+
+  protected getStatusLabel(status: OrderStatus): string {
+    return getOrderStatusLabel(status);
+  }
+
+  private renderRevenueChart(canvas: HTMLCanvasElement, orders: readonly OrderRecord[]): void {
+    const monthly = this.getMonthlyGroups(orders);
     this.createChart(canvas, {
       type: 'line',
       data: {
@@ -118,8 +173,8 @@ export class OrderChartComponent implements OnDestroy {
     });
   }
 
-  private renderOrdersChart(canvas: HTMLCanvasElement): void {
-    const monthly = this.getMonthlyGroups(this.orders);
+  private renderOrdersChart(canvas: HTMLCanvasElement, orders: readonly OrderRecord[]): void {
+    const monthly = this.getMonthlyGroups(orders);
     this.createChart(canvas, {
       type: 'bar',
       data: {
@@ -137,10 +192,10 @@ export class OrderChartComponent implements OnDestroy {
     });
   }
 
-  private renderStatusChart(canvas: HTMLCanvasElement): void {
+  private renderStatusChart(canvas: HTMLCanvasElement, orders: readonly OrderRecord[]): void {
     const statusCounts = ORDER_STATUS_OPTIONS.map((status) => ({
       label: getOrderStatusLabel(status),
-      value: this.orders.filter((order) => order.status === status).length,
+      value: orders.filter((order) => order.status === status).length,
     })).filter((item) => item.value > 0);
 
     this.createChart(canvas, {
@@ -159,9 +214,9 @@ export class OrderChartComponent implements OnDestroy {
     });
   }
 
-  private renderPaymentChart(canvas: HTMLCanvasElement): void {
-    const paid = this.orders.filter((order) => order.isPaid).length;
-    const unpaid = this.orders.length - paid;
+  private renderPaymentChart(canvas: HTMLCanvasElement, orders: readonly OrderRecord[]): void {
+    const paid = orders.filter((order) => order.isPaid).length;
+    const unpaid = orders.length - paid;
 
     this.createChart(canvas, {
       type: 'doughnut',
@@ -177,6 +232,42 @@ export class OrderChartComponent implements OnDestroy {
       },
       options: this.getDoughnutOptions(),
     });
+  }
+
+  private applyFilters(): void {
+    const { dateFrom, dateTo, status, payment } = this.filterForm.getRawValue();
+    const fromTime = dateFrom ? this.getStartOfDay(dateFrom).getTime() : null;
+    const toTime = dateTo ? this.getEndOfDay(dateTo).getTime() : null;
+
+    const filtered = this.allOrders.filter((order) => {
+      const orderDate = new Date(order.date);
+      const orderTime = orderDate.getTime();
+
+      if (fromTime !== null && (!Number.isFinite(orderTime) || orderTime < fromTime)) {
+        return false;
+      }
+
+      if (toTime !== null && (!Number.isFinite(orderTime) || orderTime > toTime)) {
+        return false;
+      }
+
+      if (status && order.status !== status) {
+        return false;
+      }
+
+      if (payment === 'paid' && !order.isPaid) {
+        return false;
+      }
+
+      if (payment === 'unpaid' && order.isPaid) {
+        return false;
+      }
+
+      return true;
+    });
+
+    this.filteredOrders.set(filtered);
+    this.metrics.set(this.buildMetrics(filtered));
   }
 
   private getCanvases(): ChartCanvases | null {
@@ -308,6 +399,14 @@ export class OrderChartComponent implements OnDestroy {
   private formatNumber(value: number): string {
     return new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 0 }).format(value);
   }
+
+  private getStartOfDay(date: Date): Date {
+    return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  }
+
+  private getEndOfDay(date: Date): Date {
+    return new Date(date.getFullYear(), date.getMonth(), date.getDate(), 23, 59, 59, 999);
+  }
 }
 
 interface ChartMetric {
@@ -330,3 +429,5 @@ interface ChartCanvases {
   status: HTMLCanvasElement;
   payment: HTMLCanvasElement;
 }
+
+type PaymentFilter = 'all' | 'paid' | 'unpaid';

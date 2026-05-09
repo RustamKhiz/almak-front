@@ -6,6 +6,49 @@
   } @else if (!hasData()) {
     <div class="state">Пока нет заказов для построения графиков.</div>
   } @else {
+    <form class="filters" [formGroup]="filterForm" (ngSubmit)="onApplyFilters()">
+      <mat-form-field appearance="outline">
+        <mat-label>С даты</mat-label>
+        <input matInput [matDatepicker]="dateFromPicker" formControlName="dateFrom" />
+        <mat-datepicker-toggle matIconSuffix [for]="dateFromPicker"></mat-datepicker-toggle>
+        <mat-datepicker #dateFromPicker></mat-datepicker>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>По дату</mat-label>
+        <input matInput [matDatepicker]="dateToPicker" formControlName="dateTo" />
+        <mat-datepicker-toggle matIconSuffix [for]="dateToPicker"></mat-datepicker-toggle>
+        <mat-datepicker #dateToPicker></mat-datepicker>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Статус</mat-label>
+        <mat-select formControlName="status">
+          <mat-option [value]="null">Все статусы</mat-option>
+          @for (status of statusOptions; track status) {
+            <mat-option [value]="status">{{ getStatusLabel(status) }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Оплата</mat-label>
+        <mat-select formControlName="payment">
+          <mat-option value="all">Все</mat-option>
+          <mat-option value="paid">Оплачено</mat-option>
+          <mat-option value="unpaid">Не оплачено</mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <div class="filter-actions">
+        <button mat-flat-button color="primary" type="submit">Применить</button>
+        <button mat-button type="button" (click)="onClearFilters()">Сбросить</button>
+      </div>
+    </form>
+
+    @if (filteredOrders().length === 0) {
+      <div class="state">По выбранным фильтрам нет заказов.</div>
+    } @else {
     <div class="metrics">
       @for (metric of metrics(); track metric.label) {
         <div class="metric">
@@ -42,5 +85,6 @@
         <canvas #paymentCanvas></canvas>
       </div>
     </section>
+    }
   }
 </div>

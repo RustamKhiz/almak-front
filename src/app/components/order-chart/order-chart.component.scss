@@ -11,6 +11,29 @@
   gap: 12px;
 }
 
+.filters {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: repeat(4, minmax(160px, 1fr)) auto;
+  align-items: start;
+  gap: 12px;
+  padding: 16px;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+}
+
+.filter-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  min-height: 56px;
+}
+
+.filters mat-form-field {
+  width: 100%;
+}
+
 .metric,
 .chart-panel,
 .state {
@@ -76,6 +99,14 @@
 }
 
 @media (max-width: 1100px) {
+  .filters {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .filter-actions {
+    min-height: 0;
+  }
+
   .metrics {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
@@ -83,8 +114,13 @@
 
 @media (max-width: 760px) {
   .analytics,
+  .filters,
   .metrics {
     grid-template-columns: 1fr;
+  }
+
+  .filter-actions {
+    justify-content: flex-start;
   }
 
   .chart-frame {
