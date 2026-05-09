@@ -1,13 +1,13 @@
 import {
-  AfterViewInit,
   ChangeDetectionStrategy,
   Component,
   DestroyRef,
   ElementRef,
   OnDestroy,
-  ViewChild,
+  effect,
   inject,
   signal,
+  viewChild,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -22,17 +22,16 @@ import { OrderRecord, OrdersService } from '../../services/orders.service';
   styleUrl: './order-chart.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class OrderChartComponent implements AfterViewInit, OnDestroy {
-  @ViewChild('revenueCanvas') private readonly revenueCanvas?: ElementRef<HTMLCanvasElement>;
-  @ViewChild('ordersCanvas') private readonly ordersCanvas?: ElementRef<HTMLCanvasElement>;
-  @ViewChild('statusCanvas') private readonly statusCanvas?: ElementRef<HTMLCanvasElement>;
-  @ViewChild('paymentCanvas') private readonly paymentCanvas?: ElementRef<HTMLCanvasElement>;
+export class OrderChartComponent implements OnDestroy {
+  private readonly revenueCanvas = viewChild<ElementRef<HTMLCanvasElement>>('revenueCanvas');
+  private readonly ordersCanvas = viewChild<ElementRef<HTMLCanvasElement>>('ordersCanvas');
+  private readonly statusCanvas = viewChild<ElementRef<HTMLCanvasElement>>('statusCanvas');
+  private readonly paymentCanvas = viewChild<ElementRef<HTMLCanvasElement>>('paymentCanvas');
 
   private readonly ordersService = inject(OrdersService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly charts: Chart[] = [];
   private orders: readonly OrderRecord[] = [];
-  private isViewReady = false;
 
   protected readonly isLoading = signal(true);
   protected readonly loadError = signal<string | null>(null);
@@ -41,6 +40,18 @@ export class OrderChartComponent implements AfterViewInit, OnDestroy {
 
   constructor() {
     Chart.register(...registerables);
+
+    effect(() => {
+      this.isLoading();
+      this.loadError();
+      this.hasData();
+      this.revenueCanvas();
+      this.ordersCanvas();
+      this.statusCanvas();
+      this.paymentCanvas();
+
+      this.renderChartsIfReady();
+    });
 
     this.ordersService
       .getOrders()
@@ -52,7 +63,6 @@ export class OrderChartComponent implements AfterViewInit, OnDestroy {
           this.metrics.set(this.buildMetrics(orders));
           this.loadError.set(null);
           this.isLoading.set(false);
-          this.renderChartsIfReady();
         },
         error: () => {
           this.loadError.set('Не удалось загрузить данные для графиков.');
@@ -61,33 +71,25 @@ export class OrderChartComponent implements AfterViewInit, OnDestroy {
       });
   }
 
-  ngAfterViewInit(): void {
-    this.isViewReady = true;
-    this.renderChartsIfReady();
-  }
-
   ngOnDestroy(): void {
     this.destroyCharts();
   }
 
   private renderChartsIfReady(): void {
-    if (!this.isViewReady || this.isLoading() || this.loadError() || this.orders.length === 0) {
+    const canvases = this.getCanvases();
+
+    if (this.isLoading() || this.loadError() || this.orders.length === 0 || !canvases) {
       return;
     }
 
     this.destroyCharts();
-    this.renderRevenueChart();
-    this.renderOrdersChart();
-    this.renderStatusChart();
-    this.renderPaymentChart();
+    this.renderRevenueChart(canvases.revenue);
+    this.renderOrdersChart(canvases.orders);
+    this.renderStatusChart(canvases.status);
+    this.renderPaymentChart(canvases.payment);
   }
 
-  private renderRevenueChart(): void {
-    const canvas = this.revenueCanvas?.nativeElement;
-    if (!canvas) {
-      return;
-    }
-
+  private renderRevenueChart(canvas: HTMLCanvasElement): void {
     const monthly = this.getMonthlyGroups(this.orders);
     this.createChart(canvas, {
       type: 'line',
@@ -116,12 +118,7 @@ export class OrderChartComponent implements AfterViewInit, OnDestroy {
     });
   }
 
-  private renderOrdersChart(): void {
-    const canvas = this.ordersCanvas?.nativeElement;
-    if (!canvas) {
-      return;
-    }
-
+  private renderOrdersChart(canvas: HTMLCanvasElement): void {
     const monthly = this.getMonthlyGroups(this.orders);
     this.createChart(canvas, {
       type: 'bar',
@@ -140,12 +137,7 @@ export class OrderChartComponent implements AfterViewInit, OnDestroy {
     });
   }
 
-  private renderStatusChart(): void {
-    const canvas = this.statusCanvas?.nativeElement;
-    if (!canvas) {
-      return;
-    }
-
+  private renderStatusChart(canvas: HTMLCanvasElement): void {
     const statusCounts = ORDER_STATUS_OPTIONS.map((status) => ({
       label: getOrderStatusLabel(status),
       value: this.orders.filter((order) => order.status === status).length,
@@ -167,12 +159,7 @@ export class OrderChartComponent implements AfterViewInit, OnDestroy {
     });
   }
 
-  private renderPaymentChart(): void {
-    const canvas = this.paymentCanvas?.nativeElement;
-    if (!canvas) {
-      return;
-    }
-
+  private renderPaymentChart(canvas: HTMLCanvasElement): void {
     const paid = this.orders.filter((order) => order.isPaid).length;
     const unpaid = this.orders.length - paid;
 
@@ -190,6 +177,19 @@ export class OrderChartComponent implements AfterViewInit, OnDestroy {
       },
       options: this.getDoughnutOptions(),
     });
+  }
+
+  private getCanvases(): ChartCanvases | null {
+    const revenue = this.revenueCanvas()?.nativeElement;
+    const orders = this.ordersCanvas()?.nativeElement;
+    const status = this.statusCanvas()?.nativeElement;
+    const payment = this.paymentCanvas()?.nativeElement;
+
+    if (!revenue || !orders || !status || !payment) {
+      return null;
+    }
+
+    return { revenue, orders, status, payment };
   }
 
   private buildMetrics(orders: readonly OrderRecord[]): readonly ChartMetric[] {
@@ -322,4 +322,11 @@ interface MonthlyGroup {
   paid: number;
   debt: number;
   count: number;
+}
+
+interface ChartCanvases {
+  revenue: HTMLCanvasElement;
+  orders: HTMLCanvasElement;
+  status: HTMLCanvasElement;
+  payment: HTMLCanvasElement;
 }
