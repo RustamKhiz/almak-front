@@ -14,7 +14,11 @@ export function getOptionalTotal(count: number | null, price: number | null): nu
 }
 
 export function getMoldingTotal(item: MoldingItem): number {
-  return item.framePrice * item.frameCount + item.platbandPrice * item.platbandCount;
+  return (
+    item.framePrice * item.frameCount +
+    item.platbandPrice * item.platbandCount +
+    item.rebateBarPrice * item.rebateBarCount
+  );
 }
 
 export function getExtensionTotal(item: ExtensionItem): number {
@@ -43,6 +47,7 @@ export function getHardwareTotal(item: HardwareItem): number {
     getOptionalTotal(item.handleCount, item.handlePrice) +
     getOptionalTotal(item.lockCount, item.lockPrice) +
     getOptionalTotal(item.fixatorCount, item.fixatorPrice) +
+    getOptionalTotal(item.clickCount, item.clickPrice) +
     getOptionalTotal(item.thumbturnCount, item.thumbturnPrice) +
     getOptionalTotal(item.escutcheonCount, item.escutcheonPrice) +
     getOptionalTotal(item.cylinderCount, item.cylinderPrice) +

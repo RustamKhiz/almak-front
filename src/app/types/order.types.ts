@@ -135,6 +135,7 @@ export interface MoldingItem {
   platbandPrice: number;
   platbandCount: number;
   rebateBarCount: number;
+  rebateBarPrice: number;
   color: string;
   covering: MoldingCovering;
   comment: string;
@@ -199,6 +200,8 @@ export interface HardwareItem {
   lockPrice: number | null;
   fixatorCount: number | null;
   fixatorPrice: number | null;
+  clickCount: number | null;
+  clickPrice: number | null;
   thumbturnCount: number | null;
   thumbturnPrice: number | null;
   escutcheonCount: number | null;

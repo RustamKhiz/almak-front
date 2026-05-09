@@ -16,6 +16,16 @@ export const routes: Routes = [
     canActivate: [authGuard],
   },
   {
+    path: 'drafts',
+    loadComponent: () => import('./pages/order-drafts/order-drafts.component').then((m) => m.OrderDraftsComponent),
+    title: 'Черновики',
+  },
+  {
+    path: 'drafts/:draftId',
+    loadComponent: () => import('./pages/order/order.component').then((m) => m.OrderComponent),
+    title: 'Черновик заказа',
+  },
+  {
     path: 'order/:id',
     loadComponent: () => import('./pages/order-view/order-view.component').then((m) => m.OrderViewComponent),
     title: 'Просмотр заказа',

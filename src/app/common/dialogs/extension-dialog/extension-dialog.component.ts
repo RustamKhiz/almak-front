@@ -12,12 +12,15 @@ import {
   EXTENSION_COVERING_LABELS,
   EXTENSION_COVERING_OPTIONS,
 } from '../../constants/molding-catalog';
-import { ExtensionItem, OrderItemType } from '../../../types/order.types';
+import { ExtensionCovering, ExtensionItem, OrderItemType } from '../../../types/order.types';
 import { QuantityFieldComponent } from '../../../ui/quantity-field/quantity-field.component';
+import { bindLeadingCapitalization } from '../../utils/form-text';
 
 export interface ExtensionDialogData {
   mode: 'create' | 'edit';
   extension?: ExtensionItem;
+  defaultColor?: string;
+  defaultCovering?: ExtensionCovering;
 }
 
 export type ExtensionDialogResult = Omit<ExtensionItem, 'id'>;
@@ -49,8 +52,11 @@ export class ExtensionDialogComponent {
   protected readonly coveringLabels = EXTENSION_COVERING_LABELS;
 
   protected readonly form = this.fb.group({
-    color: [this.data.extension?.color ?? '', [Validators.required]],
-    covering: [this.data.extension?.covering ?? DEFAULT_EXTENSION_COVERING, [Validators.required]],
+    color: [this.data.extension?.color ?? this.data.defaultColor ?? '', [Validators.required]],
+    covering: [
+      this.data.extension?.covering ?? this.data.defaultCovering ?? DEFAULT_EXTENSION_COVERING,
+      [Validators.required],
+    ],
     width: [this.data.extension?.width ?? null, [Validators.required, Validators.min(1)]],
     height: [this.data.extension?.height ?? null, [Validators.required, Validators.min(1)]],
     quantityPerSet: [this.data.extension?.quantityPerSet ?? 0.5, [Validators.required, Validators.min(0.5)]],
@@ -62,6 +68,8 @@ export class ExtensionDialogComponent {
   protected readonly title = computed(() => (this.data.mode === 'edit' ? 'Редактировать доборы' : 'Добавить доборы'));
 
   constructor() {
+    bindLeadingCapitalization(this.form.controls.color, this.destroyRef);
+
     this.lastAutoTotalArea = this.calculateArea(
       this.form.controls.width.value,
       this.form.controls.height.value,

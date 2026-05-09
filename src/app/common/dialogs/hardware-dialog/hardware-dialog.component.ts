@@ -38,6 +38,8 @@ export class HardwareDialogComponent {
       lockPrice: this.data.hardware?.lockPrice ?? null,
       fixatorCount: this.data.hardware?.fixatorCount ?? null,
       fixatorPrice: this.data.hardware?.fixatorPrice ?? null,
+      clickCount: this.data.hardware?.clickCount ?? null,
+      clickPrice: this.data.hardware?.clickPrice ?? null,
       thumbturnCount: this.data.hardware?.thumbturnCount ?? null,
       thumbturnPrice: this.data.hardware?.thumbturnPrice ?? null,
       escutcheonCount: this.data.hardware?.escutcheonCount ?? null,
@@ -61,6 +63,7 @@ export class HardwareDialogComponent {
 
   constructor() {
     bindLeadingCapitalization(this.form.controls.handleModel, this.destroyRef);
+    bindLeadingCapitalization(this.form.controls.handleColor, this.destroyRef);
 
     this.form.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
       if (this.form.hasError('emptyHardware')) {
@@ -90,6 +93,8 @@ export class HardwareDialogComponent {
       lockPrice: value.lockPrice,
       fixatorCount: value.fixatorCount,
       fixatorPrice: value.fixatorPrice,
+      clickCount: value.clickCount,
+      clickPrice: value.clickPrice,
       thumbturnCount: value.thumbturnCount,
       thumbturnPrice: value.thumbturnPrice,
       escutcheonCount: value.escutcheonCount,

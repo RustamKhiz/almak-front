@@ -22,7 +22,7 @@ import {
   INTERIOR_DOOR_HEIGHT_OPTIONS,
   INTERIOR_DOOR_WIDTH_OPTIONS,
 } from '../../constants/interior-door-catalog';
-import { DoorLeafType, InteriorDoorItem, OrderItemType } from '../../../types/order.types';
+import { DoorLeafType, InteriorDoorCovering, InteriorDoorItem, OrderItemType } from '../../../types/order.types';
 import { CatalogAutocompleteFieldComponent } from '../../../ui/catalog-autocomplete-field/catalog-autocomplete-field.component';
 import { QuantityFieldComponent } from '../../../ui/quantity-field/quantity-field.component';
 import { bindLeadingCapitalization } from '../../utils/form-text';
@@ -30,6 +30,8 @@ import { bindLeadingCapitalization } from '../../utils/form-text';
 export interface InteriorDoorDialogData {
   mode: 'create' | 'edit';
   door?: InteriorDoorItem;
+  defaultColor?: string;
+  defaultCovering?: InteriorDoorCovering;
 }
 
 export type InteriorDoorDialogResult = Omit<InteriorDoorItem, 'id'>;
@@ -68,7 +70,7 @@ export class InteriorDoorDialogComponent {
 
   protected readonly form = this.fb.group({
     model: [this.data.door?.model ?? '', [Validators.required]],
-    color: [this.data.door?.color ?? '', [Validators.required]],
+    color: [this.data.door?.color ?? this.data.defaultColor ?? '', [Validators.required]],
     hasGlass: [this.data.door?.hasGlass ?? false],
     glassComment: [this.data.door?.glassComment ?? ''],
     width: [this.data.door?.width ?? DEFAULT_INTERIOR_DOOR_WIDTH, [Validators.required, Validators.min(1)]],
@@ -80,7 +82,10 @@ export class InteriorDoorDialogComponent {
     leafType: [this.data.door?.leafType ?? DoorLeafType.Single, [Validators.required]],
     count: [this.data.door?.count ?? 1, [Validators.required, Validators.min(1)]],
     count2: [(this.data.door?.count2 ?? this.data.door?.count ?? 1) as number | null],
-    covering: [this.data.door?.covering ?? DEFAULT_INTERIOR_DOOR_COVERING, [Validators.required]],
+    covering: [
+      this.data.door?.covering ?? this.data.defaultCovering ?? DEFAULT_INTERIOR_DOOR_COVERING,
+      [Validators.required],
+    ],
     comment: [this.data.door?.comment ?? ''],
   });
 

@@ -15,12 +15,15 @@ import {
   MOLDING_PLATBAND_TYPE_LABELS,
   MOLDING_PLATBAND_TYPE_OPTIONS,
 } from '../../constants/molding-catalog';
-import { MoldingItem, MoldingPlatbandType, OrderItemType } from '../../../types/order.types';
+import { MoldingCovering, MoldingItem, MoldingPlatbandType, OrderItemType } from '../../../types/order.types';
 import { QuantityFieldComponent } from '../../../ui/quantity-field/quantity-field.component';
+import { bindLeadingCapitalization } from '../../utils/form-text';
 
 export interface MoldingDialogData {
   mode: 'create' | 'edit';
   molding?: MoldingItem;
+  defaultColor?: string;
+  defaultCovering?: MoldingCovering;
 }
 
 export type MoldingDialogResult = Omit<MoldingItem, 'id'>;
@@ -61,17 +64,23 @@ export class MoldingDialogComponent {
     platbandType: [this.data.molding?.platbandType ?? DEFAULT_MOLDING_PLATBAND_TYPE, [Validators.required]],
     platbandFigure: this.data.molding?.platbandFigure ?? '',
     platbandLength: [this.data.molding?.platbandLength ?? null, [Validators.min(0)]],
-    platbandPrice: [this.data.molding?.platbandPrice ?? null, [Validators.required, Validators.min(0)]],
+    platbandPrice: [this.data.molding?.platbandPrice ?? null, [Validators.min(0)]],
     platbandCount: [this.data.molding?.platbandCount ?? 2.5, [Validators.required, Validators.min(0.5)]],
-    rebateBarCount: [this.data.molding?.rebateBarCount ?? 1, [Validators.required, Validators.min(0)]],
-    color: [this.data.molding?.color ?? '', [Validators.required]],
-    covering: [this.data.molding?.covering ?? DEFAULT_MOLDING_COVERING, [Validators.required]],
+    rebateBarCount: [this.data.molding?.rebateBarCount ?? 0, [Validators.required, Validators.min(0)]],
+    rebateBarPrice: [this.data.molding?.rebateBarPrice ?? null, [Validators.min(0)]],
+    color: [this.data.molding?.color ?? this.data.defaultColor ?? '', [Validators.required]],
+    covering: [
+      this.data.molding?.covering ?? this.data.defaultCovering ?? DEFAULT_MOLDING_COVERING,
+      [Validators.required],
+    ],
     comment: this.data.molding?.comment ?? '',
   });
 
   protected readonly title = computed(() => (this.data.mode === 'edit' ? 'Редактировать погонаж' : 'Добавить погонаж'));
 
   constructor() {
+    bindLeadingCapitalization(this.form.controls.color, this.destroyRef);
+
     this.form.controls.platbandType.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((value) => {
       const isFigure = value === MoldingPlatbandType.Figure;
       this.isFigureType.set(isFigure);
@@ -103,6 +112,7 @@ export class MoldingDialogComponent {
       platbandPrice: value.platbandPrice,
       platbandCount: value.platbandCount,
       rebateBarCount: value.rebateBarCount,
+      rebateBarPrice: value.rebateBarPrice ?? 0,
       color: value.color.trim(),
       covering: value.covering,
       comment: value.comment.trim(),

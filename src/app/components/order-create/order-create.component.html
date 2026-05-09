@@ -10,9 +10,30 @@
         <h1>{{ isEditMode() ? 'Редактировать заказ' : 'Создать заказ' }}</h1>
       </div>
       <p>Заполните данные клиента, добавьте товары и проверьте итог перед сохранением.</p>
+      @if (draftMessage()) {
+        <div class="order-create__notice">{{ draftMessage() }}</div>
+      }
+      @if (submitError()) {
+        <div class="order-create__error">{{ submitError() }}</div>
+      }
     </div>
 
-    <div class="order-create__header-actions">
+    <div class="order-create__header-actions" [formGroup]="form">
+      <mat-form-field appearance="outline" class="order-create__default-field">
+        <mat-label>Цвет</mat-label>
+        <input matInput formControlName="defaultColor" />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="order-create__default-field">
+        <mat-label>Покрытие</mat-label>
+        <mat-select formControlName="defaultCovering">
+          <mat-option [value]="null">Не выбрано</mat-option>
+          @for (covering of defaultCoveringOptions; track covering) {
+            <mat-option [value]="covering">{{ defaultCoveringLabels[covering] }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
       <button mat-flat-button color="primary" [matMenuTriggerFor]="addItemMenu">Добавить</button>
       <mat-menu #addItemMenu="matMenu">
         <button mat-menu-item type="button" (click)="onAddItemClick(orderItemEntity.InteriorDoor)">
@@ -60,22 +81,6 @@
         <input matInput type="date" formControlName="date" />
         @if (form.controls.date.touched && form.controls.date.invalid) {
           <mat-error>Обязательное поле</mat-error>
-        }
-      </mat-form-field>
-
-      <mat-form-field appearance="outline">
-        <mat-label>Скидка</mat-label>
-        <input matInput type="number" formControlName="discount" placeholder="0" />
-        @if (form.controls.discount.touched && form.controls.discount.invalid) {
-          <mat-error>Введите число больше 0</mat-error>
-        }
-      </mat-form-field>
-
-      <mat-form-field appearance="outline">
-        <mat-label>Внесено клиентом</mat-label>
-        <input matInput type="number" formControlName="prepayment" placeholder="0" />
-        @if (form.controls.prepayment.touched && form.controls.prepayment.invalid) {
-          <mat-error>Введите число больше 0</mat-error>
         }
       </mat-form-field>
 
@@ -146,6 +151,9 @@
       </div>
     </div>
 
-    <button mat-flat-button color="primary" (click)="onSaveClick()">Сохранить</button>
+    <div class="order-create__save-actions">
+      <button mat-stroked-button type="button" (click)="onSaveDraftClick()">Сохранить черновик</button>
+      <button mat-flat-button color="primary" type="button" (click)="onSaveClick()">Сохранить</button>
+    </div>
   </div>
 </section>

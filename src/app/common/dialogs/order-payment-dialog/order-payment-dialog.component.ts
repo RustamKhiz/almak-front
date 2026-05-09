@@ -8,6 +8,9 @@ import { MatInputModule } from '@angular/material/input';
 export interface OrderPaymentDialogData {
   title?: string;
   confirmText?: string;
+  commentLabel?: string;
+  commentPlaceholder?: string;
+  initialAmount?: number | null;
 }
 
 export interface OrderPaymentDialogResult {
@@ -28,7 +31,7 @@ export class OrderPaymentDialogComponent {
 
   protected readonly data = inject<OrderPaymentDialogData>(MAT_DIALOG_DATA, { optional: true }) ?? {};
   protected readonly form = this.fb.group({
-    amount: [null as number | null, [Validators.required, Validators.min(0.01)]],
+    amount: [this.data.initialAmount ?? (null as number | null), [Validators.required, Validators.min(0)]],
     comment: [''],
   });
 
