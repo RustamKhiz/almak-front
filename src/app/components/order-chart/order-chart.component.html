@@ -1,3 +1,46 @@
-<div class="order-chart">
-  <div class="placeholder">Название графика</div>
+<div class="analytics">
+  @if (isLoading()) {
+    <div class="state">Загружаем данные...</div>
+  } @else if (loadError()) {
+    <div class="state state_error">{{ loadError() }}</div>
+  } @else if (!hasData()) {
+    <div class="state">Пока нет заказов для построения графиков.</div>
+  } @else {
+    <div class="metrics">
+      @for (metric of metrics(); track metric.label) {
+        <div class="metric">
+          <div class="metric__label">{{ metric.label }}</div>
+          <div class="metric__value">{{ metric.value }}</div>
+        </div>
+      }
+    </div>
+
+    <section class="chart-panel chart-panel_wide">
+      <h2>Сумма заказов и оплат по месяцам</h2>
+      <div class="chart-frame">
+        <canvas #revenueCanvas></canvas>
+      </div>
+    </section>
+
+    <section class="chart-panel">
+      <h2>Количество заказов по месяцам</h2>
+      <div class="chart-frame">
+        <canvas #ordersCanvas></canvas>
+      </div>
+    </section>
+
+    <section class="chart-panel">
+      <h2>Заказы по статусам</h2>
+      <div class="chart-frame">
+        <canvas #statusCanvas></canvas>
+      </div>
+    </section>
+
+    <section class="chart-panel">
+      <h2>Оплата заказов</h2>
+      <div class="chart-frame">
+        <canvas #paymentCanvas></canvas>
+      </div>
+    </section>
+  }
 </div>
