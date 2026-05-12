@@ -104,11 +104,13 @@ interface BackendMolding {
   order_id: number;
   frameLength?: number | null;
   framePrice: number;
+  frameSetCount?: number;
   frameCount: number;
   platbandType: string;
   platbandFigure?: string | null;
   platbandLength?: number | null;
   platbandPrice: number;
+  platbandSetCount?: number;
   platbandCount: number;
   rebateBarCount: number;
   rebateBarPrice?: number;
@@ -123,6 +125,7 @@ interface BackendExtension {
   covering?: string;
   width: number;
   height: number;
+  setCount?: number;
   quantityPerSet?: number;
   totalArea?: number;
   comment?: string;
@@ -244,11 +247,13 @@ interface BackendEntranceDoorPayload {
 interface BackendMoldingPayload {
   frameLength?: number | null;
   framePrice: number;
+  frameSetCount: number;
   frameCount: number;
   platbandType: string;
   platbandFigure?: string | null;
   platbandLength?: number | null;
   platbandPrice: number;
+  platbandSetCount: number;
   platbandCount: number;
   rebateBarCount: number;
   rebateBarPrice: number;
@@ -261,6 +266,7 @@ interface BackendExtensionPayload {
   covering: string;
   width: number;
   height: number;
+  setCount: number;
   quantityPerSet: number;
   totalArea: number;
   comment: string;
@@ -382,7 +388,7 @@ export class OrdersService {
   }
   reverseOrderPayment(orderId: number, paymentId: number): Observable<OrderCreatePayload> {
     return this.http
-      .post<BackendOrder>(`${this.coreService.apiBaseUrl}/orders/${orderId}/payments/${paymentId}/reverse`, {})
+      .delete<BackendOrder>(`${this.coreService.apiBaseUrl}/orders/${orderId}/payments/${paymentId}`)
       .pipe(map((order) => this.mapBackendOrderToCreatePayload(order)));
   }
   updateOrderDiscount(id: number, amount: number): Observable<OrderCreatePayload> {
@@ -481,11 +487,13 @@ export class OrdersService {
       moldings: payload.moldings.map((item) => ({
         frameLength: item.frameLength,
         framePrice: item.framePrice,
+        frameSetCount: item.frameSetCount,
         frameCount: item.frameCount,
         platbandType: item.platbandType,
         platbandFigure: item.platbandFigure,
         platbandLength: item.platbandLength,
         platbandPrice: item.platbandPrice,
+        platbandSetCount: item.platbandSetCount,
         platbandCount: item.platbandCount,
         rebateBarCount: item.rebateBarCount,
         rebateBarPrice: item.rebateBarPrice,
@@ -498,6 +506,7 @@ export class OrdersService {
         covering: item.covering,
         width: item.width,
         height: item.height,
+        setCount: item.setCount,
         quantityPerSet: item.quantityPerSet,
         totalArea: item.totalArea,
         comment: item.comment,
@@ -610,11 +619,13 @@ export class OrdersService {
       type: OrderItemType.Molding,
       frameLength: item.frameLength ?? null,
       framePrice: item.framePrice,
+      frameSetCount: item.frameSetCount ?? Number((item.frameCount / 2.5).toFixed(1)),
       frameCount: item.frameCount,
       platbandType: this.mapMoldingPlatbandType(item.platbandType),
       platbandFigure: item.platbandFigure ?? null,
       platbandLength: item.platbandLength ?? null,
       platbandPrice: item.platbandPrice,
+      platbandSetCount: item.platbandSetCount ?? Number((item.platbandCount / 2.5).toFixed(1)),
       platbandCount: item.platbandCount,
       rebateBarCount: item.rebateBarCount ?? 0,
       rebateBarPrice: item.rebateBarPrice ?? 0,
@@ -631,6 +642,7 @@ export class OrdersService {
       covering: this.mapExtensionCovering(item.covering),
       width: item.width,
       height: item.height,
+      setCount: item.setCount ?? Number(((item.quantityPerSet ?? 0.5) / 2.5).toFixed(1)),
       quantityPerSet: item.quantityPerSet ?? 0.5,
       totalArea: item.totalArea ?? Number(((item.width * item.height * 0.5) / 10000).toFixed(2)),
       comment: item.comment ?? '',

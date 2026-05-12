@@ -60,11 +60,19 @@ export class MoldingDialogComponent {
   protected readonly form = this.fb.nonNullable.group({
     frameLength: [this.data.molding?.frameLength ?? null, [Validators.min(0)]],
     framePrice: [this.data.molding?.framePrice ?? null, [Validators.min(0)]],
+    frameSetCount: [
+      this.data.molding?.frameSetCount ?? Number(((this.data.molding?.frameCount ?? 2.5) / 2.5).toFixed(1)),
+      [Validators.required, Validators.min(0.5)],
+    ],
     frameCount: [this.data.molding?.frameCount ?? 2.5, [Validators.required, Validators.min(0.5)]],
     platbandType: [this.data.molding?.platbandType ?? DEFAULT_MOLDING_PLATBAND_TYPE, [Validators.required]],
     platbandFigure: this.data.molding?.platbandFigure ?? '',
     platbandLength: [this.data.molding?.platbandLength ?? null, [Validators.min(0)]],
     platbandPrice: [this.data.molding?.platbandPrice ?? null, [Validators.min(0)]],
+    platbandSetCount: [
+      this.data.molding?.platbandSetCount ?? Number(((this.data.molding?.platbandCount ?? 2.5) / 2.5).toFixed(1)),
+      [Validators.required, Validators.min(0.5)],
+    ],
     platbandCount: [this.data.molding?.platbandCount ?? 2.5, [Validators.required, Validators.min(0.5)]],
     rebateBarCount: [this.data.molding?.rebateBarCount ?? 0, [Validators.required, Validators.min(0)]],
     rebateBarPrice: [this.data.molding?.rebateBarPrice ?? null, [Validators.min(0)]],
@@ -80,6 +88,15 @@ export class MoldingDialogComponent {
 
   constructor() {
     bindLeadingCapitalization(this.form.controls.color, this.destroyRef);
+    bindLeadingCapitalization(this.form.controls.platbandFigure, this.destroyRef);
+
+    this.form.controls.frameSetCount.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((value) => {
+      this.form.controls.frameCount.setValue(Number((Number(value ?? 0) * 2.5).toFixed(1)), { emitEvent: false });
+    });
+
+    this.form.controls.platbandSetCount.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((value) => {
+      this.form.controls.platbandCount.setValue(Number((Number(value ?? 0) * 2.5).toFixed(1)), { emitEvent: false });
+    });
 
     this.form.controls.platbandType.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((value) => {
       const isFigure = value === MoldingPlatbandType.Figure;
@@ -105,11 +122,13 @@ export class MoldingDialogComponent {
       type: OrderItemType.Molding,
       frameLength: value.frameLength == null ? null : Math.max(0, value.frameLength),
       framePrice: value.framePrice ?? 0,
+      frameSetCount: value.frameSetCount,
       frameCount: value.frameCount,
       platbandType: value.platbandType,
       platbandFigure: value.platbandType === MoldingPlatbandType.Figure ? value.platbandFigure.trim() || null : null,
       platbandLength: value.platbandLength == null ? null : Math.max(0, value.platbandLength),
       platbandPrice: value.platbandPrice,
+      platbandSetCount: value.platbandSetCount,
       platbandCount: value.platbandCount,
       rebateBarCount: value.rebateBarCount,
       rebateBarPrice: value.rebateBarPrice ?? 0,

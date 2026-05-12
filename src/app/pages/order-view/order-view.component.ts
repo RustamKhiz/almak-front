@@ -262,6 +262,7 @@ export class OrderViewComponent {
         data: {
           title: 'Внести оплату',
           confirmText: 'Добавить платеж',
+          maxAmount: this.getCustomerDebt(current.data),
         },
       })
       .afterClosed()
@@ -322,9 +323,9 @@ export class OrderViewComponent {
     }
 
     const dialogData: ConfirmDialogData = {
-      title: 'Сторно платежа',
-      message: 'Подтвердите сторно этой оплаты. Операция будет добавлена в историю отдельной записью.',
-      confirmText: 'Сделать сторно',
+      title: 'Удаление оплаты',
+      message: 'Подтвердите удаление этой записи об оплате.',
+      confirmText: 'Удалить',
       cancelText: 'Отмена',
     };
 
@@ -342,7 +343,7 @@ export class OrderViewComponent {
           this.state.set({ id: current.id, data });
         },
         error: () => {
-          this.errorMessage.set('Не удалось выполнить сторно платежа.');
+          this.errorMessage.set('Не удалось удалить оплату.');
         },
       });
   }
@@ -406,11 +407,11 @@ export class OrderViewComponent {
       return payment.comment;
     }
 
-    return this.isReversalPayment(payment) ? 'Сторно без комментария' : 'Без комментария';
+    return 'Без комментария';
   }
 
   protected getPaymentDirectionLabel(payment: OrderPayment): string {
-    return this.isReversalPayment(payment) ? 'Сторно' : 'Оплата';
+    return this.isReversalPayment(payment) ? 'Корректировка' : 'Оплата';
   }
 
   private getPaymentTimestamp(payment: OrderPayment): number {
@@ -437,8 +438,8 @@ export class OrderViewComponent {
 
   private buildProductCards(order: OrderCreatePayload): OrderViewProductCard[] {
     return [
-      ...order.interiorDoors.map((item) => this.buildInteriorDoorCard(item)),
       ...order.entranceDoors.map((item) => this.buildEntranceDoorCard(item)),
+      ...order.interiorDoors.map((item) => this.buildInteriorDoorCard(item)),
       ...order.moldings.map((item) => this.buildMoldingCard(item)),
       ...order.extensions.map((item) => this.buildExtensionCard(item)),
       ...order.capitals.map((item) => this.buildCapitalCard(item)),
@@ -532,7 +533,7 @@ export class OrderViewComponent {
       key: `molding-${item.id}`,
       typeLabel: 'Погонаж',
       title: `${item.color} · ${this.moldingCoveringLabels[item.covering]}`,
-      summary: `Коробка ${item.frameCount} шт. · Наличник ${item.platbandCount} шт. · Притворная планка ${item.rebateBarCount} шт.`,
+      summary: `Коробка ${item.frameSetCount} комп. / ${item.frameCount} шт. · Наличник ${item.platbandSetCount} комп. / ${item.platbandCount} шт. · Притворная планка ${item.rebateBarCount} шт.`,
       countLabel: `${item.frameCount + item.platbandCount + item.rebateBarCount} шт.`,
       total: getMoldingTotal(item),
       details: {
@@ -543,6 +544,7 @@ export class OrderViewComponent {
         sections: [
           this.section('Коробка', [
             ['Длина', item.frameLength !== null ? `${item.frameLength} см` : 'Не указана'],
+            ['Количество комплектов', `${item.frameSetCount}`],
             ['Количество', `${item.frameCount} шт.`],
             ['Цена за штуку', this.formatMoney(item.framePrice)],
           ]),
@@ -550,6 +552,7 @@ export class OrderViewComponent {
             ['Тип', this.moldingPlatbandTypeLabels[item.platbandType]],
             ['Модель', item.platbandFigure || 'Не указана'],
             ['Длина', item.platbandLength !== null ? `${item.platbandLength} см` : 'Не указана'],
+            ['Количество комплектов', `${item.platbandSetCount}`],
             ['Количество', `${item.platbandCount} шт.`],
             ['Цена за штуку', this.formatMoney(item.platbandPrice)],
           ]),
@@ -570,7 +573,7 @@ export class OrderViewComponent {
       key: `extension-${item.id}`,
       typeLabel: 'Доборы',
       title: `${item.color} · ${this.extensionCoveringLabels[item.covering]}`,
-      summary: `${item.width} × ${item.height} см · доборов ${item.quantityPerSet} · ${item.totalArea} м²`,
+      summary: `${item.width} × ${item.height} см · комплектов ${item.setCount} · доборов ${item.quantityPerSet} · ${item.totalArea} м²`,
       countLabel: `${item.quantityPerSet} шт.`,
       total: getExtensionTotal(item),
       details: {
@@ -582,6 +585,7 @@ export class OrderViewComponent {
           this.section('Размеры и комплектация', [
             ['Ширина', `${item.width} см`],
             ['Высота', `${item.height} см`],
+            ['Количество комплектов', `${item.setCount}`],
             ['Количество доборов', `${item.quantityPerSet}`],
             ['Общая квадратура', `${item.totalArea} м²`],
           ]),
@@ -644,12 +648,12 @@ export class OrderViewComponent {
             ['Цена', item.handlePrice !== null ? this.formatMoney(item.handlePrice) : 'Не указана'],
           ]),
           this.section('Механизмы', [
-            ['Замок', this.formatCountPrice(item.lockCount, item.lockPrice)],
             ['Фиксатор', this.formatCountPrice(item.fixatorCount, item.fixatorPrice)],
-            ['Щелчок', this.formatCountPrice(item.clickCount, item.clickPrice)],
             ['Крутилка', this.formatCountPrice(item.thumbturnCount, item.thumbturnPrice)],
+            ['Замок', this.formatCountPrice(item.lockCount, item.lockPrice)],
+            ['Барабан', this.formatCountPrice(item.cylinderCount, item.cylinderPrice)],
             ['Накладка', this.formatCountPrice(item.escutcheonCount, item.escutcheonPrice)],
-            ['Цилиндр', this.formatCountPrice(item.cylinderCount, item.cylinderPrice)],
+            ['Щелчок', this.formatCountPrice(item.clickCount, item.clickPrice)],
             ['Шпингалет', this.formatCountPrice(item.boltCount, item.boltPrice)],
             ['Петли', this.formatCountPrice(item.hingeCount, item.hingePrice)],
             ['Ограничитель', this.formatCountPrice(item.doorStopCount, item.doorStopPrice)],
@@ -747,14 +751,17 @@ export class OrderViewComponent {
     if (item.handleColor) {
       parts.push(`цвет ручки ${item.handleColor}`);
     }
-    if (item.lockCount !== null) {
-      parts.push(`замков ${item.lockCount}`);
-    }
     if (item.fixatorCount !== null) {
       parts.push(`фиксаторов ${item.fixatorCount}`);
     }
-    if (item.clickCount !== null) {
-      parts.push(`щелчков ${item.clickCount}`);
+    if (item.thumbturnCount !== null) {
+      parts.push(`крутилок ${item.thumbturnCount}`);
+    }
+    if (item.lockCount !== null) {
+      parts.push(`замков ${item.lockCount}`);
+    }
+    if (item.cylinderCount !== null) {
+      parts.push(`барабанов ${item.cylinderCount}`);
     }
     if (item.hingeCount !== null) {
       parts.push(`петель ${item.hingeCount}`);

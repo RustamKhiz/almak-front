@@ -9,7 +9,7 @@
 @if (hasItems()) {
   <div class="door-list">
     @if (interiorDoorItems.length) {
-      <div class="door-section">
+      <div class="door-section door-section--interior">
         <div class="door-section__title">Межкомнатные двери</div>
         @for (door of interiorDoorItems; track door.id) {
           <div class="door-item">
@@ -71,7 +71,7 @@
     }
 
     @if (entranceDoorItems.length) {
-      <div class="door-section">
+      <div class="door-section door-section--entrance">
         <div class="door-section__title">Входные двери</div>
         @for (door of entranceDoorItems; track door.id) {
           <div class="door-item">

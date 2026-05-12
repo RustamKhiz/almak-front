@@ -19,7 +19,7 @@
           <div class="order-payment-history__side">
             <div class="order-payment-history__amount">{{ getPaymentAmountLabel(payment) }}</div>
             @if (canReversePayment(payment)) {
-              <button mat-stroked-button type="button" (click)="onReverseClick(payment)">Сторно</button>
+              <button mat-stroked-button type="button" (click)="onReverseClick(payment)">Удалить</button>
             }
           </div>
         </article>

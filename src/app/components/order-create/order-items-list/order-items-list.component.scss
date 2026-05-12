@@ -6,6 +6,15 @@
 .door-section {
   display: grid;
   gap: 12px;
+  order: 10;
+}
+
+.door-section--entrance {
+  order: 1;
+}
+
+.door-section--interior {
+  order: 2;
 }
 
 .door-section__title {

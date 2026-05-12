@@ -59,7 +59,11 @@ export class ExtensionDialogComponent {
     ],
     width: [this.data.extension?.width ?? null, [Validators.required, Validators.min(1)]],
     height: [this.data.extension?.height ?? null, [Validators.required, Validators.min(1)]],
-    quantityPerSet: [this.data.extension?.quantityPerSet ?? 0.5, [Validators.required, Validators.min(0.5)]],
+    setCount: [
+      this.data.extension?.setCount ?? Number(((this.data.extension?.quantityPerSet ?? 2.5) / 2.5).toFixed(1)),
+      [Validators.required, Validators.min(0.5)],
+    ],
+    quantityPerSet: [this.data.extension?.quantityPerSet ?? 2.5, [Validators.required, Validators.min(0.5)]],
     totalArea: [this.data.extension?.totalArea ?? null, [Validators.required, Validators.min(0)]],
     price: [this.data.extension?.price ?? null, [Validators.required, Validators.min(0)]],
     comment: [this.data.extension?.comment ?? ''],
@@ -69,6 +73,10 @@ export class ExtensionDialogComponent {
 
   constructor() {
     bindLeadingCapitalization(this.form.controls.color, this.destroyRef);
+
+    this.form.controls.setCount.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((value) => {
+      this.form.controls.quantityPerSet.setValue(Number((Number(value ?? 0) * 2.5).toFixed(1)));
+    });
 
     this.lastAutoTotalArea = this.calculateArea(
       this.form.controls.width.value,
@@ -109,6 +117,7 @@ export class ExtensionDialogComponent {
       covering: value.covering,
       width: value.width,
       height: value.height,
+      setCount: value.setCount,
       quantityPerSet: value.quantityPerSet,
       totalArea: value.totalArea,
       comment: value.comment?.trim(),

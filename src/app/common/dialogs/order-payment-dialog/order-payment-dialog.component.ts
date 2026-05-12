@@ -11,6 +11,7 @@ export interface OrderPaymentDialogData {
   commentLabel?: string;
   commentPlaceholder?: string;
   initialAmount?: number | null;
+  maxAmount?: number | null;
 }
 
 export interface OrderPaymentDialogResult {
@@ -31,7 +32,14 @@ export class OrderPaymentDialogComponent {
 
   protected readonly data = inject<OrderPaymentDialogData>(MAT_DIALOG_DATA, { optional: true }) ?? {};
   protected readonly form = this.fb.group({
-    amount: [this.data.initialAmount ?? (null as number | null), [Validators.required, Validators.min(0)]],
+    amount: [
+      this.data.initialAmount ?? (null as number | null),
+      [
+        Validators.required,
+        Validators.min(0),
+        ...(this.data.maxAmount != null ? [Validators.max(this.data.maxAmount)] : []),
+      ],
+    ],
     comment: [''],
   });
 

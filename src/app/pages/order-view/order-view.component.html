@@ -95,7 +95,7 @@
       <div class="order-view__info-grid">
         <div class="order-view__info-card">
           <div class="order-view__label">Доставка</div>
-          <div class="order-view__value">{{ $state.data.needsDelivery ? 'Нужна' : 'Не нужна' }}</div>
+          <div class="order-view__value">{{ $state.data.needsDelivery ? 'Есть' : 'Нет' }}</div>
           <div class="order-view__meta">
             {{ $state.data.needsDelivery ? $state.data.deliveryAddress || 'Адрес не указан' : 'Без доставки' }}
           </div>
@@ -106,11 +106,6 @@
           <div class="order-view__value">{{ $state.data.comment || 'Нет комментария' }}</div>
         </div>
 
-        <div class="order-view__info-card">
-          <div class="order-view__label">Общая стоимость</div>
-          <div class="order-view__value">{{ getOrderTotal($state.data) | number: '1.0-0' }} ₽</div>
-          <div class="order-view__meta">Скидка: {{ $state.data.discount | number: '1.0-0' }} ₽</div>
-        </div>
       </div>
     </section>
 

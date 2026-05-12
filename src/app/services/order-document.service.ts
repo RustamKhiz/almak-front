@@ -182,7 +182,7 @@ export class OrderDocumentService {
             @page { size: A4 landscape; margin: 8mm; }
             * { box-sizing: border-box; }
             html, body { width: 100%; }
-            body { font-family: "Times New Roman", serif; font-size: 11px; line-height: 1.15; color: #111; margin: 0; padding: 0; }
+            body { font-family: "Times New Roman", serif; font-size: 10px; line-height: 1.15; color: #111; margin: 0; padding: 0; }
             .doc { border: 1px solid #111; padding: 10px 12px; }
             .doc-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; margin-bottom: 8px; border-bottom: 1px solid #111; padding-bottom: 6px; }
             .company-wrap { display: flex; align-items: flex-start; gap: 12px; }
@@ -281,7 +281,7 @@ export class OrderDocumentService {
             @page { size: A4 landscape; margin: 8mm; }
             * { box-sizing: border-box; }
             html, body { width: 100%; }
-            body { font-family: "Times New Roman", serif; font-size: 11px; line-height: 1.15; color: #111; margin: 0; padding: 0; }
+            body { font-family: "Times New Roman", serif; font-size: 10px; line-height: 1.15; color: #111; margin: 0; padding: 0; }
             .doc { border: 1px solid #111; padding: 10px 12px; }
             .doc-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; margin-bottom: 8px; border-bottom: 1px solid #111; padding-bottom: 6px; }
             .company-wrap { display: flex; align-items: flex-start; gap: 12px; }
@@ -765,23 +765,23 @@ export class OrderDocumentService {
     if (item.handleCount !== null || item.handlePrice !== null) {
       details.push(`ручка ${this.formatCountPrice(item.handleCount, item.handlePrice)}`);
     }
-    if (item.lockCount !== null || item.lockPrice !== null) {
-      details.push(`замок ${this.formatCountPrice(item.lockCount, item.lockPrice)}`);
-    }
     if (item.fixatorCount !== null || item.fixatorPrice !== null) {
       details.push(`фиксатор ${this.formatCountPrice(item.fixatorCount, item.fixatorPrice)}`);
-    }
-    if (item.clickCount !== null || item.clickPrice !== null) {
-      details.push(`щелчок ${this.formatCountPrice(item.clickCount, item.clickPrice)}`);
     }
     if (item.thumbturnCount !== null || item.thumbturnPrice !== null) {
       details.push(`крутилка ${this.formatCountPrice(item.thumbturnCount, item.thumbturnPrice)}`);
     }
-    if (item.escutcheonCount !== null || item.escutcheonPrice !== null) {
-      details.push(`накладка ${this.formatCountPrice(item.escutcheonCount, item.escutcheonPrice)}`);
+    if (item.lockCount !== null || item.lockPrice !== null) {
+      details.push(`замок ${this.formatCountPrice(item.lockCount, item.lockPrice)}`);
     }
     if (item.cylinderCount !== null || item.cylinderPrice !== null) {
       details.push(`барабан ${this.formatCountPrice(item.cylinderCount, item.cylinderPrice)}`);
+    }
+    if (item.escutcheonCount !== null || item.escutcheonPrice !== null) {
+      details.push(`накладка ${this.formatCountPrice(item.escutcheonCount, item.escutcheonPrice)}`);
+    }
+    if (item.clickCount !== null || item.clickPrice !== null) {
+      details.push(`щелчок ${this.formatCountPrice(item.clickCount, item.clickPrice)}`);
     }
     if (item.boltCount !== null || item.boltPrice !== null) {
       details.push(`шпингалет ${this.formatCountPrice(item.boltCount, item.boltPrice)}`);

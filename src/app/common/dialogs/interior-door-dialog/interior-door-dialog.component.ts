@@ -158,7 +158,7 @@ export class InteriorDoorDialogComponent {
       height: value.height,
       height2: value.leafType === DoorLeafType.Double ? value.height2! : null,
       price: value.price,
-      price2: value.leafType === DoorLeafType.Double ? value.price2! : null,
+      price2: value.leafType === DoorLeafType.Double ? (value.price2 ?? null) : null,
       leafType: value.leafType,
       count: value.count,
       count2: value.leafType === DoorLeafType.Double ? value.count2! : null,
@@ -192,7 +192,7 @@ export class InteriorDoorDialogComponent {
         this.form.controls.count2.setValue(this.form.controls.count.value, { emitEvent: false });
       }
       secondLeafSizeControls.forEach((control) => control.addValidators([Validators.required, Validators.min(1)]));
-      this.form.controls.price2.addValidators([Validators.required, Validators.min(0)]);
+      this.form.controls.price2.addValidators([Validators.min(0)]);
     } else {
       this.form.controls.width2.setValue(null, { emitEvent: false });
       this.form.controls.height2.setValue(null, { emitEvent: false });

@@ -128,11 +128,13 @@ export interface MoldingItem {
   type: OrderItemType.Molding;
   frameLength: number | null;
   framePrice: number;
+  frameSetCount: number;
   frameCount: number;
   platbandType: MoldingPlatbandType;
   platbandFigure: string | null;
   platbandLength: number | null;
   platbandPrice: number;
+  platbandSetCount: number;
   platbandCount: number;
   rebateBarCount: number;
   rebateBarPrice: number;
@@ -148,6 +150,7 @@ export interface ExtensionItem {
   covering: ExtensionCovering;
   width: number;
   height: number;
+  setCount: number;
   quantityPerSet: number;
   totalArea: number;
   comment: string;

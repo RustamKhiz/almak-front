@@ -38,11 +38,11 @@ export class OrderPaymentHistoryDialogComponent {
       return payment.comment;
     }
 
-    return this.isReversalPayment(payment) ? 'Сторно без комментария' : 'Без комментария';
+    return 'Без комментария';
   }
 
   protected getPaymentDirectionLabel(payment: OrderPayment): string {
-    return this.isReversalPayment(payment) ? 'Сторно' : 'Оплата';
+    return this.isReversalPayment(payment) ? 'Корректировка' : 'Оплата';
   }
 
   protected onReverseClick(payment: OrderPayment): void {
