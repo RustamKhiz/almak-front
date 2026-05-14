@@ -43,7 +43,11 @@ jobs:
       - name: Install Wine for Windows installer build
         run: |
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends wine64
+          sudo apt-get install -y --no-install-recommends wine wine64
+          if ! command -v wine >/dev/null 2>&1 && command -v wine64 >/dev/null 2>&1; then
+            sudo ln -s "$(command -v wine64)" /usr/local/bin/wine
+          fi
+          wine --version
 
       - name: Build desktop app
         run: npm run electron:build:win
