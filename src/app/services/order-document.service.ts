@@ -58,7 +58,7 @@ export class OrderDocumentService {
     const rowCount =
       order.interiorDoors.length +
       order.entranceDoors.length +
-      order.moldings.length +
+      order.moldings.reduce((sum, item) => sum + this.getMoldingDocumentRowCount(item), 0) +
       order.extensions.length +
       order.capitals.length +
       order.hardwares.length +
@@ -97,17 +97,18 @@ export class OrderDocumentService {
       )
       .join('');
     const moldingRows = order.moldings
-      .map((item) =>
+      .flatMap((item) => this.buildMoldingDocumentRows(item))
+      .map((row) =>
         this.buildRow(
           rowNumber++,
-          'Погонаж',
-          this.getMoldingTitle(item),
-          this.getMoldingSizeLabel(item),
-          `${item.color}, ${this.getMoldingCoveringLabel(item.covering)}`,
-          item.comment || '-',
-          item.frameCount + item.platbandCount + item.rebateBarCount,
-          this.getMoldingTotal(item),
-          this.getMoldingTotal(item),
+          row.type,
+          row.title,
+          row.size,
+          row.color,
+          row.comment,
+          row.count,
+          row.price,
+          row.amount,
         ),
       )
       .join('');
@@ -179,7 +180,7 @@ export class OrderDocumentService {
           <meta charset="utf-8" />
           <title>Заказ-наряд №${orderId}</title>
           <style>
-            @page { size: A4 landscape; margin: 8mm; }
+            @page { size: A4 portrait; margin: 8mm; }
             * { box-sizing: border-box; }
             html, body { width: 100%; }
             body { font-family: "Times New Roman", serif; font-size: 10px; line-height: 1.15; color: #111; margin: 0; padding: 0; }
@@ -278,7 +279,7 @@ export class OrderDocumentService {
           <meta charset="utf-8" />
           <title>Заказ-наряд №${orderId}</title>
           <style>
-            @page { size: A4 landscape; margin: 8mm; }
+            @page { size: A4 portrait; margin: 8mm; }
             * { box-sizing: border-box; }
             html, body { width: 100%; }
             body { font-family: "Times New Roman", serif; font-size: 10px; line-height: 1.15; color: #111; margin: 0; padding: 0; }
@@ -444,19 +445,7 @@ export class OrderDocumentService {
           amount: item.price * item.count,
         }),
       ),
-      ...order.moldings.map(
-        (item): CustomDocumentRow => ({
-          key: `molding:${item.id}`,
-          type: 'Погонаж',
-          title: this.getMoldingTitle(item),
-          size: this.getMoldingSizeLabel(item),
-          color: `${item.color}, ${this.getMoldingCoveringLabel(item.covering)}`,
-          comment: item.comment || '-',
-          count: item.frameCount + item.platbandCount + item.rebateBarCount,
-          price: this.getMoldingTotal(item),
-          amount: this.getMoldingTotal(item),
-        }),
-      ),
+      ...order.moldings.flatMap((item) => this.buildMoldingDocumentRows(item)),
       ...order.extensions.map(
         (item): CustomDocumentRow => ({
           key: `extension:${item.id}`,
@@ -561,6 +550,52 @@ export class OrderDocumentService {
     return '';
   }
 
+  private buildMoldingDocumentRows(item: MoldingItem): readonly CustomDocumentRow[] {
+    const common = {
+      key: `molding:${item.id}`,
+      type: 'Погонаж',
+      color: `${item.color}, ${this.getMoldingCoveringLabel(item.covering)}`,
+      comment: item.comment || '-',
+    };
+    const rows: CustomDocumentRow[] = [
+      {
+        ...common,
+        title: 'Коробка',
+        size: item.frameLength !== null ? `${item.frameLength}` : '-',
+        count: item.frameCount,
+        price: item.framePrice,
+        amount: item.framePrice * item.frameCount,
+      },
+      {
+        ...common,
+        title: `Наличник ${this.getMoldingPlatbandTypeLabel(item.platbandType)}${
+          item.platbandFigure ? ` (${item.platbandFigure})` : ''
+        }`,
+        size: item.platbandLength !== null ? `${item.platbandLength}` : '-',
+        count: item.platbandCount,
+        price: item.platbandPrice,
+        amount: item.platbandPrice * item.platbandCount,
+      },
+    ];
+
+    if (item.rebateBarCount > 0 || item.rebateBarPrice > 0) {
+      rows.push({
+        ...common,
+        title: 'Притворная планка',
+        size: '-',
+        count: item.rebateBarCount,
+        price: item.rebateBarPrice,
+        amount: item.rebateBarPrice * item.rebateBarCount,
+      });
+    }
+
+    return rows;
+  }
+
+  private getMoldingDocumentRowCount(item: MoldingItem): number {
+    return item.rebateBarCount > 0 || item.rebateBarPrice > 0 ? 3 : 2;
+  }
+
   private getLeafTypeLabel(value: string): string {
     switch (value) {
       case DoorLeafType.Single:
@@ -614,20 +649,6 @@ export class OrderDocumentService {
       details.push(`глазок: ${item.hasPeephole ? 'есть' : 'нет'}`);
     }
     return details.join(', ');
-  }
-
-  private getMoldingTitle(item: MoldingItem): string {
-    return `Коробка + наличник ${this.getMoldingPlatbandTypeLabel(item.platbandType)}${item.platbandFigure ? ` (${item.platbandFigure})` : ''}`;
-  }
-
-  private getMoldingExecutionLabel(item: MoldingItem): string {
-    return `Цвет ${item.color}, притвор ${item.rebateBarCount} шт.`;
-  }
-
-  private getMoldingSizeLabel(item: MoldingItem): string {
-    const frame = item.frameLength !== null ? `${item.frameLength}` : '-';
-    const platband = item.platbandLength !== null ? `${item.platbandLength}` : '-';
-    return `кор. ${frame}; нал. ${platband}`;
   }
 
   private getMoldingCoveringLabel(value: MoldingCovering): string {
