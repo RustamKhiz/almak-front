@@ -39,6 +39,9 @@ jobs:
           rsync -avz --delete -e "ssh -i ~/.ssh/id_ed25519" \
             dist/almak/browser/ \
             ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/tmp/almak-frontend/
+          rsync -avz -e "ssh -i ~/.ssh/id_ed25519" \
+            deploy/nginx/almakk.ru.*.conf \
+            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/tmp/
 
       - name: Deploy frontend on server
         run: |
@@ -48,5 +51,12 @@ jobs:
             sudo chown -R www-data:www-data /var/www/app &&
             sudo find /var/www/app -type d -exec chmod 755 {} \; &&
             sudo find /var/www/app -type f -exec chmod 644 {} \; &&
+            if [ -f /etc/letsencrypt/live/almakk.ru/fullchain.pem ] && [ -f /etc/letsencrypt/live/almakk.ru/privkey.pem ]; then
+              sudo cp /tmp/almakk.ru.ssl.conf /etc/nginx/sites-available/almakk.ru;
+            else
+              sudo cp /tmp/almakk.ru.http.conf /etc/nginx/sites-available/almakk.ru;
+            fi &&
+            sudo ln -sfn /etc/nginx/sites-available/almakk.ru /etc/nginx/sites-enabled/almakk.ru &&
+            sudo nginx -t &&
             sudo systemctl reload nginx
           "
