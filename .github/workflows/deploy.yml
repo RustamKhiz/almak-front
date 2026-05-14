@@ -40,6 +40,11 @@ jobs:
             dist/almak/browser/ \
             ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/tmp/almak-frontend/
 
+      - name: Install Wine for Windows installer build
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends wine64
+
       - name: Build desktop app
         run: npm run electron:build:win
 
