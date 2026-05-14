@@ -5,7 +5,37 @@ on:
     branches: [main]
 
 jobs:
+  build-desktop:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build desktop app
+        run: npm run electron:build:win
+
+      - name: Upload desktop artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: almak-desktop
+          path: |
+            release/Almak-Setup-*.exe
+            release/Almak-Setup-*.exe.blockmap
+            release/latest.yml
+          if-no-files-found: error
+
   deploy:
+    needs: build-desktop
     runs-on: ubuntu-latest
 
     steps:
@@ -40,27 +70,17 @@ jobs:
             dist/almak/browser/ \
             ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/tmp/almak-frontend/
 
-      - name: Install Wine for Windows installer build
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends wine wine64
-          if ! command -v wine >/dev/null 2>&1 && command -v wine64 >/dev/null 2>&1; then
-            sudo ln -s "$(command -v wine64)" /usr/local/bin/wine
-          fi
-          wine --version
-
-      - name: Build desktop app
-        run: npm run electron:build:win
+      - name: Download desktop artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: almak-desktop
+          path: release/downloads
 
       - name: Prepare desktop download artifact
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p release/downloads
-          cp release/Almak-Setup-*.exe release/downloads/Almak-Setup-latest.exe
-          cp release/Almak-Setup-*.exe release/downloads/
-          cp release/Almak-Setup-*.exe.blockmap release/downloads/
-          cp release/latest.yml release/downloads/
+          cp release/downloads/Almak-Setup-*.exe release/downloads/Almak-Setup-latest.exe
 
       - name: Upload desktop artifacts
         run: |
