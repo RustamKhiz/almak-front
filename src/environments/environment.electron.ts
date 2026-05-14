@@ -1,7 +1,7 @@
 export const environment = {
   production: true,
-  apiBaseUrl: '/api',
-  useHashRouting: false,
-  showDesktopDownload: true,
+  apiBaseUrl: 'https://almakk.ru/api',
+  useHashRouting: true,
+  showDesktopDownload: false,
   desktopDownloadUrl: 'https://almakk.ru/downloads/Almak-Setup-latest.exe',
 };

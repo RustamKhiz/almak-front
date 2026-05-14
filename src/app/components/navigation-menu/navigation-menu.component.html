@@ -11,4 +11,8 @@
       <span class="nav-item"> График </span>
     </a>
   </mat-nav-list>
+
+  @if (showDesktopDownload) {
+    <a class="download-app" [href]="desktopDownloadUrl" download> Скачать приложение </a>
+  }
 </div>

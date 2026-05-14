@@ -49,42 +49,42 @@
     @if (filteredOrders().length === 0) {
       <div class="state">По выбранным фильтрам нет заказов.</div>
     } @else {
-    <div class="metrics">
-      @for (metric of metrics(); track metric.label) {
-        <div class="metric">
-          <div class="metric__label">{{ metric.label }}</div>
-          <div class="metric__value">{{ metric.value }}</div>
+      <div class="metrics">
+        @for (metric of metrics(); track metric.label) {
+          <div class="metric">
+            <div class="metric__label">{{ metric.label }}</div>
+            <div class="metric__value">{{ metric.value }}</div>
+          </div>
+        }
+      </div>
+
+      <section class="chart-panel chart-panel_wide">
+        <h2>Сумма заказов и оплат по месяцам</h2>
+        <div class="chart-frame">
+          <canvas #revenueCanvas></canvas>
         </div>
-      }
-    </div>
+      </section>
 
-    <section class="chart-panel chart-panel_wide">
-      <h2>Сумма заказов и оплат по месяцам</h2>
-      <div class="chart-frame">
-        <canvas #revenueCanvas></canvas>
-      </div>
-    </section>
+      <section class="chart-panel">
+        <h2>Количество заказов по месяцам</h2>
+        <div class="chart-frame">
+          <canvas #ordersCanvas></canvas>
+        </div>
+      </section>
 
-    <section class="chart-panel">
-      <h2>Количество заказов по месяцам</h2>
-      <div class="chart-frame">
-        <canvas #ordersCanvas></canvas>
-      </div>
-    </section>
+      <section class="chart-panel">
+        <h2>Заказы по статусам</h2>
+        <div class="chart-frame">
+          <canvas #statusCanvas></canvas>
+        </div>
+      </section>
 
-    <section class="chart-panel">
-      <h2>Заказы по статусам</h2>
-      <div class="chart-frame">
-        <canvas #statusCanvas></canvas>
-      </div>
-    </section>
-
-    <section class="chart-panel">
-      <h2>Оплата заказов</h2>
-      <div class="chart-frame">
-        <canvas #paymentCanvas></canvas>
-      </div>
-    </section>
+      <section class="chart-panel">
+        <h2>Оплата заказов</h2>
+        <div class="chart-frame">
+          <canvas #paymentCanvas></canvas>
+        </div>
+      </section>
     }
   }
 </div>

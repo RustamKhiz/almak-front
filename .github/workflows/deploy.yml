@@ -40,11 +40,33 @@ jobs:
             dist/almak/browser/ \
             ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/tmp/almak-frontend/
 
+      - name: Build desktop app
+        run: npm run electron:build:win
+
+      - name: Prepare desktop download artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p release/downloads
+          cp release/Almak-Setup-*.exe release/downloads/Almak-Setup-latest.exe
+          cp release/Almak-Setup-*.exe release/downloads/
+          cp release/Almak-Setup-*.exe.blockmap release/downloads/
+          cp release/latest.yml release/downloads/
+
+      - name: Upload desktop artifacts
+        run: |
+          rsync -avz --delete -e "ssh -i ~/.ssh/id_ed25519" \
+            release/downloads/ \
+            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/tmp/almak-desktop/
+
       - name: Deploy frontend on server
         run: |
           ssh -i ~/.ssh/id_ed25519 ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "
             sudo mkdir -p /var/www/app &&
+            sudo mkdir -p /var/www/app/downloads &&
             sudo rsync -av --delete /tmp/almak-frontend/ /var/www/app/ &&
+            sudo mkdir -p /var/www/app/downloads &&
+            sudo rsync -av --delete /tmp/almak-desktop/ /var/www/app/downloads/ &&
             sudo chown -R www-data:www-data /var/www/app &&
             sudo find /var/www/app -type d -exec chmod 755 {} \; &&
             sudo find /var/www/app -type f -exec chmod 644 {} \; &&
