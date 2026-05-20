@@ -43,6 +43,28 @@ mat-dialog-content {
   gap: 8px;
 }
 
+.readonly-count {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 4px;
+  background: #fff;
+}
+
+.readonly-count span {
+  color: #6b7280;
+  font-size: 12px;
+}
+
+.readonly-count strong {
+  font-size: 16px;
+  font-weight: 600;
+}
+
 mat-radio-group {
   display: flex;
   flex-wrap: wrap;

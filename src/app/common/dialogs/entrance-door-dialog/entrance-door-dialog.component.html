@@ -22,6 +22,15 @@
       </mat-radio-group>
     </div>
 
+    <div class="door-kind">
+      <div class="door-kind__label">Открывание</div>
+      <mat-radio-group formControlName="opening">
+        @for (opening of openingOptions; track opening) {
+          <mat-radio-button [value]="opening">{{ openingLabels[opening] }}</mat-radio-button>
+        }
+      </mat-radio-group>
+    </div>
+
     <mat-form-field appearance="outline">
       <mat-label>Модель</mat-label>
       <input matInput formControlName="model" />

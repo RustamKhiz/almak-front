@@ -81,7 +81,7 @@
               </div>
               <div class="door-item__meta">
                 {{ door.width }} × {{ door.height }} см · {{ doorLeafTypeLabels[door.leafType] }} · цвет двери
-                {{ door.color }} · количество {{ door.count }}
+                {{ door.color }} · открывание {{ entranceDoorOpeningLabels[door.opening] ?? 'Левое' }} · количество {{ door.count }}
                 @if (door.painting) {
                   · покрытие {{ door.painting }}
                 }
@@ -142,7 +142,8 @@
                 Погонаж · {{ molding.color }} · {{ moldingCoveringLabels[molding.covering] }}
               </div>
               <div class="door-item__meta">
-                Коробка: {{ molding.frameCount }} шт.
+                Коробка: {{ molding.frameSetCount }} комп. / порогов {{ molding.frameThresholdCount ?? 0 }} / всего
+                {{ molding.frameCount }} шт.
                 @if (molding.frameLength !== null) {
                   · {{ molding.frameLength }} см
                 }

@@ -3,6 +3,7 @@ import { ChangeDetectionStrategy, Component, computed, input, output } from '@an
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { DOOR_LEAF_TYPE_LABELS } from '../../../common/constants/door-catalog';
+import { ENTRANCE_DOOR_OPENING_LABELS } from '../../../common/constants/entrance-door-catalog';
 import { INTERIOR_DOOR_COVERING_LABELS } from '../../../common/constants/interior-door-covering';
 import {
   CAPITAL_COVERING_LABELS,
@@ -54,6 +55,7 @@ export class OrderItemsListComponent {
 
   protected readonly orderItemEntity = OrderItemEntity;
   protected readonly doorLeafTypeLabels = DOOR_LEAF_TYPE_LABELS;
+  protected readonly entranceDoorOpeningLabels = ENTRANCE_DOOR_OPENING_LABELS;
   protected readonly doorCoveringLabels = INTERIOR_DOOR_COVERING_LABELS;
   protected readonly moldingPlatbandTypeLabels = MOLDING_PLATBAND_TYPE_LABELS;
   protected readonly moldingCoveringLabels = MOLDING_COVERING_LABELS;

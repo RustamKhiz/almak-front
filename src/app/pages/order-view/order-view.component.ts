@@ -8,6 +8,7 @@ import { MatMenuModule } from '@angular/material/menu';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { filter, switchMap } from 'rxjs';
 import { DOOR_LEAF_TYPE_LABELS } from '../../common/constants/door-catalog';
+import { ENTRANCE_DOOR_OPENING_LABELS } from '../../common/constants/entrance-door-catalog';
 import { INTERIOR_DOOR_COVERING_LABELS } from '../../common/constants/interior-door-covering';
 import {
   CAPITAL_COVERING_LABELS,
@@ -109,6 +110,7 @@ export class OrderViewComponent {
   protected readonly state = signal<OrderViewState | null>(null);
   protected readonly statusOptions = ORDER_STATUS_OPTIONS;
   protected readonly leafTypesLabels = DOOR_LEAF_TYPE_LABELS;
+  protected readonly entranceDoorOpeningLabels = ENTRANCE_DOOR_OPENING_LABELS;
   protected readonly doorCoveringLabels = INTERIOR_DOOR_COVERING_LABELS;
   protected readonly moldingPlatbandTypeLabels = MOLDING_PLATBAND_TYPE_LABELS;
   protected readonly moldingCoveringLabels = MOLDING_COVERING_LABELS;
@@ -501,7 +503,7 @@ export class OrderViewComponent {
       key: `entrance-${item.id}`,
       typeLabel: 'Входная дверь',
       title: item.model,
-      summary: `${kindLabel} · ${this.leafTypesLabels[item.leafType]} · ${item.width} × ${item.height} см`,
+      summary: `${kindLabel} · ${this.leafTypesLabels[item.leafType]} · открывание ${this.getEntranceDoorOpeningLabel(item).toLowerCase()} · ${item.width} × ${item.height} см`,
       countLabel: `${item.count} шт.`,
       total: item.price * item.count,
       details: {
@@ -513,6 +515,7 @@ export class OrderViewComponent {
           this.section('Основное', [
             ['Исполнение', kindLabel],
             ['Тип створки', this.leafTypesLabels[item.leafType]],
+            ['Открывание', this.getEntranceDoorOpeningLabel(item)],
             ['Модель', item.model],
             ['Размер', `${item.width} × ${item.height} см`],
             ['Цвет двери', item.color],
@@ -533,7 +536,7 @@ export class OrderViewComponent {
       key: `molding-${item.id}`,
       typeLabel: 'Погонаж',
       title: `${item.color} · ${this.moldingCoveringLabels[item.covering]}`,
-      summary: `Коробка ${item.frameSetCount} комп. / ${item.frameCount} шт. · Наличник ${item.platbandSetCount} комп. / ${item.platbandCount} шт. · Притворная планка ${item.rebateBarCount} шт.`,
+      summary: `Коробка ${item.frameSetCount} комп. / порогов ${item.frameThresholdCount ?? 0} / ${item.frameCount} шт. · Наличник ${item.platbandSetCount} комп. / ${item.platbandCount} шт. · Притворная планка ${item.rebateBarCount} шт.`,
       countLabel: `${item.frameCount + item.platbandCount + item.rebateBarCount} шт.`,
       total: getMoldingTotal(item),
       details: {
@@ -545,6 +548,7 @@ export class OrderViewComponent {
           this.section('Коробка', [
             ['Длина', item.frameLength !== null ? `${item.frameLength} см` : 'Не указана'],
             ['Количество комплектов', `${item.frameSetCount}`],
+            ['Количество порогов', `${item.frameThresholdCount ?? 0}`],
             ['Количество', `${item.frameCount} шт.`],
             ['Цена за штуку', this.formatMoney(item.framePrice)],
           ]),
@@ -729,6 +733,10 @@ export class OrderViewComponent {
 
   private getInteriorDoorGlassLabel(item: InteriorDoorItem): string {
     return item.hasGlass ? 'со стеклом' : 'глухая';
+  }
+
+  private getEntranceDoorOpeningLabel(item: EntranceDoorItem): string {
+    return this.entranceDoorOpeningLabels[item.opening] ?? 'Левое';
   }
 
   private formatMoney(value: number): string {

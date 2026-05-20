@@ -3,6 +3,7 @@ import {
   CapitalCovering,
   DoorLeafType,
   EntranceDoorKind,
+  EntranceDoorOpening,
   ExtensionCovering,
   ExtensionItem,
   HardwareItem,
@@ -16,6 +17,9 @@ import {
   PanelingKind,
 } from '../types/order.types';
 import { PrintConstructorOptions } from '../common/dialogs/print-constructor-dialog/print-constructor.types';
+
+const STORE_PHONE = '+7 (989) 475-09-90';
+const STORE_ADDRESS = 'г. Махачкала, ул. Акушинского 330';
 
 interface CustomDocumentRow {
   key: string;
@@ -196,7 +200,15 @@ export class OrderDocumentService {
             .section-title { margin: 8px 0 4px; font-size: 12px; font-weight: bold; text-transform: uppercase; }
             .meta-grid { display: grid; grid-template-columns: 1.2fr 1fr 1fr; gap: 4px 12px; margin-bottom: 4px; }
             .meta-line { border-bottom: 1px dashed #666; padding-bottom: 2px; }
-            table { width: 100%; border-collapse: collapse; margin-top: 6px; table-layout: fixed; }
+            table { width: 100%; border-collapse: collapse; margin-top: 6px; table-layout: fixed; mso-table-layout-alt: fixed; }
+            col.col-index { width: 28px; }
+            col.col-type { width: 110px; }
+            col.col-size { width: 68px; }
+            col.col-color { width: 138px; }
+            col.col-comment { width: 120px; }
+            col.col-count { width: 48px; }
+            col.col-price { width: 64px; }
+            col.col-amount { width: 68px; }
             th, td { border: 1px solid #111; padding: 3px 4px; vertical-align: top; word-break: break-word; overflow-wrap: anywhere; }
             th { text-align: center; font-weight: bold; font-size: 10px; line-height: 1.05; }
             td { font-size: 10px; line-height: 1.05; }
@@ -205,11 +217,11 @@ export class OrderDocumentService {
             .totals { margin-top: 8px; width: 260px; margin-left: auto; border: 1px solid #111; padding: 6px 8px; }
             .totals-row { display: flex; justify-content: space-between; gap: 12px; margin: 2px 0; }
             .comment { margin-top: 8px; min-height: 34px; border: 1px solid #111; padding: 6px 8px; }
-            .footer { margin-top: 10px; display: grid; grid-template-columns: 1fr 110px 1fr; gap: 12px; align-items: end; }
-            .sign-block { min-height: 42px; }
+            .footer { margin-top: 12px; display: grid; grid-template-columns: 1fr 120px 1fr; gap: 14px; align-items: end; page-break-inside: avoid; break-inside: avoid; }
+            .sign-block { min-height: 58px; }
             .sign-block--manager { text-align: right; }
-            .sign-line { border-bottom: 1px solid #111; height: 22px; margin-bottom: 4px; }
-            .stamp { border: 1px dashed #111; height: 54px; display: flex; align-items: center; justify-content: center; font-weight: bold; }
+            .sign-line { border-bottom: 1px solid #111; height: 34px; margin-bottom: 5px; }
+            .stamp { border: 1px dashed #111; min-height: 68px; display: flex; align-items: center; justify-content: center; font-weight: bold; }
             .muted { color: #444; font-size: 10px; margin-top: 6px; }
             .compact .doc { padding: 8px 10px; }
             .compact .doc-header { margin-bottom: 6px; padding-bottom: 4px; }
@@ -219,9 +231,9 @@ export class OrderDocumentService {
             .compact .totals { margin-top: 6px; width: 240px; padding: 4px 6px; }
             .compact .comment { margin-top: 6px; min-height: 28px; padding: 4px 6px; }
             .compact .footer { margin-top: 8px; gap: 8px; }
-            .compact .sign-block { min-height: 36px; }
-            .compact .sign-line { height: 18px; }
-            .compact .stamp { height: 46px; }
+            .compact .sign-block { min-height: 48px; }
+            .compact .sign-line { height: 28px; }
+            .compact .stamp { min-height: 56px; }
             .compact .muted { margin-top: 4px; font-size: 9px; }
             .ultra-compact .company { font-size: 10px; }
             .ultra-compact .company strong { font-size: 12px; }
@@ -230,13 +242,13 @@ export class OrderDocumentService {
             .ultra-compact .meta-grid { grid-template-columns: 1fr 1fr 1fr; }
             .ultra-compact .totals { width: 220px; }
             .ultra-compact .comment { min-height: 24px; }
-            .ultra-compact .footer { grid-template-columns: 1fr 90px 1fr; }
-            .ultra-compact .stamp { height: 40px; }
+            .ultra-compact .footer { grid-template-columns: 1fr 100px 1fr; }
+            .ultra-compact .stamp { min-height: 48px; }
           </style>
         </head>
         <body class="${layoutMode}">
           <div class="doc">
-            <div class="doc-header"><div class="company-wrap"><img class="logo" src="/logo.jpg" alt="Логотип" /><div class="company"><div><strong>Двери Алмак</strong></div><div>ИП Хизриев С.С.</div></div></div><div class="order-title"><h1>ЗАКАЗ-НАРЯД</h1><div class="num">№ ${orderId} от ${issueDate}</div></div></div>
+            ${this.buildHeader(orderId, issueDate)}
             <div class="section-title">Данные клиента</div>
             <div class="meta-grid">
               <div class="meta-line"><strong>ФИО:</strong> ${this.escapeHtml(order.name)}</div>
@@ -246,12 +258,12 @@ export class OrderDocumentService {
             </div>
             <div class="section-title">Спецификация</div>
             <table>
-              <thead><tr><th style="width: 28px;">№</th><th style="width: 110px;">Товар</th><th>Модель / позиция</th><th style="width: 68px;">Размер</th><th style="width: 138px;">Цвет / покрытие</th><th style="width: 120px;">Комментарий</th><th style="width: 48px;">Кол-во</th><th style="width: 64px;">Цена</th><th style="width: 68px;">Сумма</th></tr></thead>
+              ${this.buildFullTableHead()}
               <tbody>${rows}</tbody>
             </table>
             <div class="totals"><div class="totals-row"><span>Общая сумма:</span><strong>${this.formatMoney(totalAmount)}</strong></div><div class="totals-row"><span>Скидка:</span><strong>${this.formatMoney(order.discount)}</strong></div><div class="totals-row"><span>Итого к оплате:</span><strong>${this.formatMoney(totalToPay)}</strong></div><div class="totals-row"><span>Внесено клиентом:</span><strong>${this.formatMoney(paidAmount)}</strong></div><div class="totals-row"><span>Долг клиента:</span><strong>${this.formatMoney(customerDebt)}</strong></div></div>
             <div class="comment"><strong>Комментарий:</strong> ${this.escapeHtml(order.comment)}</div>
-            <div class="footer"><div class="sign-block"><div class="sign-line"></div><div>Подпись клиента</div></div><div class="stamp">М.П.</div><div class="sign-block sign-block--manager"><div class="sign-line"></div><div>Подпись менеджера</div></div></div>
+            ${this.buildFooter()}
             <div class="muted">Документ сформирован автоматически в информационной системе.</div>
           </div>
         </body>
@@ -295,7 +307,15 @@ export class OrderDocumentService {
             .section-title { margin: 8px 0 4px; font-size: 12px; font-weight: bold; text-transform: uppercase; }
             .meta-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px 12px; margin-bottom: 4px; }
             .meta-line { border-bottom: 1px dashed #666; padding-bottom: 2px; }
-            table { width: 100%; border-collapse: collapse; margin-top: 6px; table-layout: fixed; }
+            table { width: 100%; border-collapse: collapse; margin-top: 6px; table-layout: fixed; mso-table-layout-alt: fixed; }
+            col.col-index { width: 28px; }
+            col.col-type { width: 110px; }
+            col.col-size { width: 78px; }
+            col.col-color { width: 150px; }
+            col.col-comment { width: 120px; }
+            col.col-count { width: 52px; }
+            col.col-price { width: 76px; }
+            col.col-amount { width: 82px; }
             th, td { border: 1px solid #111; padding: 3px 4px; vertical-align: top; word-break: break-word; overflow-wrap: anywhere; }
             th { text-align: center; font-weight: bold; font-size: 10px; line-height: 1.05; }
             td { font-size: 10px; line-height: 1.05; }
@@ -304,22 +324,24 @@ export class OrderDocumentService {
             .totals { margin-top: 8px; width: 290px; margin-left: auto; border: 1px solid #111; padding: 6px 8px; }
             .totals-row { display: flex; justify-content: space-between; gap: 12px; margin: 2px 0; }
             .comment { margin-top: 8px; min-height: 34px; border: 1px solid #111; padding: 6px 8px; }
-            .footer { margin-top: 10px; display: grid; grid-template-columns: 1fr 110px 1fr; gap: 12px; align-items: end; }
-            .sign-block { min-height: 42px; }
+            .footer { margin-top: 12px; display: grid; grid-template-columns: 1fr 120px 1fr; gap: 14px; align-items: end; page-break-inside: avoid; break-inside: avoid; }
+            .sign-block { min-height: 58px; }
             .sign-block--manager { text-align: right; }
-            .sign-line { border-bottom: 1px solid #111; height: 22px; margin-bottom: 4px; }
-            .stamp { border: 1px dashed #111; height: 54px; display: flex; align-items: center; justify-content: center; font-weight: bold; }
+            .sign-line { border-bottom: 1px solid #111; height: 34px; margin-bottom: 5px; }
+            .stamp { border: 1px dashed #111; min-height: 68px; display: flex; align-items: center; justify-content: center; font-weight: bold; }
             .muted { color: #444; font-size: 10px; margin-top: 6px; }
             .compact .doc { padding: 8px 10px; }
             .compact th, .compact td { padding: 2px 3px; font-size: 9px; line-height: 1; }
             .compact .totals { width: 260px; padding: 4px 6px; }
             .compact .footer { margin-top: 8px; gap: 8px; }
-            .compact .stamp { height: 46px; }
+            .compact .sign-block { min-height: 48px; }
+            .compact .sign-line { height: 28px; }
+            .compact .stamp { min-height: 56px; }
           </style>
         </head>
         <body class="${layoutMode}">
           <div class="doc">
-            <div class="doc-header"><div class="company-wrap"><img class="logo" src="/logo.jpg" alt="Логотип" /><div class="company"><div><strong>Двери Алмак</strong></div><div>ИП Хизриев С.С.</div></div></div><div class="order-title"><h1>ЗАКАЗ-НАРЯД</h1><div class="num">№ ${orderId} от ${issueDate}</div></div></div>
+            ${this.buildHeader(orderId, issueDate)}
             ${this.buildCustomMetaBlock(order, normalizedOptions)}
             <div class="section-title">Спецификация</div>
             <table>
@@ -328,7 +350,7 @@ export class OrderDocumentService {
             </table>
             ${this.buildCustomTotalsBlock(selectedTotal, totalToPay, paidAmount, customerDebt, order.discount, normalizedOptions)}
             ${normalizedOptions.showComments ? `<div class="comment"><strong>Комментарий:</strong> ${this.escapeHtml(order.comment || '-')}</div>` : ''}
-            ${normalizedOptions.showSignatures ? '<div class="footer"><div class="sign-block"><div class="sign-line"></div><div>Подпись клиента</div></div><div class="stamp">М.П.</div><div class="sign-block sign-block--manager"><div class="sign-line"></div><div>Подпись менеджера</div></div></div>' : ''}
+            ${normalizedOptions.showSignatures ? this.buildFooter() : ''}
             <div class="muted">Документ сформирован через конструктор печати.</div>
           </div>
         </body>
@@ -348,6 +370,18 @@ export class OrderDocumentService {
     amount: number,
   ): string {
     return `<tr><td class="num">${index}</td><td>${this.escapeHtml(type)}</td><td>${this.escapeHtml(title)}</td><td class="num">${this.escapeHtml(size)}</td><td>${this.escapeHtml(color)}</td><td>${this.escapeHtml(comment)}</td><td class="num">${count}</td><td class="money">${this.formatMoney(price)}</td><td class="money">${this.formatMoney(amount)}</td></tr>`;
+  }
+
+  private buildHeader(orderId: number, issueDate: string): string {
+    return `<div class="doc-header"><div class="company-wrap"><img class="logo" src="${this.escapeHtml(this.getLogoSrc())}" alt="Логотип" /><div class="company"><div><strong>Двери Алмак</strong></div><div>ИП Хизриев С.С.</div><div>Тел.: ${this.escapeHtml(STORE_PHONE)}</div><div>${this.escapeHtml(STORE_ADDRESS)}</div></div></div><div class="order-title"><h1>ЗАКАЗ-НАРЯД</h1><div class="num">№ ${orderId} от ${issueDate}</div></div></div>`;
+  }
+
+  private buildFooter(): string {
+    return '<div class="footer"><div class="sign-block"><div class="sign-line"></div><div>Подпись клиента</div></div><div class="stamp">М.П.</div><div class="sign-block sign-block--manager"><div class="sign-line"></div><div>Подпись менеджера</div></div></div>';
+  }
+
+  private buildFullTableHead(): string {
+    return '<colgroup><col class="col-index" /><col class="col-type" /><col /><col class="col-size" /><col class="col-color" /><col class="col-comment" /><col class="col-count" /><col class="col-price" /><col class="col-amount" /></colgroup><thead><tr><th>№</th><th>Товар</th><th>Модель / позиция</th><th>Размер</th><th>Цвет / покрытие</th><th>Комментарий</th><th>Кол-во</th><th>Цена</th><th>Сумма</th></tr></thead>';
   }
 
   private normalizePrintOptions(options: PrintConstructorOptions): PrintConstructorOptions {
@@ -375,10 +409,12 @@ export class OrderDocumentService {
   }
 
   private buildCustomTableHead(showPrices: boolean, showComments: boolean): string {
-    const commentHead = showComments ? '<th style="width: 120px;">Комментарий</th>' : '';
-    const priceHeads = showPrices ? '<th style="width: 76px;">Цена</th><th style="width: 82px;">Сумма</th>' : '';
+    const commentCol = showComments ? '<col class="col-comment" />' : '';
+    const priceCols = showPrices ? '<col class="col-price" /><col class="col-amount" />' : '';
+    const commentHead = showComments ? '<th>Комментарий</th>' : '';
+    const priceHeads = showPrices ? '<th>Цена</th><th>Сумма</th>' : '';
 
-    return `<thead><tr><th style="width: 28px;">№</th><th style="width: 110px;">Товар</th><th>Модель / позиция</th><th style="width: 78px;">Размер</th><th style="width: 150px;">Цвет / покрытие</th>${commentHead}<th style="width: 52px;">Кол-во</th>${priceHeads}</tr></thead>`;
+    return `<colgroup><col class="col-index" /><col class="col-type" /><col /><col class="col-size" /><col class="col-color" />${commentCol}<col class="col-count" />${priceCols}</colgroup><thead><tr><th>№</th><th>Товар</th><th>Модель / позиция</th><th>Размер</th><th>Цвет / покрытие</th>${commentHead}<th>Кол-во</th>${priceHeads}</tr></thead>`;
   }
 
   private buildCustomTableRow(
@@ -557,16 +593,21 @@ export class OrderDocumentService {
       color: `${item.color}, ${this.getMoldingCoveringLabel(item.covering)}`,
       comment: item.comment || '-',
     };
-    const rows: CustomDocumentRow[] = [
-      {
+    const rows: CustomDocumentRow[] = [];
+
+    if (item.frameCount > 0 || item.framePrice > 0) {
+      rows.push({
         ...common,
-        title: 'Коробка',
+        title: `Коробка (${item.frameSetCount} комп., порогов ${item.frameThresholdCount ?? 0})`,
         size: item.frameLength !== null ? `${item.frameLength}` : '-',
         count: item.frameCount,
         price: item.framePrice,
         amount: item.framePrice * item.frameCount,
-      },
-      {
+      });
+    }
+
+    if (item.platbandCount > 0 || item.platbandPrice > 0) {
+      rows.push({
         ...common,
         title: `Наличник ${this.getMoldingPlatbandTypeLabel(item.platbandType)}${
           item.platbandFigure ? ` (${item.platbandFigure})` : ''
@@ -575,8 +616,8 @@ export class OrderDocumentService {
         count: item.platbandCount,
         price: item.platbandPrice,
         amount: item.platbandPrice * item.platbandCount,
-      },
-    ];
+      });
+    }
 
     if (item.rebateBarCount > 0 || item.rebateBarPrice > 0) {
       rows.push({
@@ -593,7 +634,7 @@ export class OrderDocumentService {
   }
 
   private getMoldingDocumentRowCount(item: MoldingItem): number {
-    return item.rebateBarCount > 0 || item.rebateBarPrice > 0 ? 3 : 2;
+    return this.buildMoldingDocumentRows(item).length;
   }
 
   private getLeafTypeLabel(value: string): string {
@@ -610,12 +651,14 @@ export class OrderDocumentService {
   private getEntranceExecutionLabel(
     kind: EntranceDoorKind,
     leafType: DoorLeafType,
+    opening: EntranceDoorOpening,
     painting: string | null,
     panelColor: string | null,
     hasPeephole: boolean | null,
   ): string {
     const details = [kind === EntranceDoorKind.Welded ? 'Сварная' : 'Фабричная'];
     details.push(leafType === DoorLeafType.Double ? 'Две створки' : 'Одна створка');
+    details.push(`открывание: ${this.getEntranceOpeningLabel(opening).toLowerCase()}`);
     if (painting) {
       details.push(`покр.: ${painting}`);
     }
@@ -630,6 +673,7 @@ export class OrderDocumentService {
 
   private getEntranceColorLabel(item: {
     kind: EntranceDoorKind;
+    opening: EntranceDoorOpening;
     leafType: DoorLeafType;
     color: string;
     painting: string | null;
@@ -639,6 +683,7 @@ export class OrderDocumentService {
     const details = [item.color];
     details.push(item.kind === EntranceDoorKind.Welded ? 'сварочная' : 'фабричная');
     details.push(item.leafType === DoorLeafType.Double ? 'две створки' : 'одна створка');
+    details.push(`открывание: ${this.getEntranceOpeningLabel(item.opening).toLowerCase()}`);
     if (item.painting) {
       details.push(`покрытие: ${item.painting}`);
     }
@@ -649,6 +694,16 @@ export class OrderDocumentService {
       details.push(`глазок: ${item.hasPeephole ? 'есть' : 'нет'}`);
     }
     return details.join(', ');
+  }
+
+  private getEntranceOpeningLabel(value: EntranceDoorOpening): string {
+    switch (value) {
+      case EntranceDoorOpening.Right:
+        return 'Правое';
+      case EntranceDoorOpening.Left:
+      default:
+        return 'Левое';
+    }
   }
 
   private getMoldingCoveringLabel(value: MoldingCovering): string {
@@ -872,6 +927,10 @@ export class OrderDocumentService {
 
   private getOptionalTotal(count: number | null, price: number | null): number {
     return Number(count ?? 0) * Number(price ?? 0);
+  }
+
+  private getLogoSrc(): string {
+    return new URL('logo.jpg', document.baseURI).href;
   }
 
   private escapeHtml(value: string): string {

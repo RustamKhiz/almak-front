@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { AbstractControl, FormBuilder, ReactiveFormsModule, ValidationErrors, ValidatorFn } from '@angular/forms';
+import { AbstractControl, FormBuilder, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -32,25 +32,25 @@ export class HardwareDialogComponent {
     {
       handleModel: this.data.hardware?.handleModel ?? '',
       handleColor: this.data.hardware?.handleColor ?? '',
-      handleCount: this.data.hardware?.handleCount ?? null,
+      handleCount: [this.data.hardware?.handleCount ?? null, [optionalIntegerValidator(), Validators.min(0)]],
       handlePrice: this.data.hardware?.handlePrice ?? null,
-      lockCount: this.data.hardware?.lockCount ?? null,
+      lockCount: [this.data.hardware?.lockCount ?? null, [optionalIntegerValidator(), Validators.min(0)]],
       lockPrice: this.data.hardware?.lockPrice ?? null,
-      fixatorCount: this.data.hardware?.fixatorCount ?? null,
+      fixatorCount: [this.data.hardware?.fixatorCount ?? null, [optionalIntegerValidator(), Validators.min(0)]],
       fixatorPrice: this.data.hardware?.fixatorPrice ?? null,
-      clickCount: this.data.hardware?.clickCount ?? null,
+      clickCount: [this.data.hardware?.clickCount ?? null, [optionalIntegerValidator(), Validators.min(0)]],
       clickPrice: this.data.hardware?.clickPrice ?? null,
-      thumbturnCount: this.data.hardware?.thumbturnCount ?? null,
+      thumbturnCount: [this.data.hardware?.thumbturnCount ?? null, [optionalIntegerValidator(), Validators.min(0)]],
       thumbturnPrice: this.data.hardware?.thumbturnPrice ?? null,
-      escutcheonCount: this.data.hardware?.escutcheonCount ?? null,
+      escutcheonCount: [this.data.hardware?.escutcheonCount ?? null, [optionalIntegerValidator(), Validators.min(0)]],
       escutcheonPrice: this.data.hardware?.escutcheonPrice ?? null,
-      cylinderCount: this.data.hardware?.cylinderCount ?? null,
+      cylinderCount: [this.data.hardware?.cylinderCount ?? null, [optionalIntegerValidator(), Validators.min(0)]],
       cylinderPrice: this.data.hardware?.cylinderPrice ?? null,
-      boltCount: this.data.hardware?.boltCount ?? null,
+      boltCount: [this.data.hardware?.boltCount ?? null, [optionalIntegerValidator(), Validators.min(0)]],
       boltPrice: this.data.hardware?.boltPrice ?? null,
-      hingeCount: this.data.hardware?.hingeCount ?? null,
+      hingeCount: [this.data.hardware?.hingeCount ?? null, [optionalIntegerValidator(), Validators.min(0)]],
       hingePrice: this.data.hardware?.hingePrice ?? null,
-      doorStopCount: this.data.hardware?.doorStopCount ?? null,
+      doorStopCount: [this.data.hardware?.doorStopCount ?? null, [optionalIntegerValidator(), Validators.min(0)]],
       doorStopPrice: this.data.hardware?.doorStopPrice ?? null,
       comment: this.data.hardware?.comment ?? '',
     },
@@ -87,29 +87,48 @@ export class HardwareDialogComponent {
       type: OrderItemType.Hardware,
       handleModel: value.handleModel.trim(),
       handleColor: value.handleColor.trim(),
-      handleCount: value.handleCount,
+      handleCount: normalizeOptionalInteger(value.handleCount),
       handlePrice: value.handlePrice,
-      lockCount: value.lockCount,
+      lockCount: normalizeOptionalInteger(value.lockCount),
       lockPrice: value.lockPrice,
-      fixatorCount: value.fixatorCount,
+      fixatorCount: normalizeOptionalInteger(value.fixatorCount),
       fixatorPrice: value.fixatorPrice,
-      clickCount: value.clickCount,
+      clickCount: normalizeOptionalInteger(value.clickCount),
       clickPrice: value.clickPrice,
-      thumbturnCount: value.thumbturnCount,
+      thumbturnCount: normalizeOptionalInteger(value.thumbturnCount),
       thumbturnPrice: value.thumbturnPrice,
-      escutcheonCount: value.escutcheonCount,
+      escutcheonCount: normalizeOptionalInteger(value.escutcheonCount),
       escutcheonPrice: value.escutcheonPrice,
-      cylinderCount: value.cylinderCount,
+      cylinderCount: normalizeOptionalInteger(value.cylinderCount),
       cylinderPrice: value.cylinderPrice,
-      boltCount: value.boltCount,
+      boltCount: normalizeOptionalInteger(value.boltCount),
       boltPrice: value.boltPrice,
-      hingeCount: value.hingeCount,
+      hingeCount: normalizeOptionalInteger(value.hingeCount),
       hingePrice: value.hingePrice,
-      doorStopCount: value.doorStopCount,
+      doorStopCount: normalizeOptionalInteger(value.doorStopCount),
       doorStopPrice: value.doorStopPrice,
       comment: value.comment.trim(),
     });
   }
+}
+
+function optionalIntegerValidator(): ValidatorFn {
+  return (control: AbstractControl): ValidationErrors | null => {
+    const value = control.value;
+    if (value === null || value === '') {
+      return null;
+    }
+
+    return Number.isInteger(Number(value)) ? null : { integer: true };
+  };
+}
+
+function normalizeOptionalInteger(value: number | null): number | null {
+  if (value === null || value <= 0) {
+    return null;
+  }
+
+  return Math.round(value);
 }
 
 function hardwareNotEmptyValidator(): ValidatorFn {

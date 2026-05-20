@@ -72,6 +72,27 @@ export class QuantityFieldComponent implements ControlValueAccessor {
     this.updateValue(+value);
   }
 
+  protected onKeyDown(event: KeyboardEvent): void {
+    if (this.allowsFraction()) {
+      return;
+    }
+
+    if (['.', ',', 'e', 'E', '+', '-'].includes(event.key)) {
+      event.preventDefault();
+    }
+  }
+
+  protected onPaste(event: ClipboardEvent): void {
+    if (this.allowsFraction()) {
+      return;
+    }
+
+    const text = event.clipboardData?.getData('text') ?? '';
+    if (!/^\d+$/.test(text.trim())) {
+      event.preventDefault();
+    }
+  }
+
   protected markTouched(): void {
     this.onTouched();
   }
@@ -98,5 +119,9 @@ export class QuantityFieldComponent implements ControlValueAccessor {
     const decimalIndex = normalizedValue.indexOf('.');
 
     return decimalIndex === -1 ? 0 : normalizedValue.length - decimalIndex - 1;
+  }
+
+  private allowsFraction(): boolean {
+    return !Number.isInteger(this.step()) || !Number.isInteger(this.min());
   }
 }

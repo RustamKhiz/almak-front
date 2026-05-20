@@ -11,11 +11,19 @@ import {
   ENTRANCE_DOOR_HEIGHT_OPTIONS,
   ENTRANCE_DOOR_KIND_LABELS,
   ENTRANCE_DOOR_KIND_OPTIONS,
+  ENTRANCE_DOOR_OPENING_LABELS,
+  ENTRANCE_DOOR_OPENING_OPTIONS,
   ENTRANCE_DOOR_PAINTING_OPTIONS,
   ENTRANCE_DOOR_PANEL_COLOR_OPTIONS,
   ENTRANCE_DOOR_WIDTH_OPTIONS,
 } from '../../constants/entrance-door-catalog';
-import { DoorLeafType, EntranceDoorItem, EntranceDoorKind, OrderItemType } from '../../../types/order.types';
+import {
+  DoorLeafType,
+  EntranceDoorItem,
+  EntranceDoorKind,
+  EntranceDoorOpening,
+  OrderItemType,
+} from '../../../types/order.types';
 import { CatalogAutocompleteFieldComponent } from '../../../ui/catalog-autocomplete-field/catalog-autocomplete-field.component';
 import { QuantityFieldComponent } from '../../../ui/quantity-field/quantity-field.component';
 import { bindLeadingCapitalization } from '../../utils/form-text';
@@ -52,6 +60,8 @@ export class EntranceDoorDialogComponent {
 
   protected readonly kindOptions = ENTRANCE_DOOR_KIND_OPTIONS;
   protected readonly kindLabels = ENTRANCE_DOOR_KIND_LABELS;
+  protected readonly openingOptions = ENTRANCE_DOOR_OPENING_OPTIONS;
+  protected readonly openingLabels = ENTRANCE_DOOR_OPENING_LABELS;
   protected readonly widthOptions = ENTRANCE_DOOR_WIDTH_OPTIONS;
   protected readonly heightOptions = ENTRANCE_DOOR_HEIGHT_OPTIONS;
   protected readonly paintingOptions = ENTRANCE_DOOR_PAINTING_OPTIONS;
@@ -61,6 +71,7 @@ export class EntranceDoorDialogComponent {
 
   protected readonly form = this.fb.nonNullable.group({
     kind: [this.data.door?.kind ?? EntranceDoorKind.Factory, [Validators.required]],
+    opening: [this.data.door?.opening ?? EntranceDoorOpening.Left, [Validators.required]],
     leafType: [this.data.door?.leafType ?? DoorLeafType.Single, [Validators.required]],
     model: [this.data.door?.model ?? '', [Validators.required]],
     width: [this.data.door?.width ?? this.widthOptions[0], [Validators.required, Validators.min(1)]],
@@ -108,6 +119,7 @@ export class EntranceDoorDialogComponent {
     this.dialogRef.close({
       type: OrderItemType.EntranceDoor,
       kind,
+      opening: value.opening,
       leafType: value.leafType,
       model: value.model.trim(),
       width: value.width,

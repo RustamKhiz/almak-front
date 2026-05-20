@@ -60,8 +60,8 @@ export class ExtensionDialogComponent {
     width: [this.data.extension?.width ?? null, [Validators.required, Validators.min(1)]],
     height: [this.data.extension?.height ?? null, [Validators.required, Validators.min(1)]],
     setCount: [
-      this.data.extension?.setCount ?? Number(((this.data.extension?.quantityPerSet ?? 2.5) / 2.5).toFixed(1)),
-      [Validators.required, Validators.min(0.5)],
+      this.normalizeSetCount(this.data.extension?.setCount ?? Number(((this.data.extension?.quantityPerSet ?? 2.5) / 2.5).toFixed(1))),
+      [Validators.required, Validators.min(1)],
     ],
     quantityPerSet: [this.data.extension?.quantityPerSet ?? 2.5, [Validators.required, Validators.min(0.5)]],
     totalArea: [this.data.extension?.totalArea ?? null, [Validators.required, Validators.min(0)]],
@@ -117,7 +117,7 @@ export class ExtensionDialogComponent {
       covering: value.covering,
       width: value.width,
       height: value.height,
-      setCount: value.setCount,
+      setCount: this.normalizeSetCount(value.setCount),
       quantityPerSet: value.quantityPerSet,
       totalArea: value.totalArea,
       comment: value.comment?.trim(),
@@ -138,5 +138,9 @@ export class ExtensionDialogComponent {
     }
 
     return Number(((width * height * quantityPerSet) / 10000).toFixed(2));
+  }
+
+  private normalizeSetCount(value: number | null | undefined): number {
+    return Math.max(1, Math.round(Number(value ?? 1)));
   }
 }

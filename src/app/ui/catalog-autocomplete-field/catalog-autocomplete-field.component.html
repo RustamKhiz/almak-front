@@ -7,11 +7,14 @@
     [formControl]="control"
     [matAutocomplete]="auto"
     [disabled]="disabled"
+    #trigger="matAutocompleteTrigger"
+    (focus)="onFocus(trigger)"
+    (input)="onInput()"
     (blur)="markTouched()"
   />
   <mat-autocomplete
-    autoActiveFirstOption
     #auto="matAutocomplete"
+    (opened)="onOpened()"
     (optionSelected)="onOptionSelected($event.option.value)"
   >
     @for (option of filteredOptions | async; track option) {

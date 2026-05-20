@@ -1,8 +1,8 @@
 import { AsyncPipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, DestroyRef, forwardRef, inject, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, forwardRef, inject, input } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ControlValueAccessor, FormControl, FormsModule, NG_VALUE_ACCESSOR, ReactiveFormsModule } from '@angular/forms';
-import { MatAutocompleteModule } from '@angular/material/autocomplete';
+import { MatAutocompleteModule, MatAutocompleteTrigger } from '@angular/material/autocomplete';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { map, startWith } from 'rxjs/operators';
@@ -26,6 +26,7 @@ type ValueMode = 'text' | 'number';
 })
 export class CatalogAutocompleteFieldComponent implements ControlValueAccessor {
   private readonly destroyRef = inject(DestroyRef);
+  private readonly host = inject(ElementRef<HTMLElement>);
 
   readonly title = input.required<string>();
   readonly options = input.required<readonly CatalogOption[]>();
@@ -39,6 +40,7 @@ export class CatalogAutocompleteFieldComponent implements ControlValueAccessor {
   );
 
   protected disabled = false;
+  protected showAllOptionsOnOpen = false;
 
   private onChange: (value: CatalogOption) => void = () => {
     /* empty */
@@ -83,11 +85,29 @@ export class CatalogAutocompleteFieldComponent implements ControlValueAccessor {
     this.onTouched();
   }
 
+  protected onFocus(trigger: MatAutocompleteTrigger): void {
+    this.showAllOptionsOnOpen = true;
+    this.control.setValue(this.control.value);
+    trigger.openPanel();
+  }
+
+  protected onOpened(): void {
+    this.scrollCurrentOptionIntoView();
+  }
+
+  protected onInput(): void {
+    this.showAllOptionsOnOpen = false;
+  }
+
   protected markTouched(): void {
     this.onTouched();
   }
 
   private filterOptions(value: string): readonly CatalogOption[] {
+    if (this.showAllOptionsOnOpen) {
+      return this.options();
+    }
+
     const query = value.trim().toLowerCase();
 
     if (!query) {
@@ -109,5 +129,19 @@ export class CatalogAutocompleteFieldComponent implements ControlValueAccessor {
     }
 
     this.onChange(value);
+  }
+
+  private scrollCurrentOptionIntoView(): void {
+    const currentValue = this.control.value.trim();
+    if (!currentValue) {
+      return;
+    }
+
+    setTimeout(() => {
+      const panel = this.host.nativeElement.ownerDocument.querySelector('.mat-mdc-autocomplete-panel') as HTMLElement | null;
+      const options = Array.from((panel?.querySelectorAll('.mat-mdc-option') ?? []) as NodeListOf<HTMLElement>);
+      const currentOption = options.find((option) => option.textContent?.trim() === currentValue);
+      currentOption?.scrollIntoView({ block: 'center' });
+    });
   }
 }

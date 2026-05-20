@@ -17,6 +17,7 @@ import {
   PrintableOrderItem,
   PrintPreset,
 } from './print-constructor.types';
+import { ENTRANCE_DOOR_OPENING_LABELS } from '../../constants/entrance-door-catalog';
 
 @Component({
   selector: 'app-print-constructor-dialog',
@@ -46,18 +47,6 @@ export class PrintConstructorDialogComponent {
       label: 'Полный документ',
       description: 'Все товары, цены, итоги, клиент, доставка, комментарии и подписи.',
       options: this.getFullOptions(),
-    },
-    {
-      id: 'client-no-prices',
-      label: 'Клиенту без цен',
-      description: 'Состав заказа без цен и финансового блока.',
-      options: {
-        ...this.getFullOptions(),
-        showPrices: false,
-        showTotals: false,
-        showDiscount: false,
-        showPayments: false,
-      },
     },
     {
       id: 'production',
@@ -200,7 +189,7 @@ export class PrintConstructorDialogComponent {
         type: 'entranceDoor' as const,
         typeLabel: 'Входная дверь',
         title: item.model,
-        summary: `${item.width}x${item.height}, цвет ${item.color}`,
+        summary: `${item.width}x${item.height}, цвет ${item.color}, открывание ${(ENTRANCE_DOOR_OPENING_LABELS[item.opening] ?? 'Левое').toLowerCase()}`,
         total: item.price * item.count,
       })),
       ...order.moldings.map((item) => ({
@@ -208,7 +197,7 @@ export class PrintConstructorDialogComponent {
         type: 'molding' as const,
         typeLabel: 'Погонаж',
         title: item.color,
-        summary: `Коробка ${item.frameCount}, наличник ${item.platbandCount}, притвор ${item.rebateBarCount}`,
+        summary: `Коробка ${item.frameCount} (${item.frameSetCount} комп., порогов ${item.frameThresholdCount ?? 0}), наличник ${item.platbandCount}, притвор ${item.rebateBarCount}`,
         total: getMoldingTotal(item),
       })),
       ...order.extensions.map((item) => ({

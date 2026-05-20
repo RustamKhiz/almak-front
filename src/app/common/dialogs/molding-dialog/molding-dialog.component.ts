@@ -61,19 +61,25 @@ export class MoldingDialogComponent {
     frameLength: [this.data.molding?.frameLength ?? null, [Validators.min(0)]],
     framePrice: [this.data.molding?.framePrice ?? null, [Validators.min(0)]],
     frameSetCount: [
-      this.data.molding?.frameSetCount ?? Number(((this.data.molding?.frameCount ?? 2.5) / 2.5).toFixed(1)),
-      [Validators.required, Validators.min(0.5)],
+      this.normalizeIntegerCount(this.data.molding?.frameSetCount ?? Math.floor((this.data.molding?.frameCount ?? 2.5) / 2.5)),
+      [Validators.required, Validators.min(0)],
     ],
-    frameCount: [this.data.molding?.frameCount ?? 2.5, [Validators.required, Validators.min(0.5)]],
+    frameThresholdCount: [
+      this.normalizeIntegerCount(
+        this.data.molding?.frameThresholdCount ?? this.getLegacyThresholdCount(this.data.molding?.frameCount),
+      ),
+      [Validators.required, Validators.min(0)],
+    ],
+    frameCount: [this.data.molding?.frameCount ?? 2.5, [Validators.required, Validators.min(0)]],
     platbandType: [this.data.molding?.platbandType ?? DEFAULT_MOLDING_PLATBAND_TYPE, [Validators.required]],
     platbandFigure: this.data.molding?.platbandFigure ?? '',
     platbandLength: [this.data.molding?.platbandLength ?? null, [Validators.min(0)]],
     platbandPrice: [this.data.molding?.platbandPrice ?? null, [Validators.min(0)]],
     platbandSetCount: [
-      this.data.molding?.platbandSetCount ?? Number(((this.data.molding?.platbandCount ?? 2.5) / 2.5).toFixed(1)),
-      [Validators.required, Validators.min(0.5)],
+      this.normalizeIntegerCount(this.data.molding?.platbandSetCount ?? Math.floor((this.data.molding?.platbandCount ?? 2.5) / 2.5)),
+      [Validators.required, Validators.min(0)],
     ],
-    platbandCount: [this.data.molding?.platbandCount ?? 2.5, [Validators.required, Validators.min(0.5)]],
+    platbandCount: [this.data.molding?.platbandCount ?? 2.5, [Validators.required, Validators.min(0)]],
     rebateBarCount: [this.data.molding?.rebateBarCount ?? 0, [Validators.required, Validators.min(0)]],
     rebateBarPrice: [this.data.molding?.rebateBarPrice ?? null, [Validators.min(0)]],
     color: [this.data.molding?.color ?? this.data.defaultColor ?? '', [Validators.required]],
@@ -91,7 +97,11 @@ export class MoldingDialogComponent {
     bindLeadingCapitalization(this.form.controls.platbandFigure, this.destroyRef);
 
     this.form.controls.frameSetCount.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((value) => {
-      this.form.controls.frameCount.setValue(Number((Number(value ?? 0) * 2.5).toFixed(1)), { emitEvent: false });
+      this.updateFrameCount();
+    });
+
+    this.form.controls.frameThresholdCount.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
+      this.updateFrameCount();
     });
 
     this.form.controls.platbandSetCount.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((value) => {
@@ -122,13 +132,14 @@ export class MoldingDialogComponent {
       type: OrderItemType.Molding,
       frameLength: value.frameLength == null ? null : Math.max(0, value.frameLength),
       framePrice: value.framePrice ?? 0,
-      frameSetCount: value.frameSetCount,
-      frameCount: value.frameCount,
+      frameSetCount: this.normalizeIntegerCount(value.frameSetCount),
+      frameThresholdCount: this.normalizeIntegerCount(value.frameThresholdCount),
+      frameCount: this.calculateFrameCount(value.frameSetCount, value.frameThresholdCount),
       platbandType: value.platbandType,
       platbandFigure: value.platbandType === MoldingPlatbandType.Figure ? value.platbandFigure.trim() || null : null,
       platbandLength: value.platbandLength == null ? null : Math.max(0, value.platbandLength),
       platbandPrice: value.platbandPrice,
-      platbandSetCount: value.platbandSetCount,
+      platbandSetCount: this.normalizeIntegerCount(value.platbandSetCount),
       platbandCount: value.platbandCount,
       rebateBarCount: value.rebateBarCount,
       rebateBarPrice: value.rebateBarPrice ?? 0,
@@ -149,5 +160,30 @@ export class MoldingDialogComponent {
     }
 
     this.form.controls.platbandFigure.updateValueAndValidity({ emitEvent: false });
+  }
+
+  protected getFrameCount(): number {
+    return this.calculateFrameCount(this.form.controls.frameSetCount.value, this.form.controls.frameThresholdCount.value);
+  }
+
+  private updateFrameCount(): void {
+    this.form.controls.frameCount.setValue(this.getFrameCount(), { emitEvent: false });
+  }
+
+  private calculateFrameCount(setCount: number | null | undefined, thresholdCount: number | null | undefined): number {
+    return Number((this.normalizeIntegerCount(setCount) * 2.5 + this.normalizeIntegerCount(thresholdCount) * 0.5).toFixed(1));
+  }
+
+  private getLegacyThresholdCount(frameCount: number | null | undefined): number {
+    if (frameCount == null) {
+      return 0;
+    }
+
+    const remainder = Number((frameCount % 2.5).toFixed(1));
+    return this.normalizeIntegerCount(remainder / 0.5);
+  }
+
+  private normalizeIntegerCount(value: number | null | undefined): number {
+    return Math.max(0, Math.round(Number(value ?? 0)));
   }
 }

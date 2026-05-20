@@ -9,6 +9,7 @@ import {
   DoorLeafType,
   EntranceDoorItem,
   EntranceDoorKind,
+  EntranceDoorOpening,
   ExtensionCovering,
   ExtensionItem,
   HardwareItem,
@@ -87,6 +88,7 @@ interface BackendEntranceDoor {
   id: number;
   order_id: number;
   kind: string;
+  opening?: string;
   leafType?: string;
   model: string;
   width: number;
@@ -105,6 +107,7 @@ interface BackendMolding {
   frameLength?: number | null;
   framePrice: number;
   frameSetCount?: number;
+  frameThresholdCount?: number;
   frameCount: number;
   platbandType: string;
   platbandFigure?: string | null;
@@ -232,6 +235,7 @@ interface BackendInteriorDoorPayload {
 }
 interface BackendEntranceDoorPayload {
   kind: string;
+  opening: string;
   leafType: string;
   model: string;
   width: number;
@@ -248,6 +252,7 @@ interface BackendMoldingPayload {
   frameLength?: number | null;
   framePrice: number;
   frameSetCount: number;
+  frameThresholdCount: number;
   frameCount: number;
   platbandType: string;
   platbandFigure?: string | null;
@@ -472,6 +477,7 @@ export class OrdersService {
       })),
       entranceDoors: payload.entranceDoors.map((item) => ({
         kind: item.kind,
+        opening: item.opening || EntranceDoorOpening.Left,
         leafType: item.leafType,
         model: item.model,
         width: item.width,
@@ -488,6 +494,7 @@ export class OrdersService {
         frameLength: item.frameLength,
         framePrice: item.framePrice,
         frameSetCount: item.frameSetCount,
+        frameThresholdCount: item.frameThresholdCount,
         frameCount: item.frameCount,
         platbandType: item.platbandType,
         platbandFigure: item.platbandFigure,
@@ -600,6 +607,7 @@ export class OrdersService {
       id: door.id,
       type: OrderItemType.EntranceDoor,
       kind: door.kind === EntranceDoorKind.Welded ? EntranceDoorKind.Welded : EntranceDoorKind.Factory,
+      opening: door.opening === EntranceDoorOpening.Right ? EntranceDoorOpening.Right : EntranceDoorOpening.Left,
       leafType: door.leafType === DoorLeafType.Double ? DoorLeafType.Double : DoorLeafType.Single,
       model: door.model,
       width: door.width,
@@ -619,7 +627,8 @@ export class OrdersService {
       type: OrderItemType.Molding,
       frameLength: item.frameLength ?? null,
       framePrice: item.framePrice,
-      frameSetCount: item.frameSetCount ?? Number((item.frameCount / 2.5).toFixed(1)),
+      frameSetCount: item.frameSetCount ?? Math.floor(item.frameCount / 2.5),
+      frameThresholdCount: item.frameThresholdCount ?? this.getLegacyFrameThresholdCount(item.frameCount),
       frameCount: item.frameCount,
       platbandType: this.mapMoldingPlatbandType(item.platbandType),
       platbandFigure: item.platbandFigure ?? null,
@@ -830,6 +839,11 @@ export class OrdersService {
       default:
         return MoldingPlatbandType.Oval;
     }
+  }
+
+  private getLegacyFrameThresholdCount(frameCount: number): number {
+    const remainder = Number((frameCount % 2.5).toFixed(1));
+    return Math.max(0, Math.round(remainder / 0.5));
   }
   private mapHardwareMechanismType(value?: string | null): HardwareMechanismType | null {
     switch (value) {

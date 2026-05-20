@@ -25,6 +25,11 @@ export enum EntranceDoorKind {
   Welded = 'welded',
 }
 
+export enum EntranceDoorOpening {
+  Left = 'left',
+  Right = 'right',
+}
+
 export enum MoldingPlatbandType {
   Oval = 'oval',
   Smooth = 'smooth',
@@ -110,6 +115,7 @@ export interface EntranceDoorItem {
   id: number;
   type: OrderItemType.EntranceDoor;
   kind: EntranceDoorKind;
+  opening: EntranceDoorOpening;
   leafType: DoorLeafType;
   model: string;
   width: number;
@@ -129,6 +135,7 @@ export interface MoldingItem {
   frameLength: number | null;
   framePrice: number;
   frameSetCount: number;
+  frameThresholdCount: number;
   frameCount: number;
   platbandType: MoldingPlatbandType;
   platbandFigure: string | null;

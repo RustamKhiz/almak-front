@@ -12,6 +12,8 @@
       [ngModel]="value"
       [disabled]="disabled"
       (ngModelChange)="onInput($event)"
+      (keydown)="onKeyDown($event)"
+      (paste)="onPaste($event)"
       (blur)="markTouched()"
     />
     <button type="button" class="quantity-field__button" [disabled]="disabled" (click)="increase()">

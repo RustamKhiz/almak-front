@@ -59,6 +59,7 @@ import { OrdersService } from '../../services/orders.service';
 import {
   CapitalItem,
   EntranceDoorItem,
+  EntranceDoorOpening,
   ExtensionItem,
   HardwareItem,
   InteriorDoorCovering,
@@ -469,7 +470,7 @@ export class OrderCreateComponent implements OnInit {
 
   private applyOrder(order: OrderCreatePayload): void {
     this.interiorDoors.set(order.interiorDoors);
-    this.entranceDoors.set(order.entranceDoors);
+    this.entranceDoors.set(this.normalizeEntranceDoors(order.entranceDoors));
     this.moldings.set(order.moldings);
     this.extensions.set(order.extensions);
     this.capitals.set(order.capitals);
@@ -496,6 +497,13 @@ export class OrderCreateComponent implements OnInit {
 
     this.syncDeliveryState(order.needsDelivery, { clearAddressWhenDisabled: false });
     this.syncQuantity();
+  }
+
+  private normalizeEntranceDoors(items: readonly EntranceDoorItem[]): readonly EntranceDoorItem[] {
+    return items.map((item) => ({
+      ...item,
+      opening: item.opening === EntranceDoorOpening.Right ? EntranceDoorOpening.Right : EntranceDoorOpening.Left,
+    }));
   }
 
   private applyDraft(draftId: number): void {
