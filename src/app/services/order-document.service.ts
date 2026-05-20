@@ -191,7 +191,7 @@ export class OrderDocumentService {
             .doc { border: 1px solid #111; padding: 10px 12px; }
             .doc-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; margin-bottom: 8px; border-bottom: 1px solid #111; padding-bottom: 6px; }
             .company-wrap { display: flex; align-items: flex-start; gap: 12px; }
-            .logo { width: 72px; height: auto; object-fit: contain; }
+            .logo { width: 52px; max-width: 52px; height: auto; max-height: 52px; object-fit: contain; filter: grayscale(100%); -webkit-filter: grayscale(100%); }
             .company { font-size: 11px; }
             .company strong { font-size: 13px; }
             .order-title { text-align: right; }
@@ -217,11 +217,13 @@ export class OrderDocumentService {
             .totals { margin-top: 8px; width: 260px; margin-left: auto; border: 1px solid #111; padding: 6px 8px; }
             .totals-row { display: flex; justify-content: space-between; gap: 12px; margin: 2px 0; }
             .comment { margin-top: 8px; min-height: 34px; border: 1px solid #111; padding: 6px 8px; }
-            .footer { margin-top: 12px; display: grid; grid-template-columns: 1fr 120px 1fr; gap: 14px; align-items: end; page-break-inside: avoid; break-inside: avoid; }
-            .sign-block { min-height: 58px; }
+            table.footer { margin-top: 12px; border-collapse: separate; border-spacing: 14px 0; table-layout: fixed; page-break-inside: avoid; break-inside: avoid; }
+            table.footer td { border: 0; padding: 0; vertical-align: bottom; font-size: 10px; line-height: 1.15; }
+            .footer-stamp-cell { width: 120px; }
+            .sign-block { min-height: 58px; text-align: left; }
             .sign-block--manager { text-align: right; }
             .sign-line { border-bottom: 1px solid #111; height: 34px; margin-bottom: 5px; }
-            .stamp { border: 1px dashed #111; min-height: 68px; display: flex; align-items: center; justify-content: center; font-weight: bold; }
+            .stamp { border: 1px dashed #111; height: 68px; line-height: 68px; text-align: center; font-weight: bold; }
             .muted { color: #444; font-size: 10px; margin-top: 6px; }
             .compact .doc { padding: 8px 10px; }
             .compact .doc-header { margin-bottom: 6px; padding-bottom: 4px; }
@@ -242,8 +244,8 @@ export class OrderDocumentService {
             .ultra-compact .meta-grid { grid-template-columns: 1fr 1fr 1fr; }
             .ultra-compact .totals { width: 220px; }
             .ultra-compact .comment { min-height: 24px; }
-            .ultra-compact .footer { grid-template-columns: 1fr 100px 1fr; }
-            .ultra-compact .stamp { min-height: 48px; }
+            .ultra-compact .footer-stamp-cell { width: 100px; }
+            .ultra-compact .stamp { height: 48px; line-height: 48px; }
           </style>
         </head>
         <body class="${layoutMode}">
@@ -298,7 +300,7 @@ export class OrderDocumentService {
             .doc { border: 1px solid #111; padding: 10px 12px; }
             .doc-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; margin-bottom: 8px; border-bottom: 1px solid #111; padding-bottom: 6px; }
             .company-wrap { display: flex; align-items: flex-start; gap: 12px; }
-            .logo { width: 72px; height: auto; object-fit: contain; }
+            .logo { width: 52px; max-width: 52px; height: auto; max-height: 52px; object-fit: contain; filter: grayscale(100%); -webkit-filter: grayscale(100%); }
             .company { font-size: 11px; }
             .company strong { font-size: 13px; }
             .order-title { text-align: right; }
@@ -324,19 +326,21 @@ export class OrderDocumentService {
             .totals { margin-top: 8px; width: 290px; margin-left: auto; border: 1px solid #111; padding: 6px 8px; }
             .totals-row { display: flex; justify-content: space-between; gap: 12px; margin: 2px 0; }
             .comment { margin-top: 8px; min-height: 34px; border: 1px solid #111; padding: 6px 8px; }
-            .footer { margin-top: 12px; display: grid; grid-template-columns: 1fr 120px 1fr; gap: 14px; align-items: end; page-break-inside: avoid; break-inside: avoid; }
-            .sign-block { min-height: 58px; }
+            table.footer { margin-top: 12px; border-collapse: separate; border-spacing: 14px 0; table-layout: fixed; page-break-inside: avoid; break-inside: avoid; }
+            table.footer td { border: 0; padding: 0; vertical-align: bottom; font-size: 10px; line-height: 1.15; }
+            .footer-stamp-cell { width: 120px; }
+            .sign-block { min-height: 58px; text-align: left; }
             .sign-block--manager { text-align: right; }
             .sign-line { border-bottom: 1px solid #111; height: 34px; margin-bottom: 5px; }
-            .stamp { border: 1px dashed #111; min-height: 68px; display: flex; align-items: center; justify-content: center; font-weight: bold; }
+            .stamp { border: 1px dashed #111; height: 68px; line-height: 68px; text-align: center; font-weight: bold; }
             .muted { color: #444; font-size: 10px; margin-top: 6px; }
             .compact .doc { padding: 8px 10px; }
             .compact th, .compact td { padding: 2px 3px; font-size: 9px; line-height: 1; }
             .compact .totals { width: 260px; padding: 4px 6px; }
-            .compact .footer { margin-top: 8px; gap: 8px; }
+            .compact table.footer { margin-top: 8px; border-spacing: 8px 0; }
             .compact .sign-block { min-height: 48px; }
             .compact .sign-line { height: 28px; }
-            .compact .stamp { min-height: 56px; }
+            .compact .stamp { height: 56px; line-height: 56px; }
           </style>
         </head>
         <body class="${layoutMode}">
@@ -373,11 +377,11 @@ export class OrderDocumentService {
   }
 
   private buildHeader(orderId: number, issueDate: string): string {
-    return `<div class="doc-header"><div class="company-wrap"><img class="logo" src="${this.escapeHtml(this.getLogoSrc())}" alt="Логотип" /><div class="company"><div><strong>Двери Алмак</strong></div><div>ИП Хизриев С.С.</div><div>Тел.: ${this.escapeHtml(STORE_PHONE)}</div><div>${this.escapeHtml(STORE_ADDRESS)}</div></div></div><div class="order-title"><h1>ЗАКАЗ-НАРЯД</h1><div class="num">№ ${orderId} от ${issueDate}</div></div></div>`;
+    return `<div class="doc-header"><div class="company-wrap"><img class="logo" src="${this.escapeHtml(this.getLogoSrc())}" alt="Логотип" width="52" /><div class="company"><div><strong>Двери Алмак</strong></div><div>ИП Хизриев С.С.</div><div>Тел.: ${this.escapeHtml(STORE_PHONE)}</div><div>${this.escapeHtml(STORE_ADDRESS)}</div></div></div><div class="order-title"><h1>ЗАКАЗ-НАРЯД</h1><div class="num">№ ${orderId} от ${issueDate}</div></div></div>`;
   }
 
   private buildFooter(): string {
-    return '<div class="footer"><div class="sign-block"><div class="sign-line"></div><div>Подпись клиента</div></div><div class="stamp">М.П.</div><div class="sign-block sign-block--manager"><div class="sign-line"></div><div>Подпись менеджера</div></div></div>';
+    return '<table class="footer"><tbody><tr><td><div class="sign-block"><div class="sign-line"></div><div>Подпись клиента</div></div></td><td class="footer-stamp-cell"><div class="stamp">М.П.</div></td><td><div class="sign-block sign-block--manager"><div class="sign-line"></div><div>Подпись менеджера</div></div></td></tr></tbody></table>';
   }
 
   private buildFullTableHead(): string {
@@ -930,7 +934,7 @@ export class OrderDocumentService {
   }
 
   private getLogoSrc(): string {
-    return new URL('logo.jpg', document.baseURI).href;
+    return new URL('logo-bw.jpg', document.baseURI).href;
   }
 
   private escapeHtml(value: string): string {
