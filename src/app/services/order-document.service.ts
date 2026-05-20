@@ -189,9 +189,14 @@ export class OrderDocumentService {
             html, body { width: 100%; }
             body { font-family: "Times New Roman", serif; font-size: 10px; line-height: 1.15; color: #111; margin: 0; padding: 0; }
             .doc { border: 1px solid #111; padding: 10px 12px; }
-            .doc-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; margin-bottom: 8px; border-bottom: 1px solid #111; padding-bottom: 6px; }
-            .company-wrap { display: flex; align-items: flex-start; gap: 12px; }
-            .logo { width: 52px; max-width: 52px; height: auto; max-height: 52px; object-fit: contain; filter: grayscale(100%); -webkit-filter: grayscale(100%); }
+            table.doc-header { width: 100%; margin: 0 0 8px 0; border-collapse: collapse; table-layout: fixed; border-bottom: 1px solid #111; }
+            table.doc-header td { border: 0; padding: 0 0 6px 0; vertical-align: top; }
+            .company-cell { width: 65%; }
+            .title-cell { width: 35%; }
+            table.company-wrap { width: 100%; margin: 0; border-collapse: collapse; table-layout: fixed; }
+            table.company-wrap td { border: 0; padding: 0; vertical-align: top; }
+            .logo-cell { width: 84px; }
+            .logo { display: block; width: 76px; height: 76px; max-width: 76px; max-height: 76px; object-fit: contain; filter: grayscale(100%) contrast(120%); -webkit-filter: grayscale(100%) contrast(120%); }
             .company { font-size: 11px; }
             .company strong { font-size: 13px; }
             .order-title { text-align: right; }
@@ -226,7 +231,8 @@ export class OrderDocumentService {
             .stamp { border: 1px dashed #111; height: 68px; line-height: 68px; text-align: center; font-weight: bold; }
             .muted { color: #444; font-size: 10px; margin-top: 6px; }
             .compact .doc { padding: 8px 10px; }
-            .compact .doc-header { margin-bottom: 6px; padding-bottom: 4px; }
+            .compact table.doc-header { margin-bottom: 6px; }
+            .compact table.doc-header td { padding-bottom: 4px; }
             .compact .section-title { margin: 6px 0 3px; font-size: 11px; }
             .compact .meta-grid { gap: 3px 8px; }
             .compact th, .compact td { padding: 2px 3px; font-size: 9px; line-height: 1; }
@@ -298,9 +304,14 @@ export class OrderDocumentService {
             html, body { width: 100%; }
             body { font-family: "Times New Roman", serif; font-size: 10px; line-height: 1.15; color: #111; margin: 0; padding: 0; }
             .doc { border: 1px solid #111; padding: 10px 12px; }
-            .doc-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; margin-bottom: 8px; border-bottom: 1px solid #111; padding-bottom: 6px; }
-            .company-wrap { display: flex; align-items: flex-start; gap: 12px; }
-            .logo { width: 52px; max-width: 52px; height: auto; max-height: 52px; object-fit: contain; filter: grayscale(100%); -webkit-filter: grayscale(100%); }
+            table.doc-header { width: 100%; margin: 0 0 8px 0; border-collapse: collapse; table-layout: fixed; border-bottom: 1px solid #111; }
+            table.doc-header td { border: 0; padding: 0 0 6px 0; vertical-align: top; }
+            .company-cell { width: 65%; }
+            .title-cell { width: 35%; }
+            table.company-wrap { width: 100%; margin: 0; border-collapse: collapse; table-layout: fixed; }
+            table.company-wrap td { border: 0; padding: 0; vertical-align: top; }
+            .logo-cell { width: 84px; }
+            .logo { display: block; width: 76px; height: 76px; max-width: 76px; max-height: 76px; object-fit: contain; filter: grayscale(100%) contrast(120%); -webkit-filter: grayscale(100%) contrast(120%); }
             .company { font-size: 11px; }
             .company strong { font-size: 13px; }
             .order-title { text-align: right; }
@@ -377,7 +388,7 @@ export class OrderDocumentService {
   }
 
   private buildHeader(orderId: number, issueDate: string): string {
-    return `<div class="doc-header"><div class="company-wrap"><img class="logo" src="${this.escapeHtml(this.getLogoSrc())}" alt="Логотип" width="52" /><div class="company"><div><strong>Двери Алмак</strong></div><div>ИП Хизриев С.С.</div><div>Тел.: ${this.escapeHtml(STORE_PHONE)}</div><div>${this.escapeHtml(STORE_ADDRESS)}</div></div></div><div class="order-title"><h1>ЗАКАЗ-НАРЯД</h1><div class="num">№ ${orderId} от ${issueDate}</div></div></div>`;
+    return `<table class="doc-header"><tbody><tr><td class="company-cell"><table class="company-wrap"><tbody><tr><td class="logo-cell"><img class="logo" src="${this.escapeHtml(this.getLogoSrc())}" alt="Логотип" width="76" height="76" /></td><td><div class="company"><div><strong>Двери Алмак</strong></div><div>ИП Хизриев С.С.</div><div>Тел.: ${this.escapeHtml(STORE_PHONE)}</div><div>${this.escapeHtml(STORE_ADDRESS)}</div></div></td></tr></tbody></table></td><td class="title-cell"><div class="order-title"><h1>ЗАКАЗ-НАРЯД</h1><div class="num">№ ${orderId} от ${issueDate}</div></div></td></tr></tbody></table>`;
   }
 
   private buildFooter(): string {
