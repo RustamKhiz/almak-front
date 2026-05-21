@@ -107,6 +107,7 @@ interface BackendMolding {
   frameLength?: number | null;
   framePrice: number;
   frameSetCount?: number;
+  frameBoxCount?: number;
   frameThresholdCount?: number;
   frameThresholdPrice?: number;
   frameCount: number;
@@ -253,6 +254,7 @@ interface BackendMoldingPayload {
   frameLength?: number | null;
   framePrice: number;
   frameSetCount: number;
+  frameBoxCount: number;
   frameThresholdCount: number;
   frameThresholdPrice: number;
   frameCount: number;
@@ -496,6 +498,7 @@ export class OrdersService {
         frameLength: item.frameLength,
         framePrice: item.framePrice,
         frameSetCount: item.frameSetCount,
+        frameBoxCount: item.frameBoxCount,
         frameThresholdCount: item.frameThresholdCount,
         frameThresholdPrice: item.frameThresholdPrice,
         frameCount: item.frameCount,
@@ -631,6 +634,7 @@ export class OrdersService {
       frameLength: item.frameLength ?? null,
       framePrice: item.framePrice,
       frameSetCount: item.frameSetCount ?? Math.floor(item.frameCount / 2.5),
+      frameBoxCount: item.frameBoxCount ?? 0,
       frameThresholdCount: item.frameThresholdCount ?? this.getLegacyFrameThresholdCount(item.frameCount),
       frameThresholdPrice: item.frameThresholdPrice ?? 500,
       frameCount: item.frameCount,

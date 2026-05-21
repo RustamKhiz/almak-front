@@ -135,6 +135,7 @@ export interface MoldingItem {
   frameLength: number | null;
   framePrice: number;
   frameSetCount: number;
+  frameBoxCount: number;
   frameThresholdCount: number;
   frameThresholdPrice: number;
   frameCount: number;

@@ -64,6 +64,7 @@ export class MoldingDialogComponent {
       this.normalizeIntegerCount(this.data.molding?.frameSetCount ?? Math.floor((this.data.molding?.frameCount ?? 2.5) / 2.5)),
       [Validators.required, Validators.min(0)],
     ],
+    frameBoxCount: [this.normalizeIntegerCount(this.data.molding?.frameBoxCount ?? 0), [Validators.required, Validators.min(0)]],
     frameThresholdCount: [
       this.normalizeIntegerCount(
         this.data.molding?.frameThresholdCount ?? this.getLegacyThresholdCount(this.data.molding?.frameCount),
@@ -101,6 +102,10 @@ export class MoldingDialogComponent {
       this.updateFrameCount();
     });
 
+    this.form.controls.frameBoxCount.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
+      this.updateFrameCount();
+    });
+
     this.form.controls.frameThresholdCount.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
       this.updateFrameCount();
     });
@@ -134,9 +139,10 @@ export class MoldingDialogComponent {
       frameLength: value.frameLength == null ? null : Math.max(0, value.frameLength),
       framePrice: value.framePrice ?? 0,
       frameSetCount: this.normalizeIntegerCount(value.frameSetCount),
+      frameBoxCount: this.normalizeIntegerCount(value.frameBoxCount),
       frameThresholdCount: this.normalizeIntegerCount(value.frameThresholdCount),
       frameThresholdPrice: value.frameThresholdPrice ?? 500,
-      frameCount: this.calculateFrameCount(value.frameSetCount, value.frameThresholdCount),
+      frameCount: this.calculateFrameCount(value.frameSetCount, value.frameBoxCount, value.frameThresholdCount),
       platbandType: value.platbandType,
       platbandFigure: value.platbandType === MoldingPlatbandType.Figure ? value.platbandFigure.trim() || null : null,
       platbandLength: value.platbandLength == null ? null : Math.max(0, value.platbandLength),
@@ -165,15 +171,29 @@ export class MoldingDialogComponent {
   }
 
   protected getFrameCount(): number {
-    return this.calculateFrameCount(this.form.controls.frameSetCount.value, this.form.controls.frameThresholdCount.value);
+    return this.calculateFrameCount(
+      this.form.controls.frameSetCount.value,
+      this.form.controls.frameBoxCount.value,
+      this.form.controls.frameThresholdCount.value,
+    );
   }
 
   private updateFrameCount(): void {
     this.form.controls.frameCount.setValue(this.getFrameCount(), { emitEvent: false });
   }
 
-  private calculateFrameCount(setCount: number | null | undefined, thresholdCount: number | null | undefined): number {
-    return Number((this.normalizeIntegerCount(setCount) * 2.5 + this.normalizeIntegerCount(thresholdCount) * 0.5).toFixed(1));
+  private calculateFrameCount(
+    setCount: number | null | undefined,
+    boxCount: number | null | undefined,
+    thresholdCount: number | null | undefined,
+  ): number {
+    return Number(
+      (
+        this.normalizeIntegerCount(setCount) * 2.5 +
+        this.normalizeIntegerCount(boxCount) +
+        this.normalizeIntegerCount(thresholdCount) * 0.5
+      ).toFixed(1),
+    );
   }
 
   private getLegacyThresholdCount(frameCount: number | null | undefined): number {

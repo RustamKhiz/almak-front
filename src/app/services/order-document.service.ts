@@ -610,14 +610,16 @@ export class OrderDocumentService {
     };
     const rows: CustomDocumentRow[] = [];
 
-    if (item.frameSetCount > 0 || item.framePrice > 0) {
+    const framePaidCount = item.frameSetCount * 2.5 + item.frameBoxCount;
+
+    if (framePaidCount > 0 || item.framePrice > 0) {
       rows.push({
         ...common,
-        title: `Коробка (${item.frameSetCount} шт.)`,
+        title: `Коробка (${item.frameSetCount} комп., ${item.frameBoxCount} шт.)`,
         size: item.frameLength !== null ? `${item.frameLength}` : '-',
-        count: item.frameSetCount * 2.5,
+        count: framePaidCount,
         price: item.framePrice,
-        amount: item.framePrice * item.frameSetCount * 2.5,
+        amount: item.framePrice * framePaidCount,
       });
     }
 
@@ -816,7 +818,7 @@ export class OrderDocumentService {
 
   private getMoldingTotal(item: MoldingItem): number {
     return (
-      item.framePrice * item.frameSetCount * 2.5 +
+      item.framePrice * (item.frameSetCount * 2.5 + item.frameBoxCount) +
       item.frameThresholdPrice * item.frameThresholdCount +
       item.platbandPrice * item.platbandCount +
       item.rebateBarPrice * item.rebateBarCount
