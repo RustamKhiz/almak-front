@@ -136,6 +136,7 @@ export interface MoldingItem {
   framePrice: number;
   frameSetCount: number;
   frameThresholdCount: number;
+  frameThresholdPrice: number;
   frameCount: number;
   platbandType: MoldingPlatbandType;
   platbandFigure: string | null;

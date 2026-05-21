@@ -536,7 +536,7 @@ export class OrderViewComponent {
       key: `molding-${item.id}`,
       typeLabel: 'Погонаж',
       title: `${item.color} · ${this.moldingCoveringLabels[item.covering]}`,
-      summary: `Коробка ${item.frameSetCount} комп. / порогов ${item.frameThresholdCount ?? 0} / ${item.frameCount} шт. · Наличник ${item.platbandSetCount} комп. / ${item.platbandCount} шт. · Притворная планка ${item.rebateBarCount} шт.`,
+      summary: `Коробка ${item.frameSetCount} шт. / порогов ${item.frameThresholdCount ?? 0} / всего ${item.frameCount} шт. · Наличник ${item.platbandSetCount} комп. / ${item.platbandCount} шт. · Притворная планка ${item.rebateBarCount} шт.`,
       countLabel: `${item.frameCount + item.platbandCount + item.rebateBarCount} шт.`,
       total: getMoldingTotal(item),
       details: {
@@ -547,10 +547,11 @@ export class OrderViewComponent {
         sections: [
           this.section('Коробка', [
             ['Длина', item.frameLength !== null ? `${item.frameLength} см` : 'Не указана'],
-            ['Количество комплектов', `${item.frameSetCount}`],
+            ['Количество коробок', `${item.frameSetCount}`],
             ['Количество порогов', `${item.frameThresholdCount ?? 0}`],
-            ['Количество', `${item.frameCount} шт.`],
-            ['Цена за штуку', this.formatMoney(item.framePrice)],
+            ['Общее количество коробок', `${item.frameCount} шт.`],
+            ['Цена коробки', this.formatMoney(item.framePrice)],
+            ['Цена порога', this.formatMoney(item.frameThresholdPrice)],
           ]),
           this.section('Наличник', [
             ['Тип', this.moldingPlatbandTypeLabels[item.platbandType]],

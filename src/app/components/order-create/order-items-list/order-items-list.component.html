@@ -142,13 +142,16 @@
                 Погонаж · {{ molding.color }} · {{ moldingCoveringLabels[molding.covering] }}
               </div>
               <div class="door-item__meta">
-                Коробка: {{ molding.frameSetCount }} комп. / порогов {{ molding.frameThresholdCount ?? 0 }} / всего
+                Коробка: {{ molding.frameSetCount }} шт. / порогов {{ molding.frameThresholdCount ?? 0 }} / всего
                 {{ molding.frameCount }} шт.
                 @if (molding.frameLength !== null) {
                   · {{ molding.frameLength }} см
                 }
                 @if (molding.framePrice > 0) {
                   · {{ molding.framePrice | number: '1.0-0' }} ₽
+                }
+                @if (molding.frameThresholdPrice > 0) {
+                  · порог {{ molding.frameThresholdPrice | number: '1.0-0' }} ₽
                 }
                 · Наличник {{ moldingPlatbandTypeLabels[molding.platbandType] }}
                 @if (molding.platbandFigure) {
