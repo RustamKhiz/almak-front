@@ -22,7 +22,7 @@ jobs:
         run: npm ci
 
       - name: Build desktop app
-        run: npm run electron:build:win
+        run: npm run electron:release:win
 
       - name: Upload desktop artifacts
         uses: actions/upload-artifact@v4
@@ -75,12 +75,6 @@ jobs:
         with:
           name: almak-desktop
           path: release/downloads
-
-      - name: Prepare desktop download artifact
-        shell: bash
-        run: |
-          set -euo pipefail
-          cp release/downloads/Almak-Setup-*.exe release/downloads/Almak-Setup-latest.exe
 
       - name: Upload desktop artifacts
         run: |

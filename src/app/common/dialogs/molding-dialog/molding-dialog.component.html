@@ -16,7 +16,6 @@
           <input matInput type="number" formControlName="framePrice" placeholder="0" />
           <mat-hint>Необязательно</mat-hint>
         </mat-form-field>
-
       </div>
 
       <div class="dialog-row">
@@ -27,7 +26,7 @@
       <div class="dialog-row">
         <app-quantity-field formControlName="frameThresholdCount" label="Количество порогов" [min]="0" [step]="1" />
         <mat-form-field appearance="outline">
-          <mat-label>Цена порога</mat-label>
+          <mat-label>Цена коробки</mat-label>
           <input matInput type="number" formControlName="frameThresholdPrice" placeholder="500" />
         </mat-form-field>
       </div>
