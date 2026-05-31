@@ -61,10 +61,15 @@ export class MoldingDialogComponent {
     frameLength: [this.data.molding?.frameLength ?? null, [Validators.min(0)]],
     framePrice: [this.data.molding?.framePrice ?? null, [Validators.min(0)]],
     frameSetCount: [
-      this.normalizeIntegerCount(this.data.molding?.frameSetCount ?? Math.floor((this.data.molding?.frameCount ?? 2.5) / 2.5)),
+      this.normalizeIntegerCount(
+        this.data.molding?.frameSetCount ?? Math.floor((this.data.molding?.frameCount ?? 2.5) / 2.5),
+      ),
       [Validators.required, Validators.min(0)],
     ],
-    frameBoxCount: [this.normalizeIntegerCount(this.data.molding?.frameBoxCount ?? 0), [Validators.required, Validators.min(0)]],
+    frameBoxCount: [
+      this.normalizeIntegerCount(this.data.molding?.frameBoxCount ?? 0),
+      [Validators.required, Validators.min(0)],
+    ],
     frameThresholdCount: [
       this.normalizeIntegerCount(
         this.data.molding?.frameThresholdCount ?? this.getLegacyThresholdCount(this.data.molding?.frameCount),
@@ -78,7 +83,9 @@ export class MoldingDialogComponent {
     platbandLength: [this.data.molding?.platbandLength ?? null, [Validators.min(0)]],
     platbandPrice: [this.data.molding?.platbandPrice ?? null, [Validators.min(0)]],
     platbandSetCount: [
-      this.normalizeIntegerCount(this.data.molding?.platbandSetCount ?? Math.floor((this.data.molding?.platbandCount ?? 2.5) / 2.5)),
+      this.normalizeIntegerCount(
+        this.data.molding?.platbandSetCount ?? Math.floor((this.data.molding?.platbandCount ?? 2.5) / 2.5),
+      ),
       [Validators.required, Validators.min(0)],
     ],
     platbandCount: [this.data.molding?.platbandCount ?? 2.5, [Validators.required, Validators.min(0)]],
@@ -146,7 +153,7 @@ export class MoldingDialogComponent {
       platbandType: value.platbandType,
       platbandFigure: value.platbandType === MoldingPlatbandType.Figure ? value.platbandFigure.trim() || null : null,
       platbandLength: value.platbandLength == null ? null : Math.max(0, value.platbandLength),
-      platbandPrice: value.platbandPrice,
+      platbandPrice: value.platbandPrice ?? 0,
       platbandSetCount: this.normalizeIntegerCount(value.platbandSetCount),
       platbandCount: value.platbandCount,
       rebateBarCount: value.rebateBarCount,

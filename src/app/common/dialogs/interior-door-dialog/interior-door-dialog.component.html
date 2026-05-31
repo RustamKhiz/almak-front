@@ -51,8 +51,18 @@
     >
       <div class="dialog-column leaf-card">
         <div class="leaf-card__title">Створка 1</div>
-        <app-catalog-autocomplete-field title="Ширина (см)" formControlName="width" [options]="widthOptions" />
-        <app-catalog-autocomplete-field title="Высота (см)" formControlName="height" [options]="heightOptions" />
+        <app-catalog-autocomplete-field
+          title="Ширина (см)"
+          mode="number"
+          formControlName="width"
+          [options]="widthOptions"
+        />
+        <app-catalog-autocomplete-field
+          title="Высота (см)"
+          mode="number"
+          formControlName="height"
+          [options]="heightOptions"
+        />
         <mat-form-field appearance="outline">
           <mat-label>Цена</mat-label>
           <input matInput type="number" formControlName="price" placeholder="0" />
@@ -63,8 +73,18 @@
       @if (form.controls.leafType.value === doorLeafType.Double) {
         <div class="dialog-column leaf-card leaf-card--second">
           <div class="leaf-card__title">Створка 2</div>
-          <app-catalog-autocomplete-field title="Ширина 2 (см)" formControlName="width2" [options]="widthOptions" />
-          <app-catalog-autocomplete-field title="Высота 2 (см)" formControlName="height2" [options]="heightOptions" />
+          <app-catalog-autocomplete-field
+            title="Ширина 2 (см)"
+            mode="number"
+            formControlName="width2"
+            [options]="widthOptions"
+          />
+          <app-catalog-autocomplete-field
+            title="Высота 2 (см)"
+            mode="number"
+            formControlName="height2"
+            [options]="heightOptions"
+          />
           <mat-form-field appearance="outline">
             <mat-label>Цена 2</mat-label>
             <input matInput type="number" formControlName="price2" placeholder="0" />

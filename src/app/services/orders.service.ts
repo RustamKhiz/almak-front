@@ -465,17 +465,17 @@ export class OrdersService {
       interiorDoors: payload.interiorDoors.map((item) => ({
         model: item.model,
         color: item.color,
-        price: item.price,
-        price2: item.price2,
-        width: item.width,
-        width2: item.width2,
-        height: item.height,
-        height2: item.height2,
+        price: this.toNonNegativeNumber(item.price),
+        price2: this.toNullableNonNegativeNumber(item.price2),
+        width: this.toPositiveInteger(item.width),
+        width2: this.toNullablePositiveInteger(item.width2),
+        height: this.toPositiveInteger(item.height),
+        height2: this.toNullablePositiveInteger(item.height2),
         hasGlass: item.hasGlass,
         glassComment: item.glassComment,
         leafType: item.leafType,
-        count: item.count,
-        count2: item.count2,
+        count: this.toPositiveInteger(item.count),
+        count2: this.toNullablePositiveInteger(item.count2),
         covering: item.covering,
         comment: item.comment,
       })),
@@ -495,21 +495,21 @@ export class OrdersService {
         comment: item.comment,
       })),
       moldings: payload.moldings.map((item) => ({
-        frameLength: item.frameLength,
-        framePrice: item.framePrice,
-        frameSetCount: item.frameSetCount,
-        frameBoxCount: item.frameBoxCount,
-        frameThresholdCount: item.frameThresholdCount,
-        frameThresholdPrice: item.frameThresholdPrice,
-        frameCount: item.frameCount,
+        frameLength: this.toNullableNonNegativeInteger(item.frameLength),
+        framePrice: this.toNonNegativeNumber(item.framePrice),
+        frameSetCount: this.toNonNegativeInteger(item.frameSetCount),
+        frameBoxCount: this.toNonNegativeInteger(item.frameBoxCount),
+        frameThresholdCount: this.toNonNegativeInteger(item.frameThresholdCount),
+        frameThresholdPrice: this.toNonNegativeNumber(item.frameThresholdPrice, 500),
+        frameCount: this.toNonNegativeNumber(item.frameCount),
         platbandType: item.platbandType,
         platbandFigure: item.platbandFigure,
-        platbandLength: item.platbandLength,
-        platbandPrice: item.platbandPrice,
-        platbandSetCount: item.platbandSetCount,
-        platbandCount: item.platbandCount,
-        rebateBarCount: item.rebateBarCount,
-        rebateBarPrice: item.rebateBarPrice,
+        platbandLength: this.toNullableNonNegativeInteger(item.platbandLength),
+        platbandPrice: this.toNonNegativeNumber(item.platbandPrice),
+        platbandSetCount: this.toNonNegativeInteger(item.platbandSetCount),
+        platbandCount: this.toNonNegativeNumber(item.platbandCount),
+        rebateBarCount: this.toNonNegativeInteger(item.rebateBarCount),
+        rebateBarPrice: this.toNonNegativeNumber(item.rebateBarPrice),
         color: item.color,
         covering: item.covering,
         comment: item.comment,
@@ -853,6 +853,58 @@ export class OrdersService {
     const remainder = Number((frameCount % 2.5).toFixed(1));
     return Math.max(0, Math.round(remainder / 0.5));
   }
+
+  private toNonNegativeNumber(value: unknown, fallback = 0): number {
+    const normalized = Number(value ?? fallback);
+    if (!Number.isFinite(normalized)) {
+      return fallback;
+    }
+
+    return Math.max(0, normalized);
+  }
+
+  private toNullableNonNegativeNumber(value: unknown): number | null {
+    if (value === null || value === undefined || value === '') {
+      return null;
+    }
+
+    return this.toNonNegativeNumber(value);
+  }
+
+  private toPositiveInteger(value: unknown, fallback = 1): number {
+    const normalized = Number(value ?? fallback);
+    if (!Number.isFinite(normalized)) {
+      return fallback;
+    }
+
+    return Math.max(1, Math.round(normalized));
+  }
+
+  private toNonNegativeInteger(value: unknown, fallback = 0): number {
+    const normalized = Number(value ?? fallback);
+    if (!Number.isFinite(normalized)) {
+      return fallback;
+    }
+
+    return Math.max(0, Math.round(normalized));
+  }
+
+  private toNullablePositiveInteger(value: unknown): number | null {
+    if (value === null || value === undefined || value === '') {
+      return null;
+    }
+
+    return this.toPositiveInteger(value);
+  }
+
+  private toNullableNonNegativeInteger(value: unknown): number | null {
+    if (value === null || value === undefined || value === '') {
+      return null;
+    }
+
+    return this.toNonNegativeInteger(value);
+  }
+
   private mapHardwareMechanismType(value?: string | null): HardwareMechanismType | null {
     switch (value) {
       case HardwareMechanismType.Lock:
