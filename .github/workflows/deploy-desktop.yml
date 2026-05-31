@@ -1,0 +1,84 @@
+name: Deploy Desktop App
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-desktop:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build desktop app
+        run: npm run electron:release:win
+
+      - name: Upload desktop artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: almak-desktop
+          path: |
+            release/Almak-Setup-[0-9]*.exe
+            release/Almak-Setup-*.exe.blockmap
+            release/latest.yml
+            !release/Almak-Setup-latest.exe
+          if-no-files-found: error
+
+  deploy-desktop:
+    needs: build-desktop
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download desktop artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: almak-desktop
+          path: release/downloads
+
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          cat << 'EOF' > ~/.ssh/known_hosts
+          ${{ secrets.KNOWN_HOSTS }}
+          EOF
+          chmod 644 ~/.ssh/known_hosts
+
+      - name: Upload desktop artifacts
+        timeout-minutes: 10
+        run: |
+          rsync -av --delete --partial --timeout=300 --info=progress2 -e "ssh -i ~/.ssh/id_ed25519" \
+            release/downloads/ \
+            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/tmp/almak-desktop/
+
+      - name: Deploy desktop artifacts on server
+        run: |
+          ssh -i ~/.ssh/id_ed25519 ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} 'bash -s' <<'EOF'
+          set -euo pipefail
+
+          sudo mkdir -p /var/www/app/downloads
+          sudo rsync -av --delete /tmp/almak-desktop/ /var/www/app/downloads/
+
+          latest_installer=$(find /var/www/app/downloads -maxdepth 1 -type f -name 'Almak-Setup-[0-9]*.exe' | sort -V | tail -n 1)
+          if [ -z "$latest_installer" ]; then
+            echo "Desktop installer was not deployed"
+            exit 1
+          fi
+          sudo cp "$latest_installer" /var/www/app/downloads/Almak-Setup-latest.exe
+
+          sudo chown -R www-data:www-data /var/www/app/downloads
+          sudo find /var/www/app/downloads -type d -exec chmod 755 {} \;
+          sudo find /var/www/app/downloads -type f -exec chmod 644 {} \;
+          sudo systemctl reload nginx
+          EOF

@@ -76,8 +76,10 @@ The download button in the web app points to:
 https://almakk.ru/downloads/Almak-Setup-latest.exe
 ```
 
-The GitHub Actions deploy workflow builds and uploads these desktop artifacts
-automatically on every frontend deploy.
+The `Deploy Desktop App` GitHub Actions workflow builds and uploads these
+desktop artifacts manually through `workflow_dispatch`.
+
+Regular frontend deploys do not rebuild or upload the desktop installer.
 
 Every release must have a higher `version` in `package.json`.
 
