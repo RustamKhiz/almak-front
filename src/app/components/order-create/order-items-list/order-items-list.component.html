@@ -81,7 +81,8 @@
               </div>
               <div class="door-item__meta">
                 {{ door.width }} × {{ door.height }} см · {{ doorLeafTypeLabels[door.leafType] }} · цвет двери
-                {{ door.color }} · открывание {{ entranceDoorOpeningLabels[door.opening] ?? 'Левое' }} · количество {{ door.count }}
+                {{ door.color }} · открывание {{ entranceDoorOpeningLabels[door.opening] ?? 'Левое' }} · количество
+                {{ door.count }}
                 @if (door.painting) {
                   · покрытие {{ door.painting }}
                 }
@@ -142,22 +143,19 @@
                 Погонаж · {{ molding.color }} · {{ moldingCoveringLabels[molding.covering] }}
               </div>
               <div class="door-item__meta">
-                Коробка: {{ molding.frameSetCount }} комп. / коробок {{ molding.frameBoxCount }} / порогов {{ molding.frameThresholdCount ?? 0 }} / всего
-                {{ molding.frameCount }} шт.
+                Коробка: всего {{ molding.frameCount }} шт. / комплект {{ molding.frameSetCount }} / доп.
+                {{ molding.frameBoxCount }} шт.
                 @if (molding.frameLength !== null) {
                   · {{ molding.frameLength }} см
                 }
                 @if (molding.framePrice > 0) {
                   · {{ molding.framePrice | number: '1.0-0' }} ₽
                 }
-                @if (molding.frameThresholdPrice > 0) {
-                  · порог {{ molding.frameThresholdPrice | number: '1.0-0' }} ₽
-                }
                 · Наличник {{ moldingPlatbandTypeLabels[molding.platbandType] }}
                 @if (molding.platbandFigure) {
                   · модель {{ molding.platbandFigure }}
                 }
-                · {{ molding.platbandCount }} шт.
+                · всего {{ molding.platbandCount }} шт.
                 @if (molding.platbandLength !== null) {
                   · {{ molding.platbandLength }} см
                 }

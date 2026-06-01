@@ -15,7 +15,9 @@ import {
   PANELING_KIND_LABELS,
   PANELING_KIND_OPTIONS,
 } from '../../constants/molding-catalog';
+import { SUPPLIER_OPTIONS } from '../../constants/reference-catalogs';
 import { OrderItemType, PanelingCovering, PanelingItem, PanelingSize } from '../../../types/order.types';
+import { CatalogAutocompleteFieldComponent } from '../../../ui/catalog-autocomplete-field/catalog-autocomplete-field.component';
 import { QuantityFieldComponent } from '../../../ui/quantity-field/quantity-field.component';
 import { bindLeadingCapitalization } from '../../utils/form-text';
 
@@ -38,6 +40,7 @@ export type PanelingDialogResult = Omit<PanelingItem, 'id'>;
     MatInputModule,
     MatSelectModule,
     DecimalPipe,
+    CatalogAutocompleteFieldComponent,
     QuantityFieldComponent,
   ],
   templateUrl: './paneling-dialog.component.html',
@@ -54,8 +57,10 @@ export class PanelingDialogComponent {
   protected readonly coveringLabels = PANELING_COVERING_LABELS;
   protected readonly kindOptions = PANELING_KIND_OPTIONS;
   protected readonly kindLabels = PANELING_KIND_LABELS;
+  protected readonly supplierOptions = SUPPLIER_OPTIONS;
 
   protected readonly form = this.fb.group({
+    supplier: [this.data.paneling?.supplier ?? ''],
     color: [this.data.paneling?.color ?? this.data.defaultColor ?? '', [Validators.required]],
     count: [this.data.paneling?.count ?? 1, [Validators.required, Validators.min(1)]],
     price: [this.data.paneling?.price ?? null, [Validators.required, Validators.min(0)]],
@@ -103,6 +108,7 @@ export class PanelingDialogComponent {
 
     this.dialogRef.close({
       type: OrderItemType.Paneling,
+      supplier: value.supplier?.trim() || '',
       color: value.color!.trim(),
       size: this.formatSizes(sizes),
       count: value.count!,

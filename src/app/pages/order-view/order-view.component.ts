@@ -536,7 +536,7 @@ export class OrderViewComponent {
       key: `molding-${item.id}`,
       typeLabel: 'Погонаж',
       title: `${item.color} · ${this.moldingCoveringLabels[item.covering]}`,
-      summary: `Коробка ${item.frameSetCount} комп. / коробок ${item.frameBoxCount} / порогов ${item.frameThresholdCount ?? 0} / всего ${item.frameCount} шт. · Наличник ${item.platbandSetCount} комп. / ${item.platbandCount} шт. · Притворная планка ${item.rebateBarCount} шт.`,
+      summary: `Коробка ${item.frameCount} шт. · Наличник ${item.platbandCount} шт. · Притворная планка ${item.rebateBarCount} шт.`,
       countLabel: `${item.frameCount + item.platbandCount + item.rebateBarCount} шт.`,
       total: getMoldingTotal(item),
       details: {
@@ -547,20 +547,21 @@ export class OrderViewComponent {
         sections: [
           this.section('Коробка', [
             ['Длина', item.frameLength !== null ? `${item.frameLength} см` : 'Не указана'],
-            ['Количество комплектов', `${item.frameSetCount}`],
-            ['Количество коробок', `${item.frameBoxCount}`],
-            ['Количество порогов', `${item.frameThresholdCount ?? 0}`],
             ['Общее количество коробок', `${item.frameCount} шт.`],
-            ['Цена коробки', this.formatMoney(item.framePrice)],
-            ['Цена порога', this.formatMoney(item.frameThresholdPrice)],
+            ['Комплект коробок', `${item.frameSetCount}`],
+            ['Дополнительные коробки', `${item.frameBoxCount}`],
+            ['Цена дополнительной коробки', this.formatMoney(item.framePrice)],
+            ['Общая стоимость коробок', this.formatMoney(item.framePrice * item.frameBoxCount)],
           ]),
           this.section('Наличник', [
             ['Тип', this.moldingPlatbandTypeLabels[item.platbandType]],
             ['Модель', item.platbandFigure || 'Не указана'],
             ['Длина', item.platbandLength !== null ? `${item.platbandLength} см` : 'Не указана'],
-            ['Количество комплектов', `${item.platbandSetCount}`],
-            ['Количество', `${item.platbandCount} шт.`],
+            ['Комплект наличников', `${item.platbandSetCount}`],
+            ['Общее количество наличников', `${item.platbandCount} шт.`],
             ['Цена за штуку', this.formatMoney(item.platbandPrice)],
+            ['Стоимость', this.formatMoney(item.platbandPrice * item.platbandCount)],
+            ['Минус стоимость наличников', this.formatMoney(item.platbandDeductionPrice * item.platbandCount)],
           ]),
           this.section('Дополнительно', [
             ['Цвет', item.color],

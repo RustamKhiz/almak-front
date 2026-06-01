@@ -94,6 +94,7 @@ export enum BackendOrderStatus {
 export interface InteriorDoorItem {
   id: number;
   type: OrderItemType.InteriorDoor;
+  supplier: string;
   model: string;
   color: string;
   price: number;
@@ -114,6 +115,7 @@ export interface InteriorDoorItem {
 export interface EntranceDoorItem {
   id: number;
   type: OrderItemType.EntranceDoor;
+  supplier: string;
   kind: EntranceDoorKind;
   opening: EntranceDoorOpening;
   leafType: DoorLeafType;
@@ -132,6 +134,7 @@ export interface EntranceDoorItem {
 export interface MoldingItem {
   id: number;
   type: OrderItemType.Molding;
+  supplier: string;
   frameLength: number | null;
   framePrice: number;
   frameSetCount: number;
@@ -145,6 +148,7 @@ export interface MoldingItem {
   platbandPrice: number;
   platbandSetCount: number;
   platbandCount: number;
+  platbandDeductionPrice: number;
   rebateBarCount: number;
   rebateBarPrice: number;
   color: string;
@@ -155,6 +159,7 @@ export interface MoldingItem {
 export interface ExtensionItem {
   id: number;
   type: OrderItemType.Extension;
+  supplier: string;
   color: string;
   covering: ExtensionCovering;
   width: number;
@@ -170,6 +175,7 @@ export interface ExtensionItem {
 export interface CapitalItem {
   id: number;
   type: OrderItemType.Capital;
+  supplier: string;
   name: string;
   color: string;
   covering: CapitalCovering;
@@ -183,6 +189,7 @@ export interface CapitalItem {
 export interface PanelingItem {
   id: number;
   type: OrderItemType.Paneling;
+  supplier: string;
   color: string;
   size: string;
   width: number;
@@ -204,6 +211,7 @@ export interface PanelingSize {
 export interface HardwareItem {
   id: number;
   type: OrderItemType.Hardware;
+  supplier: string;
   handleModel: string;
   handleColor: string;
   handleCount: number | null;

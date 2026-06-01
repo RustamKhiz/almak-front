@@ -12,7 +12,9 @@ import {
   EXTENSION_COVERING_LABELS,
   EXTENSION_COVERING_OPTIONS,
 } from '../../constants/molding-catalog';
+import { SUPPLIER_OPTIONS } from '../../constants/reference-catalogs';
 import { ExtensionCovering, ExtensionItem, OrderItemType } from '../../../types/order.types';
+import { CatalogAutocompleteFieldComponent } from '../../../ui/catalog-autocomplete-field/catalog-autocomplete-field.component';
 import { QuantityFieldComponent } from '../../../ui/quantity-field/quantity-field.component';
 import { bindLeadingCapitalization } from '../../utils/form-text';
 
@@ -35,6 +37,7 @@ export type ExtensionDialogResult = Omit<ExtensionItem, 'id'>;
     MatInputModule,
     MatSelectModule,
     DecimalPipe,
+    CatalogAutocompleteFieldComponent,
     QuantityFieldComponent,
   ],
   templateUrl: './extension-dialog.component.html',
@@ -50,8 +53,10 @@ export class ExtensionDialogComponent {
 
   protected readonly coveringOptions = EXTENSION_COVERING_OPTIONS;
   protected readonly coveringLabels = EXTENSION_COVERING_LABELS;
+  protected readonly supplierOptions = SUPPLIER_OPTIONS;
 
   protected readonly form = this.fb.group({
+    supplier: [this.data.extension?.supplier ?? ''],
     color: [this.data.extension?.color ?? this.data.defaultColor ?? '', [Validators.required]],
     covering: [
       this.data.extension?.covering ?? this.data.defaultCovering ?? DEFAULT_EXTENSION_COVERING,
@@ -59,11 +64,8 @@ export class ExtensionDialogComponent {
     ],
     width: [this.data.extension?.width ?? null, [Validators.required, Validators.min(1)]],
     height: [this.data.extension?.height ?? null, [Validators.required, Validators.min(1)]],
-    setCount: [
-      this.normalizeSetCount(this.data.extension?.setCount ?? Number(((this.data.extension?.quantityPerSet ?? 2.5) / 2.5).toFixed(1))),
-      [Validators.required, Validators.min(1)],
-    ],
-    quantityPerSet: [this.data.extension?.quantityPerSet ?? 2.5, [Validators.required, Validators.min(0.5)]],
+    setCount: [this.normalizeSetCount(this.data.extension?.setCount ?? 0), [Validators.required, Validators.min(0)]],
+    quantityPerSet: [this.data.extension?.quantityPerSet ?? 0, [Validators.required, Validators.min(0)]],
     totalArea: [this.data.extension?.totalArea ?? null, [Validators.required, Validators.min(0)]],
     price: [this.data.extension?.price ?? null, [Validators.required, Validators.min(0)]],
     comment: [this.data.extension?.comment ?? ''],
@@ -113,6 +115,7 @@ export class ExtensionDialogComponent {
     const value = this.form.getRawValue();
     this.dialogRef.close({
       type: OrderItemType.Extension,
+      supplier: value.supplier?.trim() ?? '',
       color: value.color?.trim(),
       covering: value.covering,
       width: value.width,
@@ -141,6 +144,6 @@ export class ExtensionDialogComponent {
   }
 
   private normalizeSetCount(value: number | null | undefined): number {
-    return Math.max(1, Math.round(Number(value ?? 1)));
+    return Math.max(0, Math.round(Number(value ?? 0)));
   }
 }

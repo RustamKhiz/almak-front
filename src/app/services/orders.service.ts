@@ -68,6 +68,7 @@ interface BackendOrderPayment {
 interface BackendInteriorDoor {
   id: number;
   order_id: number;
+  supplier?: string;
   model: string;
   color: string;
   price: number;
@@ -87,6 +88,7 @@ interface BackendInteriorDoor {
 interface BackendEntranceDoor {
   id: number;
   order_id: number;
+  supplier?: string;
   kind: string;
   opening?: string;
   leafType?: string;
@@ -104,6 +106,7 @@ interface BackendEntranceDoor {
 interface BackendMolding {
   id: number;
   order_id: number;
+  supplier?: string;
   frameLength?: number | null;
   framePrice: number;
   frameSetCount?: number;
@@ -117,6 +120,7 @@ interface BackendMolding {
   platbandPrice: number;
   platbandSetCount?: number;
   platbandCount: number;
+  platbandDeductionPrice?: number;
   rebateBarCount: number;
   rebateBarPrice?: number;
   color: string;
@@ -126,6 +130,7 @@ interface BackendMolding {
 interface BackendExtension {
   id: number;
   order_id: number;
+  supplier?: string;
   color: string;
   covering?: string;
   width: number;
@@ -140,6 +145,7 @@ interface BackendExtension {
 interface BackendCapital {
   id: number;
   order_id: number;
+  supplier?: string;
   name: string;
   color: string;
   covering?: string;
@@ -152,6 +158,7 @@ interface BackendCapital {
 interface BackendHardware {
   id: number;
   order_id: number;
+  supplier?: string;
   handleModel?: string | null;
   handleColor?: string | null;
   handleCount?: number | null;
@@ -179,6 +186,7 @@ interface BackendHardware {
 interface BackendPaneling {
   id: number;
   order_id: number;
+  supplier?: string;
   color: string;
   size?: string;
   width: number;
@@ -219,6 +227,7 @@ interface BackendOrderPayload {
 }
 
 interface BackendInteriorDoorPayload {
+  supplier: string;
   model: string;
   color: string;
   price: number;
@@ -236,6 +245,7 @@ interface BackendInteriorDoorPayload {
   comment: string;
 }
 interface BackendEntranceDoorPayload {
+  supplier: string;
   kind: string;
   opening: string;
   leafType: string;
@@ -251,6 +261,7 @@ interface BackendEntranceDoorPayload {
   comment: string;
 }
 interface BackendMoldingPayload {
+  supplier: string;
   frameLength?: number | null;
   framePrice: number;
   frameSetCount: number;
@@ -264,6 +275,7 @@ interface BackendMoldingPayload {
   platbandPrice: number;
   platbandSetCount: number;
   platbandCount: number;
+  platbandDeductionPrice: number;
   rebateBarCount: number;
   rebateBarPrice: number;
   color: string;
@@ -271,6 +283,7 @@ interface BackendMoldingPayload {
   comment: string;
 }
 interface BackendExtensionPayload {
+  supplier: string;
   color: string;
   covering: string;
   width: number;
@@ -283,6 +296,7 @@ interface BackendExtensionPayload {
   price: number;
 }
 interface BackendCapitalPayload {
+  supplier: string;
   name: string;
   color: string;
   covering: string;
@@ -293,6 +307,7 @@ interface BackendCapitalPayload {
   count: number;
 }
 interface BackendHardwarePayload {
+  supplier: string;
   handleModel?: string | null;
   handleColor?: string | null;
   handleCount?: number | null;
@@ -318,6 +333,7 @@ interface BackendHardwarePayload {
   comment: string;
 }
 interface BackendPanelingPayload {
+  supplier: string;
   color: string;
   width: number;
   height: number;
@@ -463,6 +479,7 @@ export class OrdersService {
       status: this.mapOrderStatusToBackendStatus(payload.status),
       isPaid: payload.isPaid,
       interiorDoors: payload.interiorDoors.map((item) => ({
+        supplier: item.supplier,
         model: item.model,
         color: item.color,
         price: this.toNonNegativeNumber(item.price),
@@ -480,6 +497,7 @@ export class OrdersService {
         comment: item.comment,
       })),
       entranceDoors: payload.entranceDoors.map((item) => ({
+        supplier: item.supplier,
         kind: item.kind,
         opening: item.opening || EntranceDoorOpening.Left,
         leafType: item.leafType,
@@ -495,12 +513,13 @@ export class OrdersService {
         comment: item.comment,
       })),
       moldings: payload.moldings.map((item) => ({
+        supplier: item.supplier,
         frameLength: this.toNullableNonNegativeInteger(item.frameLength),
         framePrice: this.toNonNegativeNumber(item.framePrice),
         frameSetCount: this.toNonNegativeInteger(item.frameSetCount),
         frameBoxCount: this.toNonNegativeInteger(item.frameBoxCount),
-        frameThresholdCount: this.toNonNegativeInteger(item.frameThresholdCount),
-        frameThresholdPrice: this.toNonNegativeNumber(item.frameThresholdPrice, 500),
+        frameThresholdCount: 0,
+        frameThresholdPrice: 0,
         frameCount: this.toNonNegativeNumber(item.frameCount),
         platbandType: item.platbandType,
         platbandFigure: item.platbandFigure,
@@ -508,6 +527,7 @@ export class OrdersService {
         platbandPrice: this.toNonNegativeNumber(item.platbandPrice),
         platbandSetCount: this.toNonNegativeInteger(item.platbandSetCount),
         platbandCount: this.toNonNegativeNumber(item.platbandCount),
+        platbandDeductionPrice: this.toNonNegativeNumber(item.platbandDeductionPrice),
         rebateBarCount: this.toNonNegativeInteger(item.rebateBarCount),
         rebateBarPrice: this.toNonNegativeNumber(item.rebateBarPrice),
         color: item.color,
@@ -515,6 +535,7 @@ export class OrdersService {
         comment: item.comment,
       })),
       extensions: payload.extensions.map((item) => ({
+        supplier: item.supplier,
         color: item.color,
         covering: item.covering,
         width: item.width,
@@ -527,6 +548,7 @@ export class OrdersService {
         price: item.price,
       })),
       capitals: payload.capitals.map((item) => ({
+        supplier: item.supplier,
         name: item.name,
         color: item.color,
         covering: item.covering,
@@ -537,6 +559,7 @@ export class OrdersService {
         count: item.count,
       })),
       hardwares: payload.hardwares.map((item) => ({
+        supplier: item.supplier,
         handleModel: item.handleModel || null,
         handleColor: item.handleColor || null,
         handleCount: item.handleCount,
@@ -562,6 +585,7 @@ export class OrdersService {
         comment: item.comment,
       })),
       panelings: payload.panelings.map((item) => ({
+        supplier: item.supplier,
         color: item.color,
         width: item.width,
         height: item.height,
@@ -591,6 +615,7 @@ export class OrdersService {
     return {
       id: door.id,
       type: OrderItemType.InteriorDoor,
+      supplier: door.supplier ?? '',
       model: door.model,
       color: door.color ?? '',
       price: door.price,
@@ -612,6 +637,7 @@ export class OrdersService {
     return {
       id: door.id,
       type: OrderItemType.EntranceDoor,
+      supplier: door.supplier ?? '',
       kind: door.kind === EntranceDoorKind.Welded ? EntranceDoorKind.Welded : EntranceDoorKind.Factory,
       opening: door.opening === EntranceDoorOpening.Right ? EntranceDoorOpening.Right : EntranceDoorOpening.Left,
       leafType: door.leafType === DoorLeafType.Double ? DoorLeafType.Double : DoorLeafType.Single,
@@ -631,6 +657,7 @@ export class OrdersService {
     return {
       id: item.id,
       type: OrderItemType.Molding,
+      supplier: item.supplier ?? '',
       frameLength: item.frameLength ?? null,
       framePrice: item.framePrice,
       frameSetCount: item.frameSetCount ?? Math.floor(item.frameCount / 2.5),
@@ -644,6 +671,7 @@ export class OrdersService {
       platbandPrice: item.platbandPrice,
       platbandSetCount: item.platbandSetCount ?? Number((item.platbandCount / 2.5).toFixed(1)),
       platbandCount: item.platbandCount,
+      platbandDeductionPrice: item.platbandDeductionPrice ?? 0,
       rebateBarCount: item.rebateBarCount ?? 0,
       rebateBarPrice: item.rebateBarPrice ?? 0,
       color: item.color ?? '',
@@ -655,6 +683,7 @@ export class OrdersService {
     return {
       id: item.id,
       type: OrderItemType.Extension,
+      supplier: item.supplier ?? '',
       color: item.color ?? '',
       covering: this.mapExtensionCovering(item.covering),
       width: item.width,
@@ -671,6 +700,7 @@ export class OrdersService {
     return {
       id: item.id,
       type: OrderItemType.Capital,
+      supplier: item.supplier ?? '',
       name: item.name ?? '',
       color: item.color ?? '',
       covering: this.mapCapitalCovering(item.covering),
@@ -685,6 +715,7 @@ export class OrdersService {
     return {
       id: item.id,
       type: OrderItemType.Hardware,
+      supplier: item.supplier ?? '',
       handleModel: item.handleModel ?? '',
       handleColor: item.handleColor ?? '',
       handleCount: item.handleCount ?? null,
@@ -719,6 +750,7 @@ export class OrdersService {
     return {
       id: item.id,
       type: OrderItemType.Paneling,
+      supplier: item.supplier ?? '',
       color: item.color ?? '',
       size: `${item.width}x${item.height}`,
       width: item.width,

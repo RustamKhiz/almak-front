@@ -2,6 +2,8 @@
 
 <mat-dialog-content>
   <form class="dialog-form" [formGroup]="form">
+    <app-catalog-autocomplete-field title="Поставщик" formControlName="supplier" [options]="supplierOptions" />
+
     <div class="dialog-section">
       <div class="dialog-section__title">Коробка</div>
       <div class="dialog-row">
@@ -19,20 +21,17 @@
       </div>
 
       <div class="dialog-row">
-        <app-quantity-field formControlName="frameSetCount" label="Количество комплектов" [min]="0" [step]="1" />
-        <app-quantity-field formControlName="frameBoxCount" label="Количество коробок" [min]="0" [step]="1" />
+        <app-quantity-field formControlName="frameSetCount" label="Комплект коробок" [min]="0" [step]="1" />
+        <app-quantity-field formControlName="frameBoxCount" label="Дополнительные коробки" [min]="0" [step]="1" />
       </div>
 
-      <div class="dialog-row">
-        <app-quantity-field formControlName="frameThresholdCount" label="Количество порогов" [min]="0" [step]="1" />
-        <mat-form-field appearance="outline">
-          <mat-label>Цена коробки</mat-label>
-          <input matInput type="number" formControlName="frameThresholdPrice" placeholder="500" />
-        </mat-form-field>
-      </div>
       <div class="readonly-count">
         <span>Общее количество коробок</span>
         <strong>{{ getFrameCount() }}</strong>
+      </div>
+      <div class="readonly-count">
+        <span>Общая стоимость коробок</span>
+        <strong>{{ getFrameTotal() | number: '1.0-0' }} ₽</strong>
       </div>
     </div>
 
@@ -53,6 +52,12 @@
           <mat-label>Модель</mat-label>
           <input matInput formControlName="platbandFigure" />
         </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Минус стоимость наличников</mat-label>
+          <input matInput type="number" formControlName="platbandDeductionPrice" placeholder="0" />
+          <mat-hint>Вычитается за каждый наличник</mat-hint>
+        </mat-form-field>
       }
 
       <div class="dialog-row">
@@ -69,8 +74,27 @@
         </mat-form-field>
       </div>
 
-      <app-quantity-field formControlName="platbandSetCount" label="Количество комплектов" [min]="0" [step]="1" />
-      <app-quantity-field formControlName="platbandCount" label="Количество наличников" [min]="0" [step]="0.5" />
+      <app-quantity-field formControlName="platbandSetCount" label="Комплект наличников" [min]="0" [step]="1" />
+      <app-quantity-field formControlName="platbandCount" label="Дополнительные наличники" [min]="0" [step]="0.5" />
+
+      <div class="readonly-count">
+        <span>Общее количество наличников</span>
+        <strong>{{ getPlatbandCount() }}</strong>
+      </div>
+      <div class="readonly-count">
+        <span>Стоимость наличников</span>
+        <strong>{{ getPlatbandBaseTotal() | number: '1.0-0' }} ₽</strong>
+      </div>
+      @if (isFigureType()) {
+        <div class="readonly-count">
+          <span>Минус наличники</span>
+          <strong>{{ getPlatbandDeductionTotal() | number: '1.0-0' }} ₽</strong>
+        </div>
+      }
+      <div class="readonly-count">
+        <span>Итого наличники</span>
+        <strong>{{ getPlatbandTotal() | number: '1.0-0' }} ₽</strong>
+      </div>
     </div>
 
     <div class="dialog-row">
@@ -96,6 +120,11 @@
         }
       </mat-select>
     </mat-form-field>
+
+    <div class="total-preview">
+      <span>Стоимость погонажа</span>
+      <strong>{{ getDraftTotal() | number: '1.0-0' }} ₽</strong>
+    </div>
 
     <mat-form-field appearance="outline">
       <mat-label>Комментарий</mat-label>

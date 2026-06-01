@@ -22,6 +22,7 @@ import {
   INTERIOR_DOOR_HEIGHT_OPTIONS,
   INTERIOR_DOOR_WIDTH_OPTIONS,
 } from '../../constants/interior-door-catalog';
+import { SUPPLIER_OPTIONS } from '../../constants/reference-catalogs';
 import { DoorLeafType, InteriorDoorCovering, InteriorDoorItem, OrderItemType } from '../../../types/order.types';
 import { CatalogAutocompleteFieldComponent } from '../../../ui/catalog-autocomplete-field/catalog-autocomplete-field.component';
 import { QuantityFieldComponent } from '../../../ui/quantity-field/quantity-field.component';
@@ -66,9 +67,11 @@ export class InteriorDoorDialogComponent {
   protected readonly heightOptions = INTERIOR_DOOR_HEIGHT_OPTIONS;
   protected readonly coveringOptions = INTERIOR_DOOR_COVERING_OPTIONS;
   protected readonly coveringLabels = INTERIOR_DOOR_COVERING_LABELS;
+  protected readonly supplierOptions = SUPPLIER_OPTIONS;
   protected readonly doorLeafType = DoorLeafType;
 
   protected readonly form = this.fb.group({
+    supplier: [this.data.door?.supplier ?? ''],
     model: [this.data.door?.model ?? '', [Validators.required]],
     color: [this.data.door?.color ?? this.data.defaultColor ?? '', [Validators.required]],
     hasGlass: [this.data.door?.hasGlass ?? false],
@@ -149,6 +152,7 @@ export class InteriorDoorDialogComponent {
     const value = this.form.getRawValue();
     this.dialogRef.close({
       type: OrderItemType.InteriorDoor,
+      supplier: value.supplier?.trim() || '',
       model: value.model!.trim(),
       color: value.color!.trim(),
       hasGlass: value.hasGlass,

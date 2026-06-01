@@ -2,7 +2,7 @@
   <mat-label>{{ title() }}</mat-label>
   <input
     type="text"
-    inputmode="numeric"
+    [attr.inputmode]="mode() === 'number' ? 'numeric' : null"
     matInput
     [formControl]="control"
     [matAutocomplete]="auto"

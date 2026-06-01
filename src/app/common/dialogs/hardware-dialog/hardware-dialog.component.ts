@@ -1,11 +1,20 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { AbstractControl, FormBuilder, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
+import {
+  AbstractControl,
+  FormBuilder,
+  ReactiveFormsModule,
+  ValidationErrors,
+  ValidatorFn,
+  Validators,
+} from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { HardwareItem, OrderItemType } from '../../../types/order.types';
+import { CatalogAutocompleteFieldComponent } from '../../../ui/catalog-autocomplete-field/catalog-autocomplete-field.component';
+import { SUPPLIER_OPTIONS } from '../../constants/reference-catalogs';
 import { bindLeadingCapitalization } from '../../utils/form-text';
 
 export interface HardwareDialogData {
@@ -17,7 +26,14 @@ export type HardwareDialogResult = Omit<HardwareItem, 'id'>;
 
 @Component({
   selector: 'app-hardware-dialog',
-  imports: [ReactiveFormsModule, MatButtonModule, MatDialogModule, MatFormFieldModule, MatInputModule],
+  imports: [
+    ReactiveFormsModule,
+    MatButtonModule,
+    MatDialogModule,
+    MatFormFieldModule,
+    MatInputModule,
+    CatalogAutocompleteFieldComponent,
+  ],
   templateUrl: './hardware-dialog.component.html',
   styleUrl: './hardware-dialog.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -27,9 +43,11 @@ export class HardwareDialogComponent {
   private readonly dialogRef = inject(MatDialogRef<HardwareDialogComponent, HardwareDialogResult>);
   private readonly data = inject<HardwareDialogData>(MAT_DIALOG_DATA);
   private readonly destroyRef = inject(DestroyRef);
+  protected readonly supplierOptions = SUPPLIER_OPTIONS;
 
   protected readonly form = this.fb.nonNullable.group(
     {
+      supplier: this.data.hardware?.supplier ?? '',
       handleModel: this.data.hardware?.handleModel ?? '',
       handleColor: this.data.hardware?.handleColor ?? '',
       handleCount: [this.data.hardware?.handleCount ?? null, [optionalIntegerValidator(), Validators.min(0)]],
@@ -85,6 +103,7 @@ export class HardwareDialogComponent {
     const value = this.form.getRawValue();
     this.dialogRef.close({
       type: OrderItemType.Hardware,
+      supplier: value.supplier.trim(),
       handleModel: value.handleModel.trim(),
       handleColor: value.handleColor.trim(),
       handleCount: normalizeOptionalInteger(value.handleCount),
@@ -138,7 +157,10 @@ function hardwareNotEmptyValidator(): ValidatorFn {
       return { emptyHardware: true };
     }
 
-    const hasValue = Object.values(value).some((fieldValue) => {
+    const { supplier, ...hardwareValue } = value;
+    void supplier;
+
+    const hasValue = Object.values(hardwareValue).some((fieldValue) => {
       if (typeof fieldValue === 'string') {
         return fieldValue.trim() !== '';
       }

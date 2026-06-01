@@ -197,7 +197,7 @@ export class PrintConstructorDialogComponent {
         type: 'molding' as const,
         typeLabel: 'Погонаж',
         title: item.color,
-        summary: `Коробка ${item.frameCount} (${item.frameSetCount} комп., коробок ${item.frameBoxCount}, порогов ${item.frameThresholdCount ?? 0}), наличник ${item.platbandCount}, притвор ${item.rebateBarCount}`,
+        summary: `Коробка ${item.frameCount} шт., наличник ${item.platbandCount} шт., притвор ${item.rebateBarCount} шт.`,
         total: getMoldingTotal(item),
       })),
       ...order.extensions.map((item) => ({

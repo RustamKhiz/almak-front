@@ -17,6 +17,7 @@ import {
   ENTRANCE_DOOR_PANEL_COLOR_OPTIONS,
   ENTRANCE_DOOR_WIDTH_OPTIONS,
 } from '../../constants/entrance-door-catalog';
+import { SUPPLIER_OPTIONS } from '../../constants/reference-catalogs';
 import {
   DoorLeafType,
   EntranceDoorItem,
@@ -66,10 +67,12 @@ export class EntranceDoorDialogComponent {
   protected readonly heightOptions = ENTRANCE_DOOR_HEIGHT_OPTIONS;
   protected readonly paintingOptions = ENTRANCE_DOOR_PAINTING_OPTIONS;
   protected readonly panelColorOptions = ENTRANCE_DOOR_PANEL_COLOR_OPTIONS;
+  protected readonly supplierOptions = SUPPLIER_OPTIONS;
   protected readonly leafTypeOptions = [DoorLeafType.Single, DoorLeafType.Double] as const;
   protected readonly isWelded = signal(this.data.door?.kind === EntranceDoorKind.Welded);
 
   protected readonly form = this.fb.nonNullable.group({
+    supplier: this.data.door?.supplier ?? '',
     kind: [this.data.door?.kind ?? EntranceDoorKind.Factory, [Validators.required]],
     opening: [this.data.door?.opening ?? EntranceDoorOpening.Left, [Validators.required]],
     leafType: [this.data.door?.leafType ?? DoorLeafType.Single, [Validators.required]],
@@ -118,6 +121,7 @@ export class EntranceDoorDialogComponent {
 
     this.dialogRef.close({
       type: OrderItemType.EntranceDoor,
+      supplier: value.supplier.trim(),
       kind,
       opening: value.opening,
       leafType: value.leafType,

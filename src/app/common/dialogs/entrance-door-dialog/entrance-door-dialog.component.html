@@ -2,6 +2,8 @@
 
 <mat-dialog-content>
   <form class="dialog-form" [formGroup]="form">
+    <app-catalog-autocomplete-field title="Поставщик" formControlName="supplier" [options]="supplierOptions" />
+
     <div class="door-kind">
       <div class="door-kind__label">Тип входной двери</div>
       <mat-radio-group formControlName="kind">

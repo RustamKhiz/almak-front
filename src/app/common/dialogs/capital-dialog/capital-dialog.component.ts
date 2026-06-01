@@ -10,7 +10,9 @@ import {
   CAPITAL_COVERING_OPTIONS,
   DEFAULT_CAPITAL_COVERING,
 } from '../../constants/molding-catalog';
+import { SUPPLIER_OPTIONS } from '../../constants/reference-catalogs';
 import { CapitalCovering, CapitalItem, OrderItemType } from '../../../types/order.types';
+import { CatalogAutocompleteFieldComponent } from '../../../ui/catalog-autocomplete-field/catalog-autocomplete-field.component';
 import { QuantityFieldComponent } from '../../../ui/quantity-field/quantity-field.component';
 import { bindLeadingCapitalization } from '../../utils/form-text';
 
@@ -32,6 +34,7 @@ export type CapitalDialogResult = Omit<CapitalItem, 'id'>;
     MatFormFieldModule,
     MatInputModule,
     MatSelectModule,
+    CatalogAutocompleteFieldComponent,
     QuantityFieldComponent,
   ],
   templateUrl: './capital-dialog.component.html',
@@ -46,8 +49,10 @@ export class CapitalDialogComponent {
 
   protected readonly coveringOptions = CAPITAL_COVERING_OPTIONS;
   protected readonly coveringLabels = CAPITAL_COVERING_LABELS;
+  protected readonly supplierOptions = SUPPLIER_OPTIONS;
 
   protected readonly form = this.fb.group({
+    supplier: [this.data.capital?.supplier ?? ''],
     name: [this.data.capital?.name ?? '', [Validators.required]],
     color: [this.data.capital?.color ?? this.data.defaultColor ?? '', [Validators.required]],
     covering: [
@@ -82,13 +87,14 @@ export class CapitalDialogComponent {
     const value = this.form.getRawValue();
     this.dialogRef.close({
       type: OrderItemType.Capital,
-      name: value.name.trim(),
-      color: value.color.trim(),
+      supplier: value.supplier?.trim() || '',
+      name: value.name?.trim(),
+      color: value.color?.trim(),
       covering: value.covering,
       width: value.width,
       height: value.height,
       price: value.price,
-      comment: value.comment.trim(),
+      comment: value.comment?.trim(),
       count: value.count,
     });
   }

@@ -1,6 +1,8 @@
 <h2 mat-dialog-title>{{ title() }}</h2>
 <mat-dialog-content>
   <form class="dialog-form" [formGroup]="form">
+    <app-catalog-autocomplete-field title="Поставщик" formControlName="supplier" [options]="supplierOptions" />
+
     <mat-form-field appearance="outline">
       <mat-label>Цвет</mat-label>
       <input matInput formControlName="color" />
@@ -27,8 +29,8 @@
       </mat-form-field>
     </div>
 
-    <app-quantity-field formControlName="setCount" label="Количество комплектов" [min]="1" [step]="1" />
-    <app-quantity-field formControlName="quantityPerSet" label="Количество доборов" [min]="0.5" [step]="0.5" />
+    <app-quantity-field formControlName="setCount" label="Количество комплектов" [min]="0" [step]="1" />
+    <app-quantity-field formControlName="quantityPerSet" label="Количество доборов" [min]="0" [step]="0.5" />
 
     <mat-form-field appearance="outline">
       <mat-label>Общая квадратура</mat-label>

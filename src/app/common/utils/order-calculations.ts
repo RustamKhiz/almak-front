@@ -15,9 +15,8 @@ export function getOptionalTotal(count: number | null, price: number | null): nu
 
 export function getMoldingTotal(item: MoldingItem): number {
   return (
-    item.framePrice * (item.frameSetCount * 2.5 + item.frameBoxCount) +
-    item.frameThresholdPrice * item.frameThresholdCount +
-    item.platbandPrice * item.platbandCount +
+    item.framePrice * item.frameBoxCount +
+    (item.platbandPrice - item.platbandDeductionPrice) * item.platbandCount +
     item.rebateBarPrice * item.rebateBarCount
   );
 }

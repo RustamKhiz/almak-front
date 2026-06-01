@@ -1,6 +1,8 @@
 <h2 mat-dialog-title>{{ title() }}</h2>
 <mat-dialog-content>
   <form class="dialog-form" [formGroup]="form">
+    <app-catalog-autocomplete-field title="Поставщик" formControlName="supplier" [options]="supplierOptions" />
+
     <div class="dialog-section">
       <div class="dialog-section__title">Ручка</div>
       <div class="dialog-row">
