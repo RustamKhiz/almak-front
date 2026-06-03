@@ -2,8 +2,6 @@
 
 <mat-dialog-content>
   <form class="dialog-form" [formGroup]="form">
-    <app-catalog-autocomplete-field title="Поставщик" formControlName="supplier" [options]="supplierOptions" />
-
     <div class="dialog-section">
       <div class="dialog-section__title">Коробка</div>
       <div class="dialog-row">
@@ -130,6 +128,8 @@
       <mat-label>Комментарий</mat-label>
       <textarea matInput rows="3" formControlName="comment"></textarea>
     </mat-form-field>
+
+    <app-catalog-autocomplete-field title="Поставщик" formControlName="supplier" [options]="supplierOptions" />
   </form>
 </mat-dialog-content>
 

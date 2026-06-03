@@ -167,9 +167,22 @@
   justify-items: end;
 }
 
+.order-view__item-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
 .order-view__item-count {
   font-size: 13px;
   color: #6b7280;
+}
+
+.order-view__supplier {
+  color: #374151;
+  font-size: 13px;
+  font-weight: 600;
 }
 
 .order-view__products-count {
@@ -367,5 +380,9 @@
   .order-view__payment-side {
     width: 100%;
     justify-items: start;
+  }
+
+  .order-view__item-actions {
+    justify-content: flex-start;
   }
 }

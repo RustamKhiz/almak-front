@@ -6,7 +6,7 @@ import { MatChipsModule } from '@angular/material/chips';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatMenuModule } from '@angular/material/menu';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
-import { filter, switchMap } from 'rxjs';
+import { filter, map, switchMap } from 'rxjs';
 import { DOOR_LEAF_TYPE_LABELS } from '../../common/constants/door-catalog';
 import { ENTRANCE_DOOR_OPENING_LABELS } from '../../common/constants/entrance-door-catalog';
 import { INTERIOR_DOOR_COVERING_LABELS } from '../../common/constants/interior-door-covering';
@@ -45,6 +45,10 @@ import {
 import { OrderPaymentHistoryDialogComponent } from '../../common/dialogs/order-payment-history-dialog/order-payment-history-dialog.component';
 import { PrintConstructorDialogComponent } from '../../common/dialogs/print-constructor-dialog/print-constructor-dialog.component';
 import { PrintConstructorDialogResult } from '../../common/dialogs/print-constructor-dialog/print-constructor.types';
+import {
+  SupplierDialogComponent,
+  SupplierDialogResult,
+} from '../../common/dialogs/supplier-dialog/supplier-dialog.component';
 import { FileDownloadService } from '../../services/file-download.service';
 import { OrderDocumentService } from '../../services/order-document.service';
 import { OrderPrintService } from '../../services/order-print.service';
@@ -63,6 +67,15 @@ import {
   PanelingItem,
 } from '../../types/order.types';
 
+type SupplierItemEntity =
+  | 'interiorDoors'
+  | 'entranceDoors'
+  | 'moldings'
+  | 'extensions'
+  | 'capitals'
+  | 'hardwares'
+  | 'panelings';
+
 interface OrderViewState {
   id: number;
   data: OrderCreatePayload;
@@ -73,6 +86,9 @@ interface OrderViewProductCard {
   typeLabel: string;
   title: string;
   summary: string;
+  supplier: string;
+  entity: SupplierItemEntity;
+  itemId: number;
   countLabel: string;
   total: number;
   details: OrderItemDetailsDialogData;
@@ -249,6 +265,38 @@ export class OrderViewComponent {
       maxWidth: 'calc(100vw - 24px)',
       data: card.details,
     });
+  }
+
+  protected onChangeSupplierClick(card: OrderViewProductCard): void {
+    const current = this.state();
+    if (!current) {
+      return;
+    }
+
+    this.dialog
+      .open(SupplierDialogComponent, {
+        width: '420px',
+        maxWidth: 'calc(100vw - 24px)',
+        data: { supplier: card.supplier },
+      })
+      .afterClosed()
+      .pipe(
+        filter((result): result is SupplierDialogResult => !!result),
+        switchMap((result) => {
+          const nextData = this.updateSupplierInOrder(current.data, card.entity, card.itemId, result.supplier);
+          return this.ordersService.updateOrder(current.id, nextData).pipe(map(() => nextData));
+        }),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe({
+        next: (data) => {
+          this.errorMessage.set(null);
+          this.state.set({ id: current.id, data });
+        },
+        error: () => {
+          this.errorMessage.set('Не удалось изменить поставщика.');
+        },
+      });
   }
 
   protected onAddPaymentClick(): void {
@@ -453,9 +501,12 @@ export class OrderViewComponent {
   private buildInteriorDoorCard(item: InteriorDoorItem): OrderViewProductCard {
     return {
       key: `interior-${item.id}`,
+      entity: 'interiorDoors',
+      itemId: item.id,
       typeLabel: 'Межкомнатная дверь',
       title: item.model,
       summary: `${this.formatInteriorDoorSize(item)} · ${this.leafTypesLabels[item.leafType]} · цвет ${item.color} · ${this.getInteriorDoorGlassLabel(item)}`,
+      supplier: item.supplier,
       countLabel: `${item.count + (item.leafType === 'Double' ? Number(item.count2 ?? 0) : 0)} шт.`,
       total: getInteriorDoorTotal(item),
       details: {
@@ -501,9 +552,12 @@ export class OrderViewComponent {
     const kindLabel = item.kind === EntranceDoorKind.Welded ? 'Сварочная' : 'Фабричная';
     return {
       key: `entrance-${item.id}`,
+      entity: 'entranceDoors',
+      itemId: item.id,
       typeLabel: 'Входная дверь',
       title: item.model,
       summary: `${kindLabel} · ${this.leafTypesLabels[item.leafType]} · открывание ${this.getEntranceDoorOpeningLabel(item).toLowerCase()} · ${item.width} × ${item.height} см`,
+      supplier: item.supplier,
       countLabel: `${item.count} шт.`,
       total: item.price * item.count,
       details: {
@@ -534,9 +588,12 @@ export class OrderViewComponent {
   private buildMoldingCard(item: MoldingItem): OrderViewProductCard {
     return {
       key: `molding-${item.id}`,
+      entity: 'moldings',
+      itemId: item.id,
       typeLabel: 'Погонаж',
       title: `${item.color} · ${this.moldingCoveringLabels[item.covering]}`,
       summary: `Коробка ${item.frameCount} шт. · Наличник ${item.platbandCount} шт. · Притворная планка ${item.rebateBarCount} шт.`,
+      supplier: item.supplier,
       countLabel: `${item.frameCount + item.platbandCount + item.rebateBarCount} шт.`,
       total: getMoldingTotal(item),
       details: {
@@ -578,9 +635,12 @@ export class OrderViewComponent {
   private buildExtensionCard(item: ExtensionItem): OrderViewProductCard {
     return {
       key: `extension-${item.id}`,
+      entity: 'extensions',
+      itemId: item.id,
       typeLabel: 'Доборы',
       title: `${item.color} · ${this.extensionCoveringLabels[item.covering]}`,
       summary: `${item.width} × ${item.height} см · комплектов ${item.setCount} · доборов ${item.quantityPerSet} · ${item.totalArea} м²`,
+      supplier: item.supplier,
       countLabel: `${item.quantityPerSet} шт.`,
       total: getExtensionTotal(item),
       details: {
@@ -608,9 +668,12 @@ export class OrderViewComponent {
   private buildCapitalCard(item: CapitalItem): OrderViewProductCard {
     return {
       key: `capital-${item.id}`,
+      entity: 'capitals',
+      itemId: item.id,
       typeLabel: 'Капитель',
       title: item.name,
       summary: `${item.width} × ${item.height} см · цвет ${item.color} · ${this.capitalCoveringLabels[item.covering]}`,
+      supplier: item.supplier,
       countLabel: `${item.count} шт.`,
       total: getCapitalTotal(item),
       details: {
@@ -637,9 +700,12 @@ export class OrderViewComponent {
   private buildHardwareCard(item: HardwareItem): OrderViewProductCard {
     return {
       key: `hardware-${item.id}`,
+      entity: 'hardwares',
+      itemId: item.id,
       typeLabel: 'Фурнитура',
       title: item.handleModel ? `Ручка ${item.handleModel}` : 'Комплект фурнитуры',
       summary: this.getHardwareSummary(item),
+      supplier: item.supplier,
       countLabel: `${this.getHardwarePositionsCount(item)} поз.`,
       total: getHardwareTotal(item),
       details: {
@@ -674,9 +740,12 @@ export class OrderViewComponent {
   private buildPanelingCard(item: PanelingItem): OrderViewProductCard {
     return {
       key: `paneling-${item.id}`,
+      entity: 'panelings',
+      itemId: item.id,
       typeLabel: 'Обшивка',
       title: `${item.color} · ${this.panelingKindLabels[item.kind]}`,
       summary: `${this.formatPanelingSizes(item)} · ${this.panelingCoveringLabels[item.covering]} · ${item.totalArea} м²`,
+      supplier: item.supplier,
       countLabel: `${item.count} шт.`,
       total: getPanelingTotal(item),
       details: {
@@ -707,6 +776,18 @@ export class OrderViewComponent {
     return {
       title,
       rows: rows.map(([label, value]) => ({ label, value })),
+    };
+  }
+
+  private updateSupplierInOrder(
+    order: OrderCreatePayload,
+    entity: SupplierItemEntity,
+    itemId: number,
+    supplier: string,
+  ): OrderCreatePayload {
+    return {
+      ...order,
+      [entity]: order[entity].map((item) => (item.id === itemId ? { ...item, supplier } : item)),
     };
   }
 

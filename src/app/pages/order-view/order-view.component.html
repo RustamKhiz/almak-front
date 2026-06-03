@@ -164,12 +164,18 @@
                 <div class="order-view__item-type">{{ card.typeLabel }}</div>
                 <div class="order-view__item-title">{{ card.title }}</div>
                 <div class="order-view__meta">{{ card.summary }}</div>
+                <div class="order-view__supplier">Поставщик: {{ card.supplier || 'Не указан' }}</div>
               </div>
 
               <div class="order-view__item-side">
                 <div class="order-view__item-count">{{ card.countLabel }}</div>
                 <div class="order-view__price">{{ card.total | number: '1.0-0' }} ₽</div>
-                <button mat-stroked-button type="button" (click)="onProductDetailsClick(card)">Подробнее</button>
+                <div class="order-view__item-actions">
+                  <button mat-stroked-button type="button" (click)="onProductDetailsClick(card)">Подробнее</button>
+                  <button mat-stroked-button type="button" (click)="onChangeSupplierClick(card)">
+                    Изменить поставщика
+                  </button>
+                </div>
               </div>
             </article>
           }
