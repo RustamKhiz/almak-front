@@ -181,7 +181,7 @@ export class PrintConstructorDialogComponent {
         type: 'interiorDoor' as const,
         typeLabel: 'Межкомнатная дверь',
         title: item.model,
-        summary: `${item.width}x${item.height}, цвет ${item.color}`,
+        summary: `${item.width}x${item.height}, цвет ${item.color}${this.getSupplierSummary(item.supplier)}`,
         total: getInteriorDoorTotal(item),
       })),
       ...order.entranceDoors.map((item) => ({
@@ -189,7 +189,7 @@ export class PrintConstructorDialogComponent {
         type: 'entranceDoor' as const,
         typeLabel: 'Входная дверь',
         title: item.model,
-        summary: `${item.width}x${item.height}, цвет ${item.color}, открывание ${(ENTRANCE_DOOR_OPENING_LABELS[item.opening] ?? 'Левое').toLowerCase()}`,
+        summary: `${item.width}x${item.height}, цвет ${item.color}, открывание ${(ENTRANCE_DOOR_OPENING_LABELS[item.opening] ?? 'Левое').toLowerCase()}${this.getSupplierSummary(item.supplier)}`,
         total: item.price * item.count,
       })),
       ...order.moldings.map((item) => ({
@@ -197,7 +197,7 @@ export class PrintConstructorDialogComponent {
         type: 'molding' as const,
         typeLabel: 'Погонаж',
         title: item.color,
-        summary: `Коробка ${item.frameCount} шт., наличник ${item.platbandCount} шт., притвор ${item.rebateBarCount} шт.`,
+        summary: `Коробка ${item.frameCount} шт., наличник ${item.platbandCount} шт., притвор ${item.rebateBarCount} шт.${this.getSupplierSummary(item.supplier)}`,
         total: getMoldingTotal(item),
       })),
       ...order.extensions.map((item) => ({
@@ -205,7 +205,7 @@ export class PrintConstructorDialogComponent {
         type: 'extension' as const,
         typeLabel: 'Доборы',
         title: item.color,
-        summary: `${item.width}x${item.height}, ${item.totalArea} м2`,
+        summary: `${item.width}x${item.height}, ${item.totalArea} м2${this.getSupplierSummary(item.supplier)}`,
         total: getExtensionTotal(item),
       })),
       ...order.capitals.map((item) => ({
@@ -213,7 +213,7 @@ export class PrintConstructorDialogComponent {
         type: 'capital' as const,
         typeLabel: 'Капитель',
         title: item.name,
-        summary: `${item.width}x${item.height}, цвет ${item.color}`,
+        summary: `${item.width}x${item.height}, цвет ${item.color}${this.getSupplierSummary(item.supplier)}`,
         total: getCapitalTotal(item),
       })),
       ...order.hardwares.map((item) => ({
@@ -221,7 +221,7 @@ export class PrintConstructorDialogComponent {
         type: 'hardware' as const,
         typeLabel: 'Фурнитура',
         title: item.handleModel ? `Ручка ${item.handleModel}` : 'Фурнитура',
-        summary: item.handleColor ? `Цвет ручки ${item.handleColor}` : 'Комплект фурнитуры',
+        summary: `${item.handleColor ? `Цвет ручки ${item.handleColor}` : 'Комплект фурнитуры'}${this.getSupplierSummary(item.supplier)}`,
         total: getHardwareTotal(item),
       })),
       ...order.panelings.map((item) => ({
@@ -229,9 +229,13 @@ export class PrintConstructorDialogComponent {
         type: 'paneling' as const,
         typeLabel: 'Обшивка',
         title: item.color,
-        summary: `${item.totalArea} м2`,
+        summary: `${item.totalArea} м2${this.getSupplierSummary(item.supplier)}`,
         total: getPanelingTotal(item),
       })),
     ];
+  }
+
+  private getSupplierSummary(supplier: string): string {
+    return supplier ? `, поставщик ${supplier}` : ', поставщик не указан';
   }
 }
