@@ -55,20 +55,24 @@ jobs:
           EOF
           chmod 644 ~/.ssh/known_hosts
 
-      - name: Upload desktop artifacts
+      - name: Ensure downloads directory exists
+        run: |
+          ssh -i ~/.ssh/id_ed25519 ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} \
+            'mkdir -p /var/www/app/downloads'
+
+      - name: Upload desktop artifacts to server
         timeout-minutes: 10
         run: |
-          rsync -av --delete --partial --timeout=300 --info=progress2 -e "ssh -i ~/.ssh/id_ed25519" \
+          rsync -av --delete --no-perms --no-times --no-group --no-owner \
+            --partial --timeout=300 \
+            -e "ssh -i ~/.ssh/id_ed25519" \
             release/downloads/ \
-            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/tmp/almak-desktop/
+            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/var/www/app/downloads/
 
-      - name: Deploy desktop artifacts on server
+      - name: Finalize deployment on server
         run: |
           ssh -i ~/.ssh/id_ed25519 ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} 'bash -s' <<'EOF'
           set -euo pipefail
-
-          mkdir -p /var/www/app/downloads
-          rsync -av --delete --no-perms --no-times --no-group --no-owner /tmp/almak-desktop/ /var/www/app/downloads/
 
           latest_installer=$(find /var/www/app/downloads -maxdepth 1 -type f -name 'Almak-Setup-[0-9]*.exe' | sort -V | tail -n 1)
           if [ -z "$latest_installer" ]; then
@@ -77,7 +81,5 @@ jobs:
           fi
           cp "$latest_installer" /var/www/app/downloads/Almak-Setup-latest.exe
 
-          find /var/www/app/downloads -type d -exec chmod 755 {} \;
-          find /var/www/app/downloads -type f -exec chmod 644 {} \;
           sudo systemctl reload nginx
           EOF
