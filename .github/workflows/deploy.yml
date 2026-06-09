@@ -51,5 +51,7 @@ jobs:
           sudo chown -R www-data:www-data /var/www/app
           sudo find /var/www/app -type d -exec chmod 755 {} \;
           sudo find /var/www/app -type f -exec chmod 644 {} \;
+          sudo chown deployer:www-data /var/www/app/downloads
+          sudo chmod 775 /var/www/app/downloads
           sudo systemctl reload nginx
           EOF
