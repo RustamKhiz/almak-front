@@ -67,18 +67,17 @@ jobs:
           ssh -i ~/.ssh/id_ed25519 ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} 'bash -s' <<'EOF'
           set -euo pipefail
 
-          sudo mkdir -p /var/www/app/downloads
-          sudo rsync -av --delete /tmp/almak-desktop/ /var/www/app/downloads/
+          mkdir -p /var/www/app/downloads
+          rsync -av --delete /tmp/almak-desktop/ /var/www/app/downloads/
 
           latest_installer=$(find /var/www/app/downloads -maxdepth 1 -type f -name 'Almak-Setup-[0-9]*.exe' | sort -V | tail -n 1)
           if [ -z "$latest_installer" ]; then
             echo "Desktop installer was not deployed"
             exit 1
           fi
-          sudo cp "$latest_installer" /var/www/app/downloads/Almak-Setup-latest.exe
+          cp "$latest_installer" /var/www/app/downloads/Almak-Setup-latest.exe
 
-          sudo chown -R www-data:www-data /var/www/app/downloads
-          sudo find /var/www/app/downloads -type d -exec chmod 755 {} \;
-          sudo find /var/www/app/downloads -type f -exec chmod 644 {} \;
+          find /var/www/app/downloads -type d -exec chmod 755 {} \;
+          find /var/www/app/downloads -type f -exec chmod 644 {} \;
           sudo systemctl reload nginx
           EOF
