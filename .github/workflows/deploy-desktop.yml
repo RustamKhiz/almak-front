@@ -68,7 +68,7 @@ jobs:
           set -euo pipefail
 
           mkdir -p /var/www/app/downloads
-          rsync -av --delete --no-group --no-owner /tmp/almak-desktop/ /var/www/app/downloads/
+          rsync -av --delete --no-perms --no-times --no-group --no-owner /tmp/almak-desktop/ /var/www/app/downloads/
 
           latest_installer=$(find /var/www/app/downloads -maxdepth 1 -type f -name 'Almak-Setup-[0-9]*.exe' | sort -V | tail -n 1)
           if [ -z "$latest_installer" ]; then
