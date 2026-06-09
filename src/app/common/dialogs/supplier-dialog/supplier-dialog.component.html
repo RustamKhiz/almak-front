@@ -2,7 +2,7 @@
 
 <mat-dialog-content>
   <form class="dialog-form" [formGroup]="form">
-    <app-catalog-autocomplete-field title="Поставщик" formControlName="supplier" [options]="supplierOptions" />
+    <app-catalog-autocomplete-field title="Поставщик" formControlName="supplier" [options]="supplierOptions()" />
   </form>
 </mat-dialog-content>
 

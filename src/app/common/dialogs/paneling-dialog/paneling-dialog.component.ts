@@ -1,6 +1,6 @@
 import { DecimalPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, DestroyRef, inject } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
@@ -10,13 +10,14 @@ import { MatSelectModule } from '@angular/material/select';
 import {
   DEFAULT_PANELING_COVERING,
   DEFAULT_PANELING_KIND,
-  PANELING_COVERING_LABELS,
   PANELING_COVERING_OPTIONS,
   PANELING_KIND_LABELS,
   PANELING_KIND_OPTIONS,
 } from '../../constants/molding-catalog';
+import { CATALOG_KEYS } from '../../constants/catalog-keys';
 import { SUPPLIER_OPTIONS } from '../../constants/reference-catalogs';
-import { OrderItemType, PanelingCovering, PanelingItem, PanelingSize } from '../../../types/order.types';
+import { CatalogsService } from '../../../services/catalogs.service';
+import { OrderItemType, PanelingItem, PanelingSize } from '../../../types/order.types';
 import { CatalogAutocompleteFieldComponent } from '../../../ui/catalog-autocomplete-field/catalog-autocomplete-field.component';
 import { QuantityFieldComponent } from '../../../ui/quantity-field/quantity-field.component';
 import { bindLeadingCapitalization } from '../../utils/form-text';
@@ -25,7 +26,7 @@ export interface PanelingDialogData {
   mode: 'create' | 'edit';
   paneling?: PanelingItem;
   defaultColor?: string;
-  defaultCovering?: PanelingCovering;
+  defaultCovering?: string;
 }
 
 export type PanelingDialogResult = Omit<PanelingItem, 'id'>;
@@ -53,11 +54,18 @@ export class PanelingDialogComponent {
   private readonly dialogRef = inject(MatDialogRef<PanelingDialogComponent, PanelingDialogResult>);
   private readonly data = inject<PanelingDialogData>(MAT_DIALOG_DATA);
 
-  protected readonly coveringOptions = PANELING_COVERING_OPTIONS;
-  protected readonly coveringLabels = PANELING_COVERING_LABELS;
+  private readonly catalogsService = inject(CatalogsService);
+
+  protected readonly coveringOptions = toSignal(
+    this.catalogsService.getItemsByKey(CATALOG_KEYS.panelingCoverings, [...PANELING_COVERING_OPTIONS]),
+    { initialValue: [...PANELING_COVERING_OPTIONS] as readonly string[] },
+  );
   protected readonly kindOptions = PANELING_KIND_OPTIONS;
   protected readonly kindLabels = PANELING_KIND_LABELS;
-  protected readonly supplierOptions = SUPPLIER_OPTIONS;
+  protected readonly supplierOptions = toSignal(
+    this.catalogsService.getItemsByKey(CATALOG_KEYS.suppliers, SUPPLIER_OPTIONS),
+    { initialValue: SUPPLIER_OPTIONS },
+  );
 
   protected readonly form = this.fb.group({
     supplier: [this.data.paneling?.supplier ?? ''],

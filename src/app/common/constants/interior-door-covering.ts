@@ -1,17 +1,16 @@
-import { InteriorDoorCovering } from '../../types/order.types';
+// catalog key: 'interior_door_coverings'
+// Fallback used when the catalog has no items.
+export const INTERIOR_DOOR_COVERING_OPTIONS = ['Эмаль', 'Шпон', 'Тиснение', 'ПВХ'] as const;
 
-export const INTERIOR_DOOR_COVERING_OPTIONS: readonly InteriorDoorCovering[] = [
-  InteriorDoorCovering.Enamel,
-  InteriorDoorCovering.Veneer,
-  InteriorDoorCovering.Embossing,
-  InteriorDoorCovering.PVC,
-];
+export const DEFAULT_INTERIOR_DOOR_COVERING = 'Эмаль';
 
-export const DEFAULT_INTERIOR_DOOR_COVERING = InteriorDoorCovering.Enamel;
-
-export const INTERIOR_DOOR_COVERING_LABELS: Readonly<Record<InteriorDoorCovering, string>> = {
-  [InteriorDoorCovering.Enamel]: 'Эмаль',
-  [InteriorDoorCovering.Veneer]: 'Шпон',
-  [InteriorDoorCovering.Embossing]: 'Тиснение',
-  [InteriorDoorCovering.PVC]: 'ПВХ',
+export const INTERIOR_DOOR_COVERING_LABELS: Readonly<Record<string, string>> = {
+  Enamel: 'Эмаль',
+  Veneer: 'Шпон',
+  Embossing: 'Тиснение',
+  PVC: 'ПВХ',
+  Эмаль: 'Эмаль',
+  Шпон: 'Шпон',
+  Тиснение: 'Тиснение',
+  ПВХ: 'ПВХ',
 };

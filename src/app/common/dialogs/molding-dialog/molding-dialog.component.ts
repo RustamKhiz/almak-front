@@ -1,6 +1,6 @@
 import { DecimalPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, DestroyRef, inject, signal } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialogModule, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
@@ -11,13 +11,14 @@ import { MatSelectModule } from '@angular/material/select';
 import {
   DEFAULT_MOLDING_COVERING,
   DEFAULT_MOLDING_PLATBAND_TYPE,
-  MOLDING_COVERING_LABELS,
   MOLDING_COVERING_OPTIONS,
   MOLDING_PLATBAND_TYPE_LABELS,
   MOLDING_PLATBAND_TYPE_OPTIONS,
 } from '../../constants/molding-catalog';
+import { CATALOG_KEYS } from '../../constants/catalog-keys';
 import { SUPPLIER_OPTIONS } from '../../constants/reference-catalogs';
-import { MoldingCovering, MoldingItem, MoldingPlatbandType, OrderItemType } from '../../../types/order.types';
+import { CatalogsService } from '../../../services/catalogs.service';
+import { MoldingItem, MoldingPlatbandType, OrderItemType } from '../../../types/order.types';
 import { CatalogAutocompleteFieldComponent } from '../../../ui/catalog-autocomplete-field/catalog-autocomplete-field.component';
 import { QuantityFieldComponent } from '../../../ui/quantity-field/quantity-field.component';
 import { bindLeadingCapitalization } from '../../utils/form-text';
@@ -26,7 +27,7 @@ export interface MoldingDialogData {
   mode: 'create' | 'edit';
   molding?: MoldingItem;
   defaultColor?: string;
-  defaultCovering?: MoldingCovering;
+  defaultCovering?: string;
 }
 
 export type MoldingDialogResult = Omit<MoldingItem, 'id'>;
@@ -55,11 +56,18 @@ export class MoldingDialogComponent {
   private readonly dialogRef = inject(MatDialogRef<MoldingDialogComponent, MoldingDialogResult>);
   private readonly data = inject<MoldingDialogData>(MAT_DIALOG_DATA);
 
+  private readonly catalogsService = inject(CatalogsService);
+
   protected readonly platbandTypeOptions = MOLDING_PLATBAND_TYPE_OPTIONS;
   protected readonly platbandTypeLabels = MOLDING_PLATBAND_TYPE_LABELS;
-  protected readonly coveringOptions = MOLDING_COVERING_OPTIONS;
-  protected readonly coveringLabels = MOLDING_COVERING_LABELS;
-  protected readonly supplierOptions = SUPPLIER_OPTIONS;
+  protected readonly coveringOptions = toSignal(
+    this.catalogsService.getItemsByKey(CATALOG_KEYS.moldingCoverings, [...MOLDING_COVERING_OPTIONS]),
+    { initialValue: [...MOLDING_COVERING_OPTIONS] as readonly string[] },
+  );
+  protected readonly supplierOptions = toSignal(
+    this.catalogsService.getItemsByKey(CATALOG_KEYS.suppliers, SUPPLIER_OPTIONS),
+    { initialValue: SUPPLIER_OPTIONS },
+  );
   protected readonly platbandType = MoldingPlatbandType;
   protected readonly isFigureType = signal(this.data.molding?.platbandType === MoldingPlatbandType.Figure);
 

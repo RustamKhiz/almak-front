@@ -113,8 +113,8 @@
     <mat-form-field appearance="outline">
       <mat-label>Покрытие</mat-label>
       <mat-select formControlName="covering">
-        @for (covering of coveringOptions; track covering) {
-          <mat-option [value]="covering">{{ coveringLabels[covering] }}</mat-option>
+        @for (covering of coveringOptions(); track covering) {
+          <mat-option [value]="covering">{{ covering }}</mat-option>
         }
       </mat-select>
     </mat-form-field>
@@ -129,7 +129,7 @@
       <textarea matInput rows="3" formControlName="comment"></textarea>
     </mat-form-field>
 
-    <app-catalog-autocomplete-field title="Поставщик" formControlName="supplier" [options]="supplierOptions" />
+    <app-catalog-autocomplete-field title="Поставщик" formControlName="supplier" [options]="supplierOptions()" />
   </form>
 </mat-dialog-content>
 

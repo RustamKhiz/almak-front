@@ -1,11 +1,4 @@
-import {
-  CapitalCovering,
-  ExtensionCovering,
-  MoldingCovering,
-  MoldingPlatbandType,
-  PanelingCovering,
-  PanelingKind,
-} from '../../types/order.types';
+import { MoldingPlatbandType, PanelingKind } from '../../types/order.types';
 
 export const MOLDING_PLATBAND_TYPE_OPTIONS: readonly MoldingPlatbandType[] = [
   MoldingPlatbandType.Oval,
@@ -19,56 +12,56 @@ export const MOLDING_PLATBAND_TYPE_LABELS: Readonly<Record<MoldingPlatbandType, 
   [MoldingPlatbandType.Figure]: 'Фигурный',
 };
 
-export const MOLDING_COVERING_OPTIONS: readonly MoldingCovering[] = [
-  MoldingCovering.Enamel,
-  MoldingCovering.Veneer,
-  MoldingCovering.Embossing,
-  MoldingCovering.PVC,
-] as const;
+// catalog key: 'molding_coverings'
+export const MOLDING_COVERING_OPTIONS = ['Эмаль', 'Шпон', 'Тиснение', 'ПВХ'] as const;
 
-export const MOLDING_COVERING_LABELS: Readonly<Record<MoldingCovering, string>> = {
-  [MoldingCovering.Enamel]: 'Эмаль',
-  [MoldingCovering.Veneer]: 'Шпон',
-  [MoldingCovering.Embossing]: 'Тиснение',
-  [MoldingCovering.PVC]: 'ПВХ',
+export const MOLDING_COVERING_LABELS: Readonly<Record<string, string>> = {
+  Enamel: 'Эмаль',
+  Veneer: 'Шпон',
+  Embossing: 'Тиснение',
+  PVC: 'ПВХ',
+  Эмаль: 'Эмаль',
+  Шпон: 'Шпон',
+  Тиснение: 'Тиснение',
+  ПВХ: 'ПВХ',
 };
 
-export const EXTENSION_COVERING_OPTIONS: readonly ExtensionCovering[] = [
-  ExtensionCovering.Enamel,
-  ExtensionCovering.Veneer,
-  ExtensionCovering.Embossing,
-] as const;
+// catalog key: 'extension_coverings'
+export const EXTENSION_COVERING_OPTIONS = ['Эмаль', 'Шпон', 'Тиснение'] as const;
 
-export const EXTENSION_COVERING_LABELS: Readonly<Record<ExtensionCovering, string>> = {
-  [ExtensionCovering.Enamel]: 'Эмаль',
-  [ExtensionCovering.Veneer]: 'Шпон',
-  [ExtensionCovering.Embossing]: 'Тиснение',
+export const EXTENSION_COVERING_LABELS: Readonly<Record<string, string>> = {
+  Enamel: 'Эмаль',
+  Veneer: 'Шпон',
+  Embossing: 'Тиснение',
+  Эмаль: 'Эмаль',
+  Шпон: 'Шпон',
+  Тиснение: 'Тиснение',
 };
 
-export const CAPITAL_COVERING_OPTIONS: readonly CapitalCovering[] = [
-  CapitalCovering.Enamel,
-  CapitalCovering.Veneer,
-  CapitalCovering.Embossing,
-] as const;
+// catalog key: 'capital_coverings'
+export const CAPITAL_COVERING_OPTIONS = ['Эмаль', 'Шпон', 'Тиснение'] as const;
 
-export const CAPITAL_COVERING_LABELS: Readonly<Record<CapitalCovering, string>> = {
-  [CapitalCovering.Enamel]: 'Эмаль',
-  [CapitalCovering.Veneer]: 'Шпон',
-  [CapitalCovering.Embossing]: 'Тиснение',
+export const CAPITAL_COVERING_LABELS: Readonly<Record<string, string>> = {
+  Enamel: 'Эмаль',
+  Veneer: 'Шпон',
+  Embossing: 'Тиснение',
+  Эмаль: 'Эмаль',
+  Шпон: 'Шпон',
+  Тиснение: 'Тиснение',
 };
 
-export const PANELING_COVERING_OPTIONS: readonly PanelingCovering[] = [
-  PanelingCovering.Enamel,
-  PanelingCovering.Veneer,
-  PanelingCovering.Embossing,
-  PanelingCovering.PVC,
-] as const;
+// catalog key: 'paneling_coverings'
+export const PANELING_COVERING_OPTIONS = ['Эмаль', 'Шпон', 'Тиснение', 'ПВХ'] as const;
 
-export const PANELING_COVERING_LABELS: Readonly<Record<PanelingCovering, string>> = {
-  [PanelingCovering.Enamel]: 'Эмаль',
-  [PanelingCovering.Veneer]: 'Шпон',
-  [PanelingCovering.Embossing]: 'Тиснение',
-  [PanelingCovering.PVC]: 'ПВХ',
+export const PANELING_COVERING_LABELS: Readonly<Record<string, string>> = {
+  Enamel: 'Эмаль',
+  Veneer: 'Шпон',
+  Embossing: 'Тиснение',
+  PVC: 'ПВХ',
+  Эмаль: 'Эмаль',
+  Шпон: 'Шпон',
+  Тиснение: 'Тиснение',
+  ПВХ: 'ПВХ',
 };
 
 export const PANELING_KIND_OPTIONS: readonly PanelingKind[] = [
@@ -83,9 +76,9 @@ export const PANELING_KIND_LABELS: Readonly<Record<PanelingKind, string>> = {
   [PanelingKind.Baguette]: 'С багетом',
 };
 
-export const DEFAULT_MOLDING_COVERING = MoldingCovering.Enamel;
+export const DEFAULT_MOLDING_COVERING = 'Эмаль';
 export const DEFAULT_MOLDING_PLATBAND_TYPE = MoldingPlatbandType.Oval;
-export const DEFAULT_EXTENSION_COVERING = ExtensionCovering.Enamel;
-export const DEFAULT_CAPITAL_COVERING = CapitalCovering.Enamel;
-export const DEFAULT_PANELING_COVERING = PanelingCovering.Enamel;
+export const DEFAULT_EXTENSION_COVERING = 'Эмаль';
+export const DEFAULT_CAPITAL_COVERING = 'Эмаль';
+export const DEFAULT_PANELING_COVERING = 'Эмаль';
 export const DEFAULT_PANELING_KIND = PanelingKind.Smooth;

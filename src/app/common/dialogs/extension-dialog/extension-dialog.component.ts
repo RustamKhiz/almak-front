@@ -1,19 +1,17 @@
 import { DecimalPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, DestroyRef, inject } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
-import {
-  DEFAULT_EXTENSION_COVERING,
-  EXTENSION_COVERING_LABELS,
-  EXTENSION_COVERING_OPTIONS,
-} from '../../constants/molding-catalog';
+import { DEFAULT_EXTENSION_COVERING, EXTENSION_COVERING_OPTIONS } from '../../constants/molding-catalog';
+import { CATALOG_KEYS } from '../../constants/catalog-keys';
 import { SUPPLIER_OPTIONS } from '../../constants/reference-catalogs';
-import { ExtensionCovering, ExtensionItem, OrderItemType } from '../../../types/order.types';
+import { CatalogsService } from '../../../services/catalogs.service';
+import { ExtensionItem, OrderItemType } from '../../../types/order.types';
 import { CatalogAutocompleteFieldComponent } from '../../../ui/catalog-autocomplete-field/catalog-autocomplete-field.component';
 import { QuantityFieldComponent } from '../../../ui/quantity-field/quantity-field.component';
 import { bindLeadingCapitalization } from '../../utils/form-text';
@@ -22,7 +20,7 @@ export interface ExtensionDialogData {
   mode: 'create' | 'edit';
   extension?: ExtensionItem;
   defaultColor?: string;
-  defaultCovering?: ExtensionCovering;
+  defaultCovering?: string;
 }
 
 export type ExtensionDialogResult = Omit<ExtensionItem, 'id'>;
@@ -51,9 +49,16 @@ export class ExtensionDialogComponent {
   private readonly data = inject<ExtensionDialogData>(MAT_DIALOG_DATA);
   private lastAutoTotalArea = 0;
 
-  protected readonly coveringOptions = EXTENSION_COVERING_OPTIONS;
-  protected readonly coveringLabels = EXTENSION_COVERING_LABELS;
-  protected readonly supplierOptions = SUPPLIER_OPTIONS;
+  private readonly catalogsService = inject(CatalogsService);
+
+  protected readonly coveringOptions = toSignal(
+    this.catalogsService.getItemsByKey(CATALOG_KEYS.extensionCoverings, [...EXTENSION_COVERING_OPTIONS]),
+    { initialValue: [...EXTENSION_COVERING_OPTIONS] as readonly string[] },
+  );
+  protected readonly supplierOptions = toSignal(
+    this.catalogsService.getItemsByKey(CATALOG_KEYS.suppliers, SUPPLIER_OPTIONS),
+    { initialValue: SUPPLIER_OPTIONS },
+  );
 
   protected readonly form = this.fb.group({
     supplier: [this.data.extension?.supplier ?? ''],

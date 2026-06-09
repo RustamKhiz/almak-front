@@ -28,8 +28,8 @@
         <mat-label>Покрытие</mat-label>
         <mat-select formControlName="defaultCovering">
           <mat-option [value]="null">Не выбрано</mat-option>
-          @for (covering of defaultCoveringOptions; track covering) {
-            <mat-option [value]="covering">{{ defaultCoveringLabels[covering] }}</mat-option>
+          @for (covering of defaultCoveringOptions(); track covering) {
+            <mat-option [value]="covering">{{ covering }}</mat-option>
           }
         </mat-select>
       </mat-form-field>

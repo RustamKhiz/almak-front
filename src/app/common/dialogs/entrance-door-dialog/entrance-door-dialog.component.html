@@ -42,7 +42,11 @@
         <input matInput formControlName="color" />
       </mat-form-field>
 
-      <app-catalog-autocomplete-field title="Цвет обшивки" formControlName="panelColor" [options]="panelColorOptions" />
+      <app-catalog-autocomplete-field
+        title="Цвет обшивки"
+        formControlName="panelColor"
+        [options]="panelColorOptions()"
+      />
     </div>
 
     <div class="dialog-row dialog-row--sizes">
@@ -50,19 +54,19 @@
         title="Ширина (см)"
         mode="number"
         formControlName="width"
-        [options]="widthOptions"
+        [options]="widthOptions()"
       />
       <app-catalog-autocomplete-field
         title="Высота (см)"
         mode="number"
         formControlName="height"
-        [options]="heightOptions"
+        [options]="heightOptions()"
       />
     </div>
 
     @if (isWelded()) {
       <div class="dialog-row dialog-row--sizes">
-        <app-catalog-autocomplete-field title="Покраска" formControlName="painting" [options]="paintingOptions" />
+        <app-catalog-autocomplete-field title="Покраска" formControlName="painting" [options]="paintingOptions()" />
       </div>
 
       <mat-checkbox formControlName="hasPeephole">Глазок есть</mat-checkbox>
@@ -80,7 +84,7 @@
       <textarea matInput rows="3" formControlName="comment"></textarea>
     </mat-form-field>
 
-    <app-catalog-autocomplete-field title="Поставщик" formControlName="supplier" [options]="supplierOptions" />
+    <app-catalog-autocomplete-field title="Поставщик" formControlName="supplier" [options]="supplierOptions()" />
   </form>
 </mat-dialog-content>
 

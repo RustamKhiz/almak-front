@@ -20,8 +20,12 @@ export const ENTRANCE_DOOR_OPENING_LABELS: Readonly<Record<EntranceDoorOpening, 
   [EntranceDoorOpening.Right]: 'Правое',
 };
 
+// catalog key: 'entrance_door_widths'
 export const ENTRANCE_DOOR_WIDTH_OPTIONS = [86, 96, 110, 120, 130, 140] as const;
+// catalog key: 'entrance_door_heights'
 export const ENTRANCE_DOOR_HEIGHT_OPTIONS = [180, 190, 205, 210, 220, 230, 240] as const;
 
+// catalog key: 'entrance_door_painting'
 export const ENTRANCE_DOOR_PAINTING_OPTIONS = ['Порошковая', 'Молотковая'] as const;
+// catalog key: 'entrance_door_panel_color'
 export const ENTRANCE_DOOR_PANEL_COLOR_OPTIONS = ['Темный', 'Светлый'] as const;

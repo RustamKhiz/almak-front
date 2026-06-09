@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, DestroyRef, inject, signal } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCheckboxModule } from '@angular/material/checkbox';
@@ -17,7 +17,9 @@ import {
   ENTRANCE_DOOR_PANEL_COLOR_OPTIONS,
   ENTRANCE_DOOR_WIDTH_OPTIONS,
 } from '../../constants/entrance-door-catalog';
+import { CATALOG_KEYS } from '../../constants/catalog-keys';
 import { SUPPLIER_OPTIONS } from '../../constants/reference-catalogs';
+import { CatalogsService } from '../../../services/catalogs.service';
 import {
   DoorLeafType,
   EntranceDoorItem,
@@ -59,15 +61,32 @@ export class EntranceDoorDialogComponent {
   private readonly dialogRef = inject(MatDialogRef<EntranceDoorDialogComponent, EntranceDoorDialogResult>);
   private readonly data = inject<EntranceDoorDialogData>(MAT_DIALOG_DATA);
 
+  private readonly catalogsService = inject(CatalogsService);
+
   protected readonly kindOptions = ENTRANCE_DOOR_KIND_OPTIONS;
   protected readonly kindLabels = ENTRANCE_DOOR_KIND_LABELS;
   protected readonly openingOptions = ENTRANCE_DOOR_OPENING_OPTIONS;
   protected readonly openingLabels = ENTRANCE_DOOR_OPENING_LABELS;
-  protected readonly widthOptions = ENTRANCE_DOOR_WIDTH_OPTIONS;
-  protected readonly heightOptions = ENTRANCE_DOOR_HEIGHT_OPTIONS;
-  protected readonly paintingOptions = ENTRANCE_DOOR_PAINTING_OPTIONS;
-  protected readonly panelColorOptions = ENTRANCE_DOOR_PANEL_COLOR_OPTIONS;
-  protected readonly supplierOptions = SUPPLIER_OPTIONS;
+  protected readonly widthOptions = toSignal(
+    this.catalogsService.getItemsByKey(CATALOG_KEYS.entranceDoorWidths, ENTRANCE_DOOR_WIDTH_OPTIONS.map(String)),
+    { initialValue: ENTRANCE_DOOR_WIDTH_OPTIONS.map(String) as readonly string[] },
+  );
+  protected readonly heightOptions = toSignal(
+    this.catalogsService.getItemsByKey(CATALOG_KEYS.entranceDoorHeights, ENTRANCE_DOOR_HEIGHT_OPTIONS.map(String)),
+    { initialValue: ENTRANCE_DOOR_HEIGHT_OPTIONS.map(String) as readonly string[] },
+  );
+  protected readonly paintingOptions = toSignal(
+    this.catalogsService.getItemsByKey(CATALOG_KEYS.entranceDoorPainting, [...ENTRANCE_DOOR_PAINTING_OPTIONS]),
+    { initialValue: [...ENTRANCE_DOOR_PAINTING_OPTIONS] as readonly string[] },
+  );
+  protected readonly panelColorOptions = toSignal(
+    this.catalogsService.getItemsByKey(CATALOG_KEYS.entranceDoorPanelColor, [...ENTRANCE_DOOR_PANEL_COLOR_OPTIONS]),
+    { initialValue: [...ENTRANCE_DOOR_PANEL_COLOR_OPTIONS] as readonly string[] },
+  );
+  protected readonly supplierOptions = toSignal(
+    this.catalogsService.getItemsByKey(CATALOG_KEYS.suppliers, SUPPLIER_OPTIONS),
+    { initialValue: SUPPLIER_OPTIONS },
+  );
   protected readonly leafTypeOptions = [DoorLeafType.Single, DoorLeafType.Double] as const;
   protected readonly isWelded = signal(this.data.door?.kind === EntranceDoorKind.Welded);
 
@@ -77,8 +96,8 @@ export class EntranceDoorDialogComponent {
     opening: [this.data.door?.opening ?? EntranceDoorOpening.Left, [Validators.required]],
     leafType: [this.data.door?.leafType ?? DoorLeafType.Single, [Validators.required]],
     model: [this.data.door?.model ?? '', [Validators.required]],
-    width: [this.data.door?.width ?? this.widthOptions[0], [Validators.required, Validators.min(1)]],
-    height: [this.data.door?.height ?? this.heightOptions[2], [Validators.required, Validators.min(1)]],
+    width: [this.data.door?.width ?? ENTRANCE_DOOR_WIDTH_OPTIONS[0], [Validators.required, Validators.min(1)]],
+    height: [this.data.door?.height ?? ENTRANCE_DOOR_HEIGHT_OPTIONS[2], [Validators.required, Validators.min(1)]],
     color: [this.data.door?.color ?? '', [Validators.required]],
     painting: [this.data.door?.painting ?? ''],
     panelColor: [this.data.door?.panelColor ?? ''],

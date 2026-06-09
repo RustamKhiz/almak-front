@@ -1,5 +1,6 @@
 export interface Catalog {
   id: number;
+  key: string | null;
   name: string;
   itemsCount: number;
 }

@@ -1,17 +1,16 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
-import {
-  CAPITAL_COVERING_LABELS,
-  CAPITAL_COVERING_OPTIONS,
-  DEFAULT_CAPITAL_COVERING,
-} from '../../constants/molding-catalog';
+import { CAPITAL_COVERING_OPTIONS, DEFAULT_CAPITAL_COVERING } from '../../constants/molding-catalog';
+import { CATALOG_KEYS } from '../../constants/catalog-keys';
 import { SUPPLIER_OPTIONS } from '../../constants/reference-catalogs';
-import { CapitalCovering, CapitalItem, OrderItemType } from '../../../types/order.types';
+import { CatalogsService } from '../../../services/catalogs.service';
+import { CapitalItem, OrderItemType } from '../../../types/order.types';
 import { CatalogAutocompleteFieldComponent } from '../../../ui/catalog-autocomplete-field/catalog-autocomplete-field.component';
 import { QuantityFieldComponent } from '../../../ui/quantity-field/quantity-field.component';
 import { bindLeadingCapitalization } from '../../utils/form-text';
@@ -20,7 +19,7 @@ export interface CapitalDialogData {
   mode: 'create' | 'edit';
   capital?: CapitalItem;
   defaultColor?: string;
-  defaultCovering?: CapitalCovering;
+  defaultCovering?: string;
 }
 
 export type CapitalDialogResult = Omit<CapitalItem, 'id'>;
@@ -47,9 +46,16 @@ export class CapitalDialogComponent {
   private readonly dialogRef = inject(MatDialogRef<CapitalDialogComponent, CapitalDialogResult>);
   private readonly data = inject<CapitalDialogData>(MAT_DIALOG_DATA);
 
-  protected readonly coveringOptions = CAPITAL_COVERING_OPTIONS;
-  protected readonly coveringLabels = CAPITAL_COVERING_LABELS;
-  protected readonly supplierOptions = SUPPLIER_OPTIONS;
+  private readonly catalogsService = inject(CatalogsService);
+
+  protected readonly coveringOptions = toSignal(
+    this.catalogsService.getItemsByKey(CATALOG_KEYS.capitalCoverings, [...CAPITAL_COVERING_OPTIONS]),
+    { initialValue: [...CAPITAL_COVERING_OPTIONS] as readonly string[] },
+  );
+  protected readonly supplierOptions = toSignal(
+    this.catalogsService.getItemsByKey(CATALOG_KEYS.suppliers, SUPPLIER_OPTIONS),
+    { initialValue: SUPPLIER_OPTIONS },
+  );
 
   protected readonly form = this.fb.group({
     supplier: [this.data.capital?.supplier ?? ''],

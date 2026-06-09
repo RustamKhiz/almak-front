@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import {
   AbstractControl,
   FormBuilder,
@@ -14,7 +14,9 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { HardwareItem, OrderItemType } from '../../../types/order.types';
 import { CatalogAutocompleteFieldComponent } from '../../../ui/catalog-autocomplete-field/catalog-autocomplete-field.component';
+import { CATALOG_KEYS } from '../../constants/catalog-keys';
 import { SUPPLIER_OPTIONS } from '../../constants/reference-catalogs';
+import { CatalogsService } from '../../../services/catalogs.service';
 import { bindLeadingCapitalization } from '../../utils/form-text';
 
 export interface HardwareDialogData {
@@ -43,7 +45,12 @@ export class HardwareDialogComponent {
   private readonly dialogRef = inject(MatDialogRef<HardwareDialogComponent, HardwareDialogResult>);
   private readonly data = inject<HardwareDialogData>(MAT_DIALOG_DATA);
   private readonly destroyRef = inject(DestroyRef);
-  protected readonly supplierOptions = SUPPLIER_OPTIONS;
+  private readonly catalogsService = inject(CatalogsService);
+
+  protected readonly supplierOptions = toSignal(
+    this.catalogsService.getItemsByKey(CATALOG_KEYS.suppliers, SUPPLIER_OPTIONS),
+    { initialValue: SUPPLIER_OPTIONS },
+  );
 
   protected readonly form = this.fb.nonNullable.group(
     {

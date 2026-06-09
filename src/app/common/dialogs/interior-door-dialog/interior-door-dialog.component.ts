@@ -1,6 +1,6 @@
 import { DecimalPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, DestroyRef, inject } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
@@ -10,11 +10,7 @@ import { MatRadioModule } from '@angular/material/radio';
 import { MatSelectModule } from '@angular/material/select';
 import { pairwise, startWith } from 'rxjs';
 import { DOOR_LEAF_TYPE_LABELS, DOOR_LEAF_TYPE_OPTIONS } from '../../constants/door-catalog';
-import {
-  DEFAULT_INTERIOR_DOOR_COVERING,
-  INTERIOR_DOOR_COVERING_LABELS,
-  INTERIOR_DOOR_COVERING_OPTIONS,
-} from '../../constants/interior-door-covering';
+import { INTERIOR_DOOR_COVERING_OPTIONS } from '../../constants/interior-door-covering';
 import {
   DEFAULT_INTERIOR_DOOR_HEIGHT,
   DEFAULT_INTERIOR_DOOR_WIDTH,
@@ -22,8 +18,10 @@ import {
   INTERIOR_DOOR_HEIGHT_OPTIONS,
   INTERIOR_DOOR_WIDTH_OPTIONS,
 } from '../../constants/interior-door-catalog';
+import { CATALOG_KEYS } from '../../constants/catalog-keys';
 import { SUPPLIER_OPTIONS } from '../../constants/reference-catalogs';
-import { DoorLeafType, InteriorDoorCovering, InteriorDoorItem, OrderItemType } from '../../../types/order.types';
+import { CatalogsService } from '../../../services/catalogs.service';
+import { DoorLeafType, InteriorDoorItem, OrderItemType } from '../../../types/order.types';
 import { CatalogAutocompleteFieldComponent } from '../../../ui/catalog-autocomplete-field/catalog-autocomplete-field.component';
 import { QuantityFieldComponent } from '../../../ui/quantity-field/quantity-field.component';
 import { bindLeadingCapitalization } from '../../utils/form-text';
@@ -32,7 +30,7 @@ export interface InteriorDoorDialogData {
   mode: 'create' | 'edit';
   door?: InteriorDoorItem;
   defaultColor?: string;
-  defaultCovering?: InteriorDoorCovering;
+  defaultCovering?: string;
 }
 
 export type InteriorDoorDialogResult = Omit<InteriorDoorItem, 'id'>;
@@ -61,13 +59,26 @@ export class InteriorDoorDialogComponent {
   private readonly dialogRef = inject(MatDialogRef<InteriorDoorDialogComponent, InteriorDoorDialogResult>);
   private readonly data = inject<InteriorDoorDialogData>(MAT_DIALOG_DATA);
 
+  private readonly catalogsService = inject(CatalogsService);
+
   protected readonly doorLeafTypeOptions = DOOR_LEAF_TYPE_OPTIONS;
   protected readonly doorLeafTypeLabels = DOOR_LEAF_TYPE_LABELS;
-  protected readonly widthOptions = INTERIOR_DOOR_WIDTH_OPTIONS;
-  protected readonly heightOptions = INTERIOR_DOOR_HEIGHT_OPTIONS;
-  protected readonly coveringOptions = INTERIOR_DOOR_COVERING_OPTIONS;
-  protected readonly coveringLabels = INTERIOR_DOOR_COVERING_LABELS;
-  protected readonly supplierOptions = SUPPLIER_OPTIONS;
+  protected readonly widthOptions = toSignal(
+    this.catalogsService.getItemsByKey(CATALOG_KEYS.interiorDoorWidths, INTERIOR_DOOR_WIDTH_OPTIONS.map(String)),
+    { initialValue: INTERIOR_DOOR_WIDTH_OPTIONS.map(String) as readonly string[] },
+  );
+  protected readonly heightOptions = toSignal(
+    this.catalogsService.getItemsByKey(CATALOG_KEYS.interiorDoorHeights, INTERIOR_DOOR_HEIGHT_OPTIONS.map(String)),
+    { initialValue: INTERIOR_DOOR_HEIGHT_OPTIONS.map(String) as readonly string[] },
+  );
+  protected readonly coveringOptions = toSignal(
+    this.catalogsService.getItemsByKey(CATALOG_KEYS.interiorDoorCoverings, [...INTERIOR_DOOR_COVERING_OPTIONS]),
+    { initialValue: [...INTERIOR_DOOR_COVERING_OPTIONS] as readonly string[] },
+  );
+  protected readonly supplierOptions = toSignal(
+    this.catalogsService.getItemsByKey(CATALOG_KEYS.suppliers, SUPPLIER_OPTIONS),
+    { initialValue: SUPPLIER_OPTIONS },
+  );
   protected readonly doorLeafType = DoorLeafType;
 
   protected readonly form = this.fb.group({
@@ -85,10 +96,7 @@ export class InteriorDoorDialogComponent {
     leafType: [this.data.door?.leafType ?? DoorLeafType.Single, [Validators.required]],
     count: [this.data.door?.count ?? 1, [Validators.required, Validators.min(1)]],
     count2: [(this.data.door?.count2 ?? this.data.door?.count ?? 1) as number | null],
-    covering: [
-      this.data.door?.covering ?? this.data.defaultCovering ?? DEFAULT_INTERIOR_DOOR_COVERING,
-      [Validators.required],
-    ],
+    covering: [this.data.door?.covering ?? this.data.defaultCovering ?? 'Эмаль', [Validators.required]],
     comment: [this.data.door?.comment ?? ''],
   });
 

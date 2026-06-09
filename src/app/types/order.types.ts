@@ -108,7 +108,7 @@ export interface InteriorDoorItem {
   leafType: DoorLeafType;
   count: number;
   count2: number | null;
-  covering: InteriorDoorCovering;
+  covering: string;
   comment: string;
 }
 
@@ -152,7 +152,7 @@ export interface MoldingItem {
   rebateBarCount: number;
   rebateBarPrice: number;
   color: string;
-  covering: MoldingCovering;
+  covering: string;
   comment: string;
 }
 
@@ -161,7 +161,7 @@ export interface ExtensionItem {
   type: OrderItemType.Extension;
   supplier: string;
   color: string;
-  covering: ExtensionCovering;
+  covering: string;
   width: number;
   height: number;
   setCount: number;
@@ -178,7 +178,7 @@ export interface CapitalItem {
   supplier: string;
   name: string;
   color: string;
-  covering: CapitalCovering;
+  covering: string;
   width: number;
   height: number;
   price: number;
@@ -194,7 +194,7 @@ export interface PanelingItem {
   size: string;
   width: number;
   height: number;
-  covering: PanelingCovering;
+  covering: string;
   kind: PanelingKind;
   sizes: readonly PanelingSize[];
   totalArea: number;

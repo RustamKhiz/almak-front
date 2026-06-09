@@ -512,7 +512,7 @@ export class OrderViewComponent {
       details: {
         title: `Межкомнатная дверь · ${item.model}`,
         subtitle: 'Полная информация по позиции заказа.',
-        badges: [this.leafTypesLabels[item.leafType], this.doorCoveringLabels[item.covering]],
+        badges: [this.leafTypesLabels[item.leafType], this.doorCoveringLabels[item.covering] ?? item.covering],
         total: getInteriorDoorTotal(item),
         sections: [
           this.section('Основное', [
@@ -537,7 +537,7 @@ export class OrderViewComponent {
               ]
             : []),
           this.section('Дополнительно', [
-            ['Покрытие', this.doorCoveringLabels[item.covering]],
+            ['Покрытие', this.doorCoveringLabels[item.covering] ?? item.covering],
             ['Тип полотна', this.getInteriorDoorGlassLabel(item)],
             ['Стекло', item.hasGlass ? item.glassComment || 'Без уточнения' : 'Не используется'],
             ['Стоимость', this.formatMoney(getInteriorDoorTotal(item))],
@@ -591,7 +591,7 @@ export class OrderViewComponent {
       entity: 'moldings',
       itemId: item.id,
       typeLabel: 'Погонаж',
-      title: `${item.color} · ${this.moldingCoveringLabels[item.covering]}`,
+      title: `${item.color} · ${this.moldingCoveringLabels[item.covering] ?? item.covering}`,
       summary: `Коробка ${item.frameCount} шт. · Наличник ${item.platbandCount} шт. · Притворная планка ${item.rebateBarCount} шт.`,
       supplier: item.supplier,
       countLabel: `${item.frameCount + item.platbandCount + item.rebateBarCount} шт.`,
@@ -599,7 +599,7 @@ export class OrderViewComponent {
       details: {
         title: 'Погонаж',
         subtitle: 'Полная информация по позиции заказа.',
-        badges: [item.color, this.moldingCoveringLabels[item.covering]],
+        badges: [item.color, this.moldingCoveringLabels[item.covering] ?? item.covering],
         total: getMoldingTotal(item),
         sections: [
           this.section('Коробка', [
@@ -622,7 +622,7 @@ export class OrderViewComponent {
           ]),
           this.section('Дополнительно', [
             ['Цвет', item.color],
-            ['Покрытие', this.moldingCoveringLabels[item.covering]],
+            ['Покрытие', this.moldingCoveringLabels[item.covering] ?? item.covering],
             ['Притворная планка', `${item.rebateBarCount} шт.`],
             ['Цена притворной планки', this.formatMoney(item.rebateBarPrice)],
             ['Комментарий', item.comment || 'Нет'],
@@ -638,7 +638,7 @@ export class OrderViewComponent {
       entity: 'extensions',
       itemId: item.id,
       typeLabel: 'Доборы',
-      title: `${item.color} · ${this.extensionCoveringLabels[item.covering]}`,
+      title: `${item.color} · ${this.extensionCoveringLabels[item.covering] ?? item.covering}`,
       summary: `${item.width} × ${item.height} см · комплектов ${item.setCount} · доборов ${item.quantityPerSet} · ${item.totalArea} м²`,
       supplier: item.supplier,
       countLabel: `${item.quantityPerSet} шт.`,
@@ -646,7 +646,7 @@ export class OrderViewComponent {
       details: {
         title: 'Доборы',
         subtitle: 'Расчет общей стоимости учитывает общую квадратуру и цену за м².',
-        badges: [item.color, this.extensionCoveringLabels[item.covering]],
+        badges: [item.color, this.extensionCoveringLabels[item.covering] ?? item.covering],
         total: getExtensionTotal(item),
         sections: [
           this.section('Размеры и комплектация', [
@@ -672,20 +672,20 @@ export class OrderViewComponent {
       itemId: item.id,
       typeLabel: 'Капитель',
       title: item.name,
-      summary: `${item.width} × ${item.height} см · цвет ${item.color} · ${this.capitalCoveringLabels[item.covering]}`,
+      summary: `${item.width} × ${item.height} см · цвет ${item.color} · ${this.capitalCoveringLabels[item.covering] ?? item.covering}`,
       supplier: item.supplier,
       countLabel: `${item.count} шт.`,
       total: getCapitalTotal(item),
       details: {
         title: `Капитель · ${item.name}`,
         subtitle: 'Полная информация по позиции заказа.',
-        badges: [item.color, this.capitalCoveringLabels[item.covering]],
+        badges: [item.color, this.capitalCoveringLabels[item.covering] ?? item.covering],
         total: getCapitalTotal(item),
         sections: [
           this.section('Основное', [
             ['Название', item.name],
             ['Цвет', item.color],
-            ['Покрытие', this.capitalCoveringLabels[item.covering]],
+            ['Покрытие', this.capitalCoveringLabels[item.covering] ?? item.covering],
             ['Ширина', `${item.width} см`],
             ['Высота', `${item.height} см`],
             ['Количество', `${item.count} шт.`],
@@ -744,14 +744,18 @@ export class OrderViewComponent {
       itemId: item.id,
       typeLabel: 'Обшивка',
       title: `${item.color} · ${this.panelingKindLabels[item.kind]}`,
-      summary: `${this.formatPanelingSizes(item)} · ${this.panelingCoveringLabels[item.covering]} · ${item.totalArea} м²`,
+      summary: `${this.formatPanelingSizes(item)} · ${this.panelingCoveringLabels[item.covering] ?? item.covering} · ${item.totalArea} м²`,
       supplier: item.supplier,
       countLabel: `${item.count} шт.`,
       total: getPanelingTotal(item),
       details: {
         title: 'Обшивка',
         subtitle: 'Расчет общей стоимости учитывает общую квадратуру и цену за м².',
-        badges: [item.color, this.panelingKindLabels[item.kind], this.panelingCoveringLabels[item.covering]],
+        badges: [
+          item.color,
+          this.panelingKindLabels[item.kind],
+          this.panelingCoveringLabels[item.covering] ?? item.covering,
+        ],
         total: getPanelingTotal(item),
         sections: [
           this.section('Размеры и квадратура', [
@@ -764,7 +768,7 @@ export class OrderViewComponent {
           this.section('Стоимость', [
             ['Цена за квадратный метр', this.formatMoney(item.price)],
             ['Тип обшивки', this.panelingKindLabels[item.kind]],
-            ['Покрытие', this.panelingCoveringLabels[item.covering]],
+            ['Покрытие', this.panelingCoveringLabels[item.covering] ?? item.covering],
             ['Комментарий', item.comment || 'Нет'],
           ]),
         ],

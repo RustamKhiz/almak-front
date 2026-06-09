@@ -1,22 +1,24 @@
 import { Injectable } from '@angular/core';
 import {
-  CapitalCovering,
   DoorLeafType,
   EntranceDoorKind,
   EntranceDoorOpening,
-  ExtensionCovering,
   ExtensionItem,
   HardwareItem,
   InteriorDoorItem,
-  MoldingCovering,
   MoldingItem,
   MoldingPlatbandType,
   OrderCreatePayload,
-  PanelingCovering,
   PanelingItem,
   PanelingKind,
 } from '../types/order.types';
 import { PrintConstructorOptions } from '../common/dialogs/print-constructor-dialog/print-constructor.types';
+import {
+  MOLDING_COVERING_LABELS,
+  EXTENSION_COVERING_LABELS,
+  CAPITAL_COVERING_LABELS,
+  PANELING_COVERING_LABELS,
+} from '../common/constants/molding-catalog';
 
 const STORE_PHONE = '+7 (989) 475-09-90';
 const STORE_ADDRESS = 'г. Махачкала, ул. Акушинского 330';
@@ -721,19 +723,8 @@ export class OrderDocumentService {
     }
   }
 
-  private getMoldingCoveringLabel(value: MoldingCovering): string {
-    switch (value) {
-      case MoldingCovering.Enamel:
-        return 'Эмаль';
-      case MoldingCovering.Veneer:
-        return 'Шпон';
-      case MoldingCovering.Embossing:
-        return 'Тиснение';
-      case MoldingCovering.PVC:
-        return 'ПВХ';
-      default:
-        return value;
-    }
+  private getMoldingCoveringLabel(value: string): string {
+    return MOLDING_COVERING_LABELS[value] ?? value;
   }
 
   private getMoldingPlatbandTypeLabel(value: MoldingPlatbandType): string {
@@ -749,45 +740,16 @@ export class OrderDocumentService {
     }
   }
 
-  private getExtensionCoveringLabel(value: ExtensionCovering): string {
-    switch (value) {
-      case ExtensionCovering.Enamel:
-        return 'Эмаль';
-      case ExtensionCovering.Veneer:
-        return 'Шпон';
-      case ExtensionCovering.Embossing:
-        return 'Тиснение';
-      default:
-        return value;
-    }
+  private getExtensionCoveringLabel(value: string): string {
+    return EXTENSION_COVERING_LABELS[value] ?? value;
   }
 
-  private getCapitalCoveringLabel(value: CapitalCovering): string {
-    switch (value) {
-      case CapitalCovering.Enamel:
-        return 'Эмаль';
-      case CapitalCovering.Veneer:
-        return 'Шпон';
-      case CapitalCovering.Embossing:
-        return 'Тиснение';
-      default:
-        return value;
-    }
+  private getCapitalCoveringLabel(value: string): string {
+    return CAPITAL_COVERING_LABELS[value] ?? value;
   }
 
-  private getPanelingCoveringLabel(value: PanelingCovering): string {
-    switch (value) {
-      case PanelingCovering.Enamel:
-        return 'Эмаль';
-      case PanelingCovering.Veneer:
-        return 'Шпон';
-      case PanelingCovering.Embossing:
-        return 'Тиснение';
-      case PanelingCovering.PVC:
-        return 'ПВХ';
-      default:
-        return value;
-    }
+  private getPanelingCoveringLabel(value: string): string {
+    return PANELING_COVERING_LABELS[value] ?? value;
   }
 
   private getPanelingKindLabel(value: PanelingKind): string {

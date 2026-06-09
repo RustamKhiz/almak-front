@@ -1,7 +1,7 @@
 import { DecimalPipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, computed, inject, input, signal } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCheckboxModule } from '@angular/material/checkbox';
@@ -14,16 +14,15 @@ import { MatSelectModule } from '@angular/material/select';
 import { Router } from '@angular/router';
 import { Observable, filter, switchMap } from 'rxjs';
 import { ConfirmDialogComponent, ConfirmDialogData } from '../../common/confirm-dialog/confirm-dialog.component';
-import {
-  INTERIOR_DOOR_COVERING_LABELS,
-  INTERIOR_DOOR_COVERING_OPTIONS,
-} from '../../common/constants/interior-door-covering';
+import { INTERIOR_DOOR_COVERING_OPTIONS } from '../../common/constants/interior-door-covering';
 import {
   CAPITAL_COVERING_OPTIONS,
   EXTENSION_COVERING_OPTIONS,
   MOLDING_COVERING_OPTIONS,
   PANELING_COVERING_OPTIONS,
 } from '../../common/constants/molding-catalog';
+import { CATALOG_KEYS } from '../../common/constants/catalog-keys';
+import { CatalogsService } from '../../services/catalogs.service';
 import {
   CapitalDialogComponent,
   CapitalDialogData,
@@ -62,7 +61,6 @@ import {
   EntranceDoorOpening,
   ExtensionItem,
   HardwareItem,
-  InteriorDoorCovering,
   InteriorDoorItem,
   MoldingItem,
   OrderCreatePayload,
@@ -113,6 +111,7 @@ export class OrderCreateComponent implements OnInit {
   private readonly draftsService = inject(OrderDraftsService);
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly catalogsService = inject(CatalogsService);
 
   readonly orderId = input<number | null>(null);
   readonly draftId = input<number | null>(null);
@@ -131,8 +130,10 @@ export class OrderCreateComponent implements OnInit {
   protected readonly submitError = signal<string | null>(null);
   protected readonly draftMessage = signal<string | null>(null);
   protected readonly activeDraftId = signal<number | null>(null);
-  protected readonly defaultCoveringOptions = INTERIOR_DOOR_COVERING_OPTIONS;
-  protected readonly defaultCoveringLabels = INTERIOR_DOOR_COVERING_LABELS;
+  protected readonly defaultCoveringOptions = toSignal(
+    this.catalogsService.getItemsByKey(CATALOG_KEYS.interiorDoorCoverings, [...INTERIOR_DOOR_COVERING_OPTIONS]),
+    { initialValue: [...INTERIOR_DOOR_COVERING_OPTIONS] as readonly string[] },
+  );
   protected readonly prepayment = signal(0);
   protected readonly discount = signal(0);
   protected readonly orderItemEntity = OrderItemEntity;
@@ -168,7 +169,7 @@ export class OrderCreateComponent implements OnInit {
     status: [OrderStatus.Accepted, [Validators.required]],
     isPaid: [false, [Validators.required]],
     defaultColor: [''],
-    defaultCovering: [null as InteriorDoorCovering | null],
+    defaultCovering: [null as string | null],
   });
 
   constructor() {
