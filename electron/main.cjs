@@ -1,4 +1,4 @@
-const { app, BrowserWindow, dialog, shell } = require('electron');
+const { app, BrowserWindow, ipcMain, shell } = require('electron');
 const { autoUpdater } = require('electron-updater');
 const path = require('node:path');
 
@@ -55,34 +55,13 @@ function setupAutoUpdates() {
   autoUpdater.autoInstallOnAppQuit = true;
 
   autoUpdater.on('update-downloaded', () => {
-    const owner = mainWindow && !mainWindow.isDestroyed() ? mainWindow : undefined;
-    const options = {
-      type: 'info',
-      buttons: [
-        '\u041f\u0435\u0440\u0435\u0437\u0430\u043f\u0443\u0441\u0442\u0438\u0442\u044c \u0441\u0435\u0439\u0447\u0430\u0441',
-        '\u041f\u043e\u0437\u0436\u0435',
-      ],
-      defaultId: 0,
-      cancelId: 1,
-      title:
-        '\u0414\u043e\u0441\u0442\u0443\u043f\u043d\u043e \u043e\u0431\u043d\u043e\u0432\u043b\u0435\u043d\u0438\u0435 Almak',
-      message:
-        '\u041e\u0431\u043d\u043e\u0432\u043b\u0435\u043d\u0438\u0435 \u0441\u043a\u0430\u0447\u0430\u043d\u043e',
-      detail:
-        '\u041f\u0435\u0440\u0435\u0437\u0430\u043f\u0443\u0441\u0442\u0438\u0442\u0435 \u043f\u0440\u0438\u043b\u043e\u0436\u0435\u043d\u0438\u0435, \u0447\u0442\u043e\u0431\u044b \u0443\u0441\u0442\u0430\u043d\u043e\u0432\u0438\u0442\u044c \u043d\u043e\u0432\u0443\u044e \u0432\u0435\u0440\u0441\u0438\u044e.',
-    };
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send('update-downloaded');
+    }
+  });
 
-    const messageBox = owner ? dialog.showMessageBox(owner, options) : dialog.showMessageBox(options);
-
-    messageBox
-      .then(({ response }) => {
-        if (response === 0) {
-          autoUpdater.quitAndInstall(false, true);
-        }
-      })
-      .catch((error) => {
-        console.error('Failed to show update dialog:', error);
-      });
+  ipcMain.on('install-update', () => {
+    autoUpdater.quitAndInstall(false, true);
   });
 
   autoUpdater.on('error', (error) => {

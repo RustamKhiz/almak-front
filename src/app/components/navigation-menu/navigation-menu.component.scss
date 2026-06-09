@@ -55,3 +55,21 @@ mat-nav-list a:hover {
   background: #1f2937;
   color: #ffffff;
 }
+
+button.download-app {
+  width: 100%;
+  cursor: pointer;
+  background: none;
+  font-size: inherit;
+  font-family: inherit;
+}
+
+.update-ready {
+  border-color: #4ade80;
+  color: #4ade80;
+}
+
+.update-ready:hover {
+  background: rgba(74, 222, 128, 0.1);
+  color: #4ade80;
+}

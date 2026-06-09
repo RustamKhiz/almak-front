@@ -12,7 +12,11 @@
     </a>
   </mat-nav-list>
 
-  @if (showDesktopDownload) {
+  @if (isElectron) {
+    @if (updateReady()) {
+      <button class="download-app update-ready" (click)="installUpdate()">Установить обновление</button>
+    }
+  } @else if (showDesktopDownload) {
     <a class="download-app" [href]="desktopDownloadUrl" download> Скачать приложение </a>
   }
 </div>
