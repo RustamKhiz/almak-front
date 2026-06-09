@@ -20,7 +20,13 @@
 .brand {
   font-size: 18px;
   font-weight: 700;
-  margin: 4px 8px 16px;
+  margin: 4px 8px 4px;
+}
+
+.version {
+  font-size: 11px;
+  color: rgba(249, 250, 251, 0.4);
+  margin: 0 8px 16px;
 }
 
 mat-nav-list a {

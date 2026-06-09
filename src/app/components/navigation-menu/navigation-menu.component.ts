@@ -2,11 +2,13 @@ import { ChangeDetectionStrategy, Component, signal, OnInit } from '@angular/cor
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { MatListModule } from '@angular/material/list';
 import { environment } from '../../../environments/environment';
+import { version } from '../../../../../package.json';
 
 declare global {
   interface Window {
     almakDesktop?: {
       platform: string;
+      version: string;
       onUpdateDownloaded: (callback: () => void) => void;
       installUpdate: () => void;
     };
@@ -24,6 +26,7 @@ export class NavigationMenuComponent implements OnInit {
   readonly showDesktopDownload = environment.showDesktopDownload;
   readonly desktopDownloadUrl = environment.desktopDownloadUrl;
   readonly isElectron = !!window.almakDesktop;
+  readonly appVersion = window.almakDesktop?.version ?? version;
   readonly updateReady = signal(false);
 
   ngOnInit(): void {
