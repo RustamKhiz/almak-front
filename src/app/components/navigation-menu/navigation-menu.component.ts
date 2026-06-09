@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, signal, OnInit } from '@angular/cor
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { MatListModule } from '@angular/material/list';
 import { environment } from '../../../environments/environment';
-import { version } from '../../../../../package.json';
+import { version } from '../../../../package.json';
 
 declare global {
   interface Window {
