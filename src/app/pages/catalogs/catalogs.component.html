@@ -10,6 +10,11 @@
       <td mat-cell *matCellDef="let catalog">{{ catalog.name }}</td>
     </ng-container>
 
+    <ng-container matColumnDef="key">
+      <th mat-header-cell *matHeaderCellDef>Ключ</th>
+      <td mat-cell *matCellDef="let catalog">{{ catalog.key ?? '—' }}</td>
+    </ng-container>
+
     <ng-container matColumnDef="itemsCount">
       <th mat-header-cell *matHeaderCellDef>Элементов</th>
       <td mat-cell *matCellDef="let catalog">{{ catalog.itemsCount }}</td>

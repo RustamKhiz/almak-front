@@ -1,13 +1,24 @@
-<h2 mat-dialog-title>{{ isEdit ? 'Переименовать справочник' : 'Новый справочник' }}</h2>
+<h2 mat-dialog-title>{{ isEdit ? 'Редактировать справочник' : 'Новый справочник' }}</h2>
 
 <mat-dialog-content>
   <mat-form-field appearance="outline" class="full-width">
     <mat-label>Название</mat-label>
-    <input matInput [formControl]="nameControl" (keydown.enter)="onSave()" autofocus />
+    <input matInput [formControl]="nameControl" autofocus />
     @if (nameControl.hasError('required')) {
       <mat-error>Введите название</mat-error>
     }
     @if (nameControl.hasError('maxlength')) {
+      <mat-error>Не более 100 символов</mat-error>
+    }
+  </mat-form-field>
+
+  <mat-form-field appearance="outline" class="full-width">
+    <mat-label>Ключ (необязательно)</mat-label>
+    <input matInput [formControl]="keyControl" (keydown.enter)="onSave()" placeholder="например: interior_door_widths" />
+    @if (keyControl.hasError('pattern')) {
+      <mat-error>Только строчные буквы, цифры и подчёркивание</mat-error>
+    }
+    @if (keyControl.hasError('maxlength')) {
       <mat-error>Не более 100 символов</mat-error>
     }
   </mat-form-field>

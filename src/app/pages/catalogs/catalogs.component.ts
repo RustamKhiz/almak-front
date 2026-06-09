@@ -6,7 +6,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { Router } from '@angular/router';
 import { CatalogsService } from '../../services/catalogs.service';
 import { Catalog } from '../../types/catalog.types';
-import { CatalogDialogComponent } from '../../common/dialogs/catalog-dialog/catalog-dialog.component';
+import { CatalogDialogComponent, CatalogDialogResult } from '../../common/dialogs/catalog-dialog/catalog-dialog.component';
 import { ConfirmDialogComponent } from '../../common/confirm-dialog/confirm-dialog.component';
 
 @Component({
@@ -22,7 +22,7 @@ export class CatalogsComponent implements OnInit {
   private readonly router = inject(Router);
 
   protected readonly catalogs = signal<Catalog[]>([]);
-  protected readonly displayedColumns = ['name', 'itemsCount', 'actions'];
+  protected readonly displayedColumns = ['name', 'key', 'itemsCount', 'actions'];
 
   ngOnInit(): void {
     this.loadCatalogs();
@@ -37,9 +37,9 @@ export class CatalogsComponent implements OnInit {
     this.dialog
       .open(CatalogDialogComponent, { width: '400px', data: {} })
       .afterClosed()
-      .subscribe((name: string | undefined) => {
-        if (!name) return;
-        this.catalogsService.createCatalog(name).subscribe((catalog) => {
+      .subscribe((result: CatalogDialogResult | undefined) => {
+        if (!result) return;
+        this.catalogsService.createCatalog(result.name, result.key ?? undefined).subscribe((catalog) => {
           this.catalogs.update((list) => [...list, catalog]);
         });
       });
@@ -50,9 +50,9 @@ export class CatalogsComponent implements OnInit {
     this.dialog
       .open(CatalogDialogComponent, { width: '400px', data: { catalog } })
       .afterClosed()
-      .subscribe((name: string | undefined) => {
-        if (!name) return;
-        this.catalogsService.updateCatalog(catalog.id, name).subscribe((updated) => {
+      .subscribe((result: CatalogDialogResult | undefined) => {
+        if (!result) return;
+        this.catalogsService.updateCatalog(catalog.id, result.name, result.key).subscribe((updated) => {
           this.catalogs.update((list) => list.map((c) => (c.id === updated.id ? updated : c)));
         });
       });

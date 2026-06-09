@@ -10,6 +10,11 @@ export interface CatalogDialogData {
   catalog?: Catalog;
 }
 
+export interface CatalogDialogResult {
+  name: string;
+  key: string | null;
+}
+
 @Component({
   selector: 'app-catalog-dialog',
   imports: [MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, ReactiveFormsModule],
@@ -17,7 +22,7 @@ export interface CatalogDialogData {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CatalogDialogComponent {
-  private readonly dialogRef = inject(MatDialogRef<CatalogDialogComponent, string>);
+  private readonly dialogRef = inject(MatDialogRef<CatalogDialogComponent, CatalogDialogResult>);
   private readonly data = inject<CatalogDialogData>(MAT_DIALOG_DATA);
 
   protected readonly isEdit = !!this.data?.catalog;
@@ -25,10 +30,17 @@ export class CatalogDialogComponent {
     nonNullable: true,
     validators: [Validators.required, Validators.maxLength(100)],
   });
+  protected readonly keyControl = new FormControl(this.data?.catalog?.key ?? '', {
+    nonNullable: true,
+    validators: [Validators.maxLength(100), Validators.pattern(/^[a-z0-9_]*$/)],
+  });
 
   protected onSave(): void {
-    if (this.nameControl.invalid) return;
-    this.dialogRef.close(this.nameControl.value.trim());
+    if (this.nameControl.invalid || this.keyControl.invalid) return;
+    this.dialogRef.close({
+      name: this.nameControl.value.trim(),
+      key: this.keyControl.value.trim() || null,
+    });
   }
 
   protected onCancel(): void {
