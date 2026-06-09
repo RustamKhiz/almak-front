@@ -38,6 +38,18 @@ export const routes: Routes = [
     canActivate: [authGuard],
   },
   {
+    path: 'catalogs',
+    loadComponent: () => import('./pages/catalogs/catalogs.component').then((m) => m.CatalogsComponent),
+    title: 'Справочники',
+    canActivate: [authGuard],
+  },
+  {
+    path: 'catalogs/:id',
+    loadComponent: () => import('./pages/catalog-items/catalog-items.component').then((m) => m.CatalogItemsComponent),
+    title: 'Справочник',
+    canActivate: [authGuard],
+  },
+  {
     path: 'orders-charts',
     loadComponent: () => import('./pages/orders-charts/orders-charts.component').then((m) => m.OrdersChartsComponent),
     title: 'График',

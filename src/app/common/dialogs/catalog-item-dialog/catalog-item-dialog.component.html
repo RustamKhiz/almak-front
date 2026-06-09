@@ -1,0 +1,19 @@
+<h2 mat-dialog-title>{{ isEdit ? 'Редактировать элемент' : 'Новый элемент' }}</h2>
+
+<mat-dialog-content>
+  <mat-form-field appearance="outline" class="full-width">
+    <mat-label>Значение</mat-label>
+    <input matInput [formControl]="valueControl" (keydown.enter)="onSave()" autofocus />
+    @if (valueControl.hasError('required')) {
+      <mat-error>Введите значение</mat-error>
+    }
+    @if (valueControl.hasError('maxlength')) {
+      <mat-error>Не более 200 символов</mat-error>
+    }
+  </mat-form-field>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="onCancel()">Отмена</button>
+  <button mat-flat-button (click)="onSave()" [disabled]="valueControl.invalid">Сохранить</button>
+</mat-dialog-actions>

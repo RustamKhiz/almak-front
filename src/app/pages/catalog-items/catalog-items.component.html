@@ -1,0 +1,37 @@
+<div class="page">
+  <div class="page-header">
+    <div class="page-header-left">
+      <button mat-icon-button (click)="onBack()" title="Назад">
+        <mat-icon>arrow_back</mat-icon>
+      </button>
+      <h1 class="page-title">{{ catalog()?.name ?? 'Справочник' }}</h1>
+    </div>
+    <button mat-flat-button (click)="onAdd()">Добавить элемент</button>
+  </div>
+
+  <table mat-table [dataSource]="items()" class="items-table">
+    <ng-container matColumnDef="value">
+      <th mat-header-cell *matHeaderCellDef>Значение</th>
+      <td mat-cell *matCellDef="let item">{{ item.value }}</td>
+    </ng-container>
+
+    <ng-container matColumnDef="actions">
+      <th mat-header-cell *matHeaderCellDef></th>
+      <td mat-cell *matCellDef="let item" class="actions-cell">
+        <button mat-icon-button (click)="onEdit(item)" title="Редактировать">
+          <mat-icon>edit</mat-icon>
+        </button>
+        <button mat-icon-button (click)="onDelete(item)" title="Удалить">
+          <mat-icon>delete</mat-icon>
+        </button>
+      </td>
+    </ng-container>
+
+    <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+    <tr mat-row *matRowDef="let item; columns: displayedColumns"></tr>
+  </table>
+
+  @if (items().length === 0) {
+    <p class="empty-state">Элементов нет. Добавьте первый.</p>
+  }
+</div>

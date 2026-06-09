@@ -1,0 +1,38 @@
+.page {
+  padding: 32px;
+}
+
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+
+.page-header-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.page-title {
+  font-size: 24px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.items-table {
+  width: 100%;
+}
+
+.actions-cell {
+  text-align: right;
+  white-space: nowrap;
+  width: 100px;
+}
+
+.empty-state {
+  margin-top: 48px;
+  text-align: center;
+  color: rgba(0, 0, 0, 0.4);
+}
