@@ -138,7 +138,9 @@ export class CatalogAutocompleteFieldComponent implements ControlValueAccessor {
     }
 
     setTimeout(() => {
-      const panel = this.host.nativeElement.ownerDocument.querySelector('.mat-mdc-autocomplete-panel') as HTMLElement | null;
+      const panel = this.host.nativeElement.ownerDocument.querySelector(
+        '.mat-mdc-autocomplete-panel',
+      ) as HTMLElement | null;
       const options = Array.from((panel?.querySelectorAll('.mat-mdc-option') ?? []) as NodeListOf<HTMLElement>);
       const currentOption = options.find((option) => option.textContent?.trim() === currentValue);
       currentOption?.scrollIntoView({ block: 'center' });
