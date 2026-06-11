@@ -147,3 +147,12 @@ input[type='number'] {
   -moz-appearance: textfield;
   appearance: textfield;
 }
+
+.snack-error .mdc-snackbar__surface {
+  background-color: var(--mat-sys-error) !important;
+  color: var(--mat-sys-on-error) !important;
+}
+
+.snack-error .mat-mdc-button {
+  color: var(--mat-sys-on-error) !important;
+}

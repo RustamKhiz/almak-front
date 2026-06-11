@@ -154,6 +154,38 @@ npm run build
 npx tsc -p tsconfig.json --noEmit
 ```
 
+## Релизы
+
+Версия хранится в `package.json` и автоматически отображается в UI (навигационная панель). Используется [SemVer](https://semver.org/lang/ru/): `MAJOR.MINOR.PATCH`.
+
+| Тип изменения | Команда |
+|---|---|
+| Баг-фикс | `npm version patch` |
+| Новая функциональность | `npm version minor` |
+| Ломающие изменения | `npm version major` |
+
+### Процесс
+
+1. Убедиться что ветка `dev` стабильна и все изменения закоммичены.
+2. Поднять версию — npm сам обновит `package.json`, создаст коммит и git-тег:
+   ```bash
+   npm version patch -m "chore: release v%s"
+   ```
+3. Запушить ветку вместе с тегом:
+   ```bash
+   git push origin dev --tags
+   ```
+4. Открыть PR `dev → main` и смержить — фронт задеплоится автоматически.
+5. Electron-приложение соберётся и задеплоится автоматически по тегу (workflow `deploy-desktop.yml`).
+
+### Что происходит автоматически
+
+- **Push в `main`** → CI собирает фронт и деплоит на сервер ([`.github/workflows/deploy.yml`](.github/workflows/deploy.yml)).
+- **Push тега `v*`** → CI собирает Electron `.exe`, загружает на сервер, обновляет `Almak-Setup-latest.exe` ([`.github/workflows/deploy-desktop.yml`](.github/workflows/deploy-desktop.yml)).
+- **Запущенные Electron-клиенты** получат уведомление об обновлении и установят его при следующем запуске.
+
+Дополнительную информацию по Electron-сборке см. в [ELECTRON.md](ELECTRON.md).
+
 ## Правило по кодировке
 
 - Все текстовые исходники фронта (`src/**/*.ts`, `src/**/*.html`, `src/**/*.scss`, `README.md`) должны храниться в `UTF-8` без BOM.
