@@ -3,7 +3,7 @@
 <mat-dialog-content>
   <mat-form-field appearance="outline" class="full-width">
     <mat-label>Значение</mat-label>
-    <input matInput [formControl]="valueControl" (keydown.enter)="onSave()" autofocus />
+    <input matInput [formControl]="valueControl" (keydown.enter)="onSave()" />
     @if (valueControl.hasError('required')) {
       <mat-error>Введите значение</mat-error>
     }

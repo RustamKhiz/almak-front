@@ -4,6 +4,10 @@ import { Injectable } from '@angular/core';
   providedIn: 'root',
 })
 export class OrderPrintService {
+  private get isElectron(): boolean {
+    return navigator.userAgent.includes('Electron');
+  }
+
   printHtml(html: string): void {
     const popup = window.open('', '_blank', 'width=1000,height=800');
     if (!popup) {
@@ -13,6 +17,11 @@ export class OrderPrintService {
     popup.document.open();
     popup.document.write(html);
     popup.document.close();
+
+    if (this.isElectron) {
+      popup.focus();
+      return;
+    }
 
     const print = () => {
       popup.focus();

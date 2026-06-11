@@ -55,13 +55,11 @@ export class CatalogsService {
   // Results are cached for the lifetime of the service.
   getItemsByKey(key: CatalogKey, fallback: readonly string[]): Observable<readonly string[]> {
     if (!this.itemsCache.has(key)) {
-      const request$ = this.http
-        .get<CatalogItem[]>(`${this.base}/key/${key}/items`)
-        .pipe(
-          map((items) => (items.length > 0 ? items.map((i) => i.value) : fallback)),
-          catchError(() => of(fallback)),
-          shareReplay(1),
-        );
+      const request$ = this.http.get<CatalogItem[]>(`${this.base}/key/${key}/items`).pipe(
+        map((items) => (items.length > 0 ? items.map((i) => i.value) : fallback)),
+        catchError(() => of(fallback)),
+        shareReplay(1),
+      );
       this.itemsCache.set(key, request$);
     }
     return this.itemsCache.get(key)!;

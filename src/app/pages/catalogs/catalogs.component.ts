@@ -6,7 +6,10 @@ import { MatDialog } from '@angular/material/dialog';
 import { Router } from '@angular/router';
 import { CatalogsService } from '../../services/catalogs.service';
 import { Catalog } from '../../types/catalog.types';
-import { CatalogDialogComponent, CatalogDialogResult } from '../../common/dialogs/catalog-dialog/catalog-dialog.component';
+import {
+  CatalogDialogComponent,
+  CatalogDialogResult,
+} from '../../common/dialogs/catalog-dialog/catalog-dialog.component';
 import { ConfirmDialogComponent } from '../../common/confirm-dialog/confirm-dialog.component';
 
 @Component({
@@ -62,7 +65,11 @@ export class CatalogsComponent implements OnInit {
     event.stopPropagation();
     this.dialog
       .open(ConfirmDialogComponent, {
-        data: { title: 'Удалить справочник', message: `Удалить «${catalog.name}» и все его элементы?`, confirmText: 'Удалить' },
+        data: {
+          title: 'Удалить справочник',
+          message: `Удалить «${catalog.name}» и все его элементы?`,
+          confirmText: 'Удалить',
+        },
       })
       .afterClosed()
       .subscribe((confirmed: boolean | undefined) => {
