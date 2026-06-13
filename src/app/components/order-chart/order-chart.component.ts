@@ -19,9 +19,18 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { Chart, ChartConfiguration, ChartType, registerables } from 'chart.js';
+import { forkJoin } from 'rxjs';
 import { getOrderStatusLabel, ORDER_STATUS_OPTIONS } from '../../common/constants/order-status';
+import {
+  getCapitalTotal,
+  getExtensionTotal,
+  getHardwareTotal,
+  getInteriorDoorTotal,
+  getMoldingTotal,
+  getPanelingTotal,
+} from '../../common/utils/order-calculations';
 import { OrderRecord, OrdersService } from '../../services/orders.service';
-import { OrderStatus } from '../../types/order.types';
+import { OrderCreatePayload, OrderStatus } from '../../types/order.types';
 
 @Component({
   selector: 'app-order-chart',
@@ -44,18 +53,21 @@ export class OrderChartComponent implements OnDestroy {
   private readonly ordersCanvas = viewChild<ElementRef<HTMLCanvasElement>>('ordersCanvas');
   private readonly statusCanvas = viewChild<ElementRef<HTMLCanvasElement>>('statusCanvas');
   private readonly paymentCanvas = viewChild<ElementRef<HTMLCanvasElement>>('paymentCanvas');
+  private readonly supplierCanvas = viewChild<ElementRef<HTMLCanvasElement>>('supplierCanvas');
 
   private readonly ordersService = inject(OrdersService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly fb = inject(FormBuilder);
   private readonly charts: Chart[] = [];
   private allOrders: readonly OrderRecord[] = [];
+  private allFullOrders: readonly OrderCreatePayload[] = [];
 
   protected readonly isLoading = signal(true);
   protected readonly loadError = signal<string | null>(null);
   protected readonly metrics = signal<readonly ChartMetric[]>([]);
   protected readonly hasData = signal(false);
   protected readonly filteredOrders = signal<readonly OrderRecord[]>([]);
+  protected readonly isLoadingSuppliers = signal(true);
   protected readonly statusOptions = ORDER_STATUS_OPTIONS;
   protected readonly filterForm = this.fb.group({
     dateFrom: [null as Date | null],
@@ -72,10 +84,12 @@ export class OrderChartComponent implements OnDestroy {
       this.loadError();
       this.hasData();
       this.filteredOrders();
+      this.isLoadingSuppliers();
       this.revenueCanvas();
       this.ordersCanvas();
       this.statusCanvas();
       this.paymentCanvas();
+      this.supplierCanvas();
 
       this.renderChartsIfReady();
     });
@@ -90,6 +104,7 @@ export class OrderChartComponent implements OnDestroy {
           this.applyFilters();
           this.loadError.set(null);
           this.isLoading.set(false);
+          this.loadFullOrders();
         },
         error: () => {
           this.loadError.set('Не удалось загрузить данные для графиков.');
@@ -124,6 +139,117 @@ export class OrderChartComponent implements OnDestroy {
     this.renderOrdersChart(canvases.orders, orders);
     this.renderStatusChart(canvases.status, orders);
     this.renderPaymentChart(canvases.payment, orders);
+
+    if (!this.isLoadingSuppliers() && canvases.supplier) {
+      const supplierStats = this.getFilteredSupplierStats();
+      this.renderSupplierChart(canvases.supplier, supplierStats);
+    }
+  }
+
+  private loadFullOrders(): void {
+    const ids = this.allOrders.map((o) => o.id);
+    if (ids.length === 0) {
+      this.isLoadingSuppliers.set(false);
+      return;
+    }
+
+    forkJoin(ids.map((id) => this.ordersService.getOrder(id)))
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (orders) => {
+          this.allFullOrders = orders;
+          this.isLoadingSuppliers.set(false);
+        },
+        error: () => {
+          this.isLoadingSuppliers.set(false);
+        },
+      });
+  }
+
+  private getFilteredSupplierStats(): readonly SupplierStat[] {
+    const { dateFrom, dateTo, status, payment } = this.filterForm.getRawValue();
+    const fromTime = dateFrom ? this.getStartOfDay(dateFrom).getTime() : null;
+    const toTime = dateTo ? this.getEndOfDay(dateTo).getTime() : null;
+
+    const filtered = this.allFullOrders.filter((order) => {
+      const orderTime = new Date(order.date).getTime();
+      if (fromTime !== null && orderTime < fromTime) return false;
+      if (toTime !== null && orderTime > toTime) return false;
+      if (status && order.status !== status) return false;
+      if (payment === 'paid' && !order.isPaid) return false;
+      if (payment === 'unpaid' && order.isPaid) return false;
+      return true;
+    });
+
+    return this.aggregateSuppliers(filtered);
+  }
+
+  private aggregateSuppliers(orders: readonly OrderCreatePayload[]): readonly SupplierStat[] {
+    const stats = new Map<string, { count: number; amount: number }>();
+
+    const add = (supplier: string, amount: number) => {
+      const key = supplier || 'Не указан';
+      const cur = stats.get(key) ?? { count: 0, amount: 0 };
+      stats.set(key, { count: cur.count + 1, amount: cur.amount + amount });
+    };
+
+    for (const order of orders) {
+      for (const item of order.interiorDoors) add(item.supplier, getInteriorDoorTotal(item));
+      for (const item of order.entranceDoors) add(item.supplier, item.price * item.count);
+      for (const item of order.moldings) add(item.supplier, getMoldingTotal(item));
+      for (const item of order.extensions) add(item.supplier, getExtensionTotal(item));
+      for (const item of order.capitals) add(item.supplier, getCapitalTotal(item));
+      for (const item of order.hardwares) add(item.supplier, getHardwareTotal(item));
+      for (const item of order.panelings) add(item.supplier, getPanelingTotal(item));
+    }
+
+    return [...stats.entries()]
+      .map(([name, { count, amount }]) => ({ name, count, amount }))
+      .sort((a, b) => b.count - a.count);
+  }
+
+  private renderSupplierChart(canvas: HTMLCanvasElement, stats: readonly SupplierStat[]): void {
+    this.createChart(canvas, {
+      type: 'bar',
+      data: {
+        labels: stats.map((s) => s.name),
+        datasets: [
+          {
+            label: 'Позиций',
+            data: stats.map((s) => s.count),
+            backgroundColor: stats.map((s) => (s.name === 'Не указан' ? '#d1d5db' : '#6366f1')),
+            borderRadius: 6,
+          },
+        ],
+      },
+      options: {
+        indexAxis: 'y',
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: (ctx) => {
+                const stat = stats[ctx.dataIndex];
+                return [`Позиций: ${stat.count}`, `Сумма: ${this.formatMoney(stat.amount)}`];
+              },
+            },
+          },
+        },
+        scales: {
+          x: {
+            beginAtZero: true,
+            grid: { color: '#e5e7eb' },
+            ticks: { color: '#6b7280', precision: 0 },
+          },
+          y: {
+            grid: { display: false },
+            ticks: { color: '#374151' },
+          },
+        },
+      },
+    });
   }
 
   protected onApplyFilters(): void {
@@ -280,7 +406,7 @@ export class OrderChartComponent implements OnDestroy {
       return null;
     }
 
-    return { revenue, orders, status, payment };
+    return { revenue, orders, status, payment, supplier: this.supplierCanvas()?.nativeElement };
   }
 
   private buildMetrics(orders: readonly OrderRecord[]): readonly ChartMetric[] {
@@ -428,6 +554,13 @@ interface ChartCanvases {
   orders: HTMLCanvasElement;
   status: HTMLCanvasElement;
   payment: HTMLCanvasElement;
+  supplier?: HTMLCanvasElement;
+}
+
+interface SupplierStat {
+  name: string;
+  count: number;
+  amount: number;
 }
 
 type PaymentFilter = 'all' | 'paid' | 'unpaid';

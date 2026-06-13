@@ -95,6 +95,7 @@ export interface InteriorDoorItem {
   id: number;
   type: OrderItemType.InteriorDoor;
   supplier: string;
+  costPrice: number;
   model: string;
   color: string;
   price: number;
@@ -116,6 +117,7 @@ export interface EntranceDoorItem {
   id: number;
   type: OrderItemType.EntranceDoor;
   supplier: string;
+  costPrice: number;
   kind: EntranceDoorKind;
   opening: EntranceDoorOpening;
   leafType: DoorLeafType;
@@ -135,6 +137,7 @@ export interface MoldingItem {
   id: number;
   type: OrderItemType.Molding;
   supplier: string;
+  costPrice: number;
   frameLength: number | null;
   framePrice: number;
   frameSetCount: number;
@@ -160,6 +163,7 @@ export interface ExtensionItem {
   id: number;
   type: OrderItemType.Extension;
   supplier: string;
+  costPrice: number;
   color: string;
   covering: string;
   width: number;
@@ -176,6 +180,7 @@ export interface CapitalItem {
   id: number;
   type: OrderItemType.Capital;
   supplier: string;
+  costPrice: number;
   name: string;
   color: string;
   covering: string;
@@ -190,6 +195,7 @@ export interface PanelingItem {
   id: number;
   type: OrderItemType.Paneling;
   supplier: string;
+  costPrice: number;
   color: string;
   size: string;
   width: number;
@@ -212,6 +218,7 @@ export interface HardwareItem {
   id: number;
   type: OrderItemType.Hardware;
   supplier: string;
+  costPrice: number;
   handleModel: string;
   handleColor: string;
   handleCount: number | null;

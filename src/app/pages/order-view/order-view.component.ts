@@ -4,6 +4,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { filter, map, switchMap } from 'rxjs';
@@ -87,6 +88,7 @@ interface OrderViewProductCard {
   title: string;
   summary: string;
   supplier: string;
+  costPrice: number;
   entity: SupplierItemEntity;
   itemId: number;
   countLabel: string;
@@ -100,6 +102,7 @@ interface OrderViewProductCard {
     MatButtonModule,
     MatChipsModule,
     MatDialogModule,
+    MatIconModule,
     MatMenuModule,
     RouterModule,
     DecimalPipe,
@@ -124,6 +127,7 @@ export class OrderViewComponent {
   protected readonly isLoading = signal(true);
   protected readonly errorMessage = signal<string | null>(null);
   protected readonly state = signal<OrderViewState | null>(null);
+  protected readonly showPrivateInfo = signal(localStorage.getItem('order_view_show_private') !== 'false');
   protected readonly statusOptions = ORDER_STATUS_OPTIONS;
   protected readonly leafTypesLabels = DOOR_LEAF_TYPE_LABELS;
   protected readonly entranceDoorOpeningLabels = ENTRANCE_DOOR_OPENING_LABELS;
@@ -147,6 +151,12 @@ export class OrderViewComponent {
 
   constructor() {
     this.fetchOrder(Number(this.route.snapshot.paramMap.get('id') ?? 0));
+  }
+
+  protected togglePrivateInfo(): void {
+    const next = !this.showPrivateInfo();
+    this.showPrivateInfo.set(next);
+    localStorage.setItem('order_view_show_private', String(next));
   }
 
   protected onDeleteClick(): void {
@@ -295,6 +305,43 @@ export class OrderViewComponent {
         },
         error: () => {
           this.errorMessage.set('Не удалось изменить поставщика.');
+        },
+      });
+  }
+
+  protected onChangeCostPriceClick(card: OrderViewProductCard): void {
+    const current = this.state();
+    if (!current) {
+      return;
+    }
+
+    this.dialog
+      .open(OrderPaymentDialogComponent, {
+        width: '460px',
+        maxWidth: 'calc(100vw - 24px)',
+        data: {
+          title: 'Закупочная цена',
+          confirmText: 'Сохранить',
+          commentLabel: '',
+          initialAmount: card.costPrice > 0 ? card.costPrice : null,
+        },
+      })
+      .afterClosed()
+      .pipe(
+        filter((result): result is OrderPaymentDialogResult => !!result),
+        switchMap((result) => {
+          const nextData = this.updateCostPriceInOrder(current.data, card.entity, card.itemId, result.amount);
+          return this.ordersService.updateOrder(current.id, nextData).pipe(map(() => nextData));
+        }),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe({
+        next: (data) => {
+          this.errorMessage.set(null);
+          this.state.set({ id: current.id, data });
+        },
+        error: () => {
+          this.errorMessage.set('Не удалось изменить закупочную цену.');
         },
       });
   }
@@ -507,6 +554,7 @@ export class OrderViewComponent {
       title: item.model,
       summary: `${this.formatInteriorDoorSize(item)} · ${this.leafTypesLabels[item.leafType]} · цвет ${item.color} · ${this.getInteriorDoorGlassLabel(item)}`,
       supplier: item.supplier,
+      costPrice: item.costPrice,
       countLabel: `${item.count + (item.leafType === 'Double' ? Number(item.count2 ?? 0) : 0)} шт.`,
       total: getInteriorDoorTotal(item),
       details: {
@@ -558,6 +606,7 @@ export class OrderViewComponent {
       title: item.model,
       summary: `${kindLabel} · ${this.leafTypesLabels[item.leafType]} · открывание ${this.getEntranceDoorOpeningLabel(item).toLowerCase()} · ${item.width} × ${item.height} см`,
       supplier: item.supplier,
+      costPrice: item.costPrice,
       countLabel: `${item.count} шт.`,
       total: item.price * item.count,
       details: {
@@ -594,6 +643,7 @@ export class OrderViewComponent {
       title: `${item.color} · ${this.moldingCoveringLabels[item.covering] ?? item.covering}`,
       summary: `Коробка ${item.frameCount} шт. · Наличник ${item.platbandCount} шт. · Притворная планка ${item.rebateBarCount} шт.`,
       supplier: item.supplier,
+      costPrice: item.costPrice,
       countLabel: `${item.frameCount + item.platbandCount + item.rebateBarCount} шт.`,
       total: getMoldingTotal(item),
       details: {
@@ -641,6 +691,7 @@ export class OrderViewComponent {
       title: `${item.color} · ${this.extensionCoveringLabels[item.covering] ?? item.covering}`,
       summary: `${item.width} × ${item.height} см · комплектов ${item.setCount} · доборов ${item.quantityPerSet} · ${item.totalArea} м²`,
       supplier: item.supplier,
+      costPrice: item.costPrice,
       countLabel: `${item.quantityPerSet} шт.`,
       total: getExtensionTotal(item),
       details: {
@@ -674,6 +725,7 @@ export class OrderViewComponent {
       title: item.name,
       summary: `${item.width} × ${item.height} см · цвет ${item.color} · ${this.capitalCoveringLabels[item.covering] ?? item.covering}`,
       supplier: item.supplier,
+      costPrice: item.costPrice,
       countLabel: `${item.count} шт.`,
       total: getCapitalTotal(item),
       details: {
@@ -706,6 +758,7 @@ export class OrderViewComponent {
       title: item.handleModel ? `Ручка ${item.handleModel}` : 'Комплект фурнитуры',
       summary: this.getHardwareSummary(item),
       supplier: item.supplier,
+      costPrice: item.costPrice,
       countLabel: `${this.getHardwarePositionsCount(item)} поз.`,
       total: getHardwareTotal(item),
       details: {
@@ -746,6 +799,7 @@ export class OrderViewComponent {
       title: `${item.color} · ${this.panelingKindLabels[item.kind]}`,
       summary: `${this.formatPanelingSizes(item)} · ${this.panelingCoveringLabels[item.covering] ?? item.covering} · ${item.totalArea} м²`,
       supplier: item.supplier,
+      costPrice: item.costPrice,
       countLabel: `${item.count} шт.`,
       total: getPanelingTotal(item),
       details: {
@@ -792,6 +846,18 @@ export class OrderViewComponent {
     return {
       ...order,
       [entity]: order[entity].map((item) => (item.id === itemId ? { ...item, supplier } : item)),
+    };
+  }
+
+  private updateCostPriceInOrder(
+    order: OrderCreatePayload,
+    entity: SupplierItemEntity,
+    itemId: number,
+    costPrice: number,
+  ): OrderCreatePayload {
+    return {
+      ...order,
+      [entity]: order[entity].map((item) => (item.id === itemId ? { ...item, costPrice } : item)),
     };
   }
 

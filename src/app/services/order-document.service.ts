@@ -30,6 +30,7 @@ interface CustomDocumentRow {
   size: string;
   color: string;
   comment: string;
+  supplier: string;
   count: number;
   price: number;
   amount: number;
@@ -297,6 +298,7 @@ export class OrderDocumentService {
     const layoutMode = rows.length >= 12 ? 'compact' : '';
     const hasPriceColumns = normalizedOptions.showPrices;
     const hasCommentColumn = normalizedOptions.showComments;
+    const hasSupplierColumn = normalizedOptions.showSupplier;
 
     return `
       <html>
@@ -368,8 +370,8 @@ export class OrderDocumentService {
             ${this.buildCustomMetaBlock(order, normalizedOptions)}
             <div class="section-title">Спецификация</div>
             <table>
-              ${this.buildCustomTableHead(hasPriceColumns, hasCommentColumn)}
-              <tbody>${rows.map((row, index) => this.buildCustomTableRow(index + 1, row, hasPriceColumns, hasCommentColumn)).join('')}</tbody>
+              ${this.buildCustomTableHead(hasPriceColumns, hasCommentColumn, hasSupplierColumn)}
+              <tbody>${rows.map((row, index) => this.buildCustomTableRow(index + 1, row, hasPriceColumns, hasCommentColumn, hasSupplierColumn)).join('')}</tbody>
             </table>
             ${this.buildCustomTotalsBlock(selectedTotal, totalToPay, paidAmount, customerDebt, order.discount, normalizedOptions)}
             ${normalizedOptions.showComments ? `<div class="comment"><strong>Комментарий:</strong> ${this.escapeHtml(order.comment || '-')}</div>` : ''}
@@ -435,13 +437,15 @@ export class OrderDocumentService {
     return `<div class="section-title">Данные клиента</div><div class="meta-grid">${customerInfo}${deliveryInfo}</div>`;
   }
 
-  private buildCustomTableHead(showPrices: boolean, showComments: boolean): string {
+  private buildCustomTableHead(showPrices: boolean, showComments: boolean, showSupplier: boolean): string {
     const commentCol = showComments ? '<col class="col-comment" />' : '';
+    const supplierCol = showSupplier ? '<col class="col-comment" />' : '';
     const priceCols = showPrices ? '<col class="col-price" /><col class="col-amount" />' : '';
     const commentHead = showComments ? '<th>Комментарий</th>' : '';
+    const supplierHead = showSupplier ? '<th>Поставщик</th>' : '';
     const priceHeads = showPrices ? '<th>Цена</th><th>Сумма</th>' : '';
 
-    return `<colgroup><col class="col-index" /><col class="col-type" /><col class="col-model" /><col class="col-size" /><col class="col-color" />${commentCol}<col class="col-count" />${priceCols}</colgroup><thead><tr><th>№</th><th>Товар</th><th>Модель / позиция</th><th>Размер</th><th>Цвет / покрытие</th>${commentHead}<th>Кол-во</th>${priceHeads}</tr></thead>`;
+    return `<colgroup><col class="col-index" /><col class="col-type" /><col class="col-model" /><col class="col-size" /><col class="col-color" />${commentCol}${supplierCol}<col class="col-count" />${priceCols}</colgroup><thead><tr><th>№</th><th>Товар</th><th>Модель / позиция</th><th>Размер</th><th>Цвет / покрытие</th>${commentHead}${supplierHead}<th>Кол-во</th>${priceHeads}</tr></thead>`;
   }
 
   private buildCustomTableRow(
@@ -449,13 +453,15 @@ export class OrderDocumentService {
     row: CustomDocumentRow,
     showPrices: boolean,
     showComments: boolean,
+    showSupplier: boolean,
   ): string {
     const commentCell = showComments ? `<td>${this.escapeHtml(row.comment)}</td>` : '';
+    const supplierCell = showSupplier ? `<td>${this.escapeHtml(row.supplier || '—')}</td>` : '';
     const priceCells = showPrices
       ? `<td class="money">${this.formatMoney(row.price)}</td><td class="money">${this.formatMoney(row.amount)}</td>`
       : '';
 
-    return `<tr><td class="num">${index}</td><td>${this.escapeHtml(row.type)}</td><td>${this.escapeHtml(row.title)}</td><td class="num">${this.escapeHtml(row.size)}</td><td>${this.escapeHtml(row.color)}</td>${commentCell}<td class="num">${row.count}</td>${priceCells}</tr>`;
+    return `<tr><td class="num">${index}</td><td>${this.escapeHtml(row.type)}</td><td>${this.escapeHtml(row.title)}</td><td class="num">${this.escapeHtml(row.size)}</td><td>${this.escapeHtml(row.color)}</td>${commentCell}${supplierCell}<td class="num">${row.count}</td>${priceCells}</tr>`;
   }
 
   private buildCustomTotalsBlock(
@@ -490,6 +496,7 @@ export class OrderDocumentService {
           size: this.formatInteriorDoorSize(item),
           color: `${this.getLeafTypeLabel(item.leafType)}, ${item.color}, ${this.getInteriorDoorGlassLabel(item)}`,
           comment: item.comment || '-',
+          supplier: item.supplier,
           count: this.getInteriorDoorCount(item),
           price: this.getInteriorDoorTotal(item),
           amount: this.getInteriorDoorTotal(item),
@@ -503,6 +510,7 @@ export class OrderDocumentService {
           size: this.formatDoorSize(item.width, item.height, null),
           color: this.getEntranceColorLabel(item),
           comment: item.comment || '-',
+          supplier: item.supplier,
           count: item.count,
           price: item.price,
           amount: item.price * item.count,
@@ -517,6 +525,7 @@ export class OrderDocumentService {
           size: `${item.width}x${item.height}`,
           color: `${item.color}, ${this.getExtensionCoveringLabel(item.covering)}`,
           comment: item.comment || '-',
+          supplier: item.supplier,
           count: item.quantityPerSet,
           price: item.price,
           amount: this.getExtensionTotal(item),
@@ -530,6 +539,7 @@ export class OrderDocumentService {
           size: `${item.width}x${item.height}`,
           color: `${item.color}, ${this.getCapitalCoveringLabel(item.covering)}`,
           comment: item.comment || '-',
+          supplier: item.supplier,
           count: item.count,
           price: item.price,
           amount: this.getCapitalTotal(item),
@@ -543,6 +553,7 @@ export class OrderDocumentService {
           size: '-',
           color: this.getHardwareExecutionLabel(item),
           comment: item.comment || '-',
+          supplier: item.supplier,
           count: this.getHardwareCount(item),
           price: this.getHardwareTotal(item),
           amount: this.getHardwareTotal(item),
@@ -556,6 +567,7 @@ export class OrderDocumentService {
           size: this.formatPanelingSize(item),
           color: `${item.color}, ${this.getPanelingKindLabel(item.kind)}, ${this.getPanelingCoveringLabel(item.covering)}, общ. кв.м ${item.totalArea}`,
           comment: item.comment || '-',
+          supplier: item.supplier,
           count: item.count,
           price: item.price,
           amount: this.getPanelingTotal(item),
@@ -619,6 +631,7 @@ export class OrderDocumentService {
       type: 'Погонаж',
       color: `${item.color}, ${this.getMoldingCoveringLabel(item.covering)}`,
       comment: item.comment || '-',
+      supplier: item.supplier,
     };
     const rows: CustomDocumentRow[] = [];
 

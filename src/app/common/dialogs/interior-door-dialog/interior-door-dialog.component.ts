@@ -161,6 +161,7 @@ export class InteriorDoorDialogComponent {
     this.dialogRef.close({
       type: OrderItemType.InteriorDoor,
       supplier: value.supplier?.trim() || '',
+      costPrice: this.data.door?.costPrice ?? 0,
       model: value.model!.trim(),
       color: value.color!.trim(),
       hasGlass: value.hasGlass,

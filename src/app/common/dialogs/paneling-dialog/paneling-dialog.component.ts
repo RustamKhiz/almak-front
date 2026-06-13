@@ -117,6 +117,7 @@ export class PanelingDialogComponent {
     this.dialogRef.close({
       type: OrderItemType.Paneling,
       supplier: value.supplier?.trim() || '',
+      costPrice: this.data.paneling?.costPrice ?? 0,
       color: value.color!.trim(),
       size: this.formatSizes(sizes),
       count: value.count!,

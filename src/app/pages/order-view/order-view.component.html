@@ -153,7 +153,18 @@
           <h2>Товары</h2>
           <p>Короткий список позиций. Полная информация открывается по кнопке «Подробнее».</p>
         </div>
-        <div class="order-view__products-count">{{ productCards().length }} поз.</div>
+        <div class="order-view__section-header-actions">
+          <button
+            mat-icon-button
+            type="button"
+            class="order-view__privacy-toggle"
+            [title]="showPrivateInfo() ? 'Скрыть поставщика и закупку' : 'Показать поставщика и закупку'"
+            (click)="togglePrivateInfo()"
+          >
+            <mat-icon>{{ showPrivateInfo() ? 'visibility' : 'visibility_off' }}</mat-icon>
+          </button>
+          <div class="order-view__products-count">{{ productCards().length }} поз.</div>
+        </div>
       </div>
 
       @if (productCards().length) {
@@ -164,7 +175,18 @@
                 <div class="order-view__item-type">{{ card.typeLabel }}</div>
                 <div class="order-view__item-title">{{ card.title }}</div>
                 <div class="order-view__meta">{{ card.summary }}</div>
-                <div class="order-view__supplier">Поставщик: {{ card.supplier || 'Не указан' }}</div>
+                @if (showPrivateInfo()) {
+                  <div class="order-view__supplier" [class.order-view__supplier--set]="card.supplier">
+                    <mat-icon>storefront</mat-icon>
+                    <span>{{ card.supplier || 'Поставщик не указан' }}</span>
+                  </div>
+                  <div class="order-view__cost-price" [class.order-view__cost-price--set]="card.costPrice > 0">
+                    <mat-icon>sell</mat-icon>
+                    <span>{{
+                      card.costPrice > 0 ? (card.costPrice | number: '1.0-0') + ' ₽' : 'Закупка не указана'
+                    }}</span>
+                  </div>
+                }
               </div>
 
               <div class="order-view__item-side">
@@ -172,9 +194,12 @@
                 <div class="order-view__price">{{ card.total | number: '1.0-0' }} ₽</div>
                 <div class="order-view__item-actions">
                   <button mat-stroked-button type="button" (click)="onProductDetailsClick(card)">Подробнее</button>
-                  <button mat-stroked-button type="button" (click)="onChangeSupplierClick(card)">
-                    Изменить поставщика
-                  </button>
+                  @if (showPrivateInfo()) {
+                    <button mat-stroked-button type="button" (click)="onChangeSupplierClick(card)">
+                      Изменить поставщика
+                    </button>
+                    <button mat-stroked-button type="button" (click)="onChangeCostPriceClick(card)">Закупка</button>
+                  }
                 </div>
               </div>
             </article>

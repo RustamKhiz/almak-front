@@ -21,6 +21,7 @@ export interface PrintConstructorOptions {
   showDeliveryInfo: boolean;
   showComments: boolean;
   showSignatures: boolean;
+  showSupplier: boolean;
 }
 
 export interface PrintConstructorDialogData {

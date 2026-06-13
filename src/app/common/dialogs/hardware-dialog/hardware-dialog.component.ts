@@ -111,6 +111,7 @@ export class HardwareDialogComponent {
     this.dialogRef.close({
       type: OrderItemType.Hardware,
       supplier: value.supplier.trim(),
+      costPrice: this.data.hardware?.costPrice ?? 0,
       handleModel: value.handleModel.trim(),
       handleColor: value.handleColor.trim(),
       handleCount: normalizeOptionalInteger(value.handleCount),
