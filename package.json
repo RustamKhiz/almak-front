@@ -1,6 +1,6 @@
 {
   "name": "almak",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "Almak desktop application",
   "main": "electron/main.cjs",
   "scripts": {

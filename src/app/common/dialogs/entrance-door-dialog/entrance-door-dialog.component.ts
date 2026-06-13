@@ -141,6 +141,7 @@ export class EntranceDoorDialogComponent {
     this.dialogRef.close({
       type: OrderItemType.EntranceDoor,
       supplier: value.supplier.trim(),
+      costPrice: this.data.door?.costPrice ?? 0,
       kind,
       opening: value.opening,
       leafType: value.leafType,

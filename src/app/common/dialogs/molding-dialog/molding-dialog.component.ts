@@ -76,15 +76,12 @@ export class MoldingDialogComponent {
     frameLength: [this.data.molding?.frameLength ?? null, [Validators.min(0)]],
     framePrice: [this.data.molding?.framePrice ?? null, [Validators.min(0)]],
     frameSetCount: [
-      this.normalizeIntegerCount(
-        this.data.molding?.frameSetCount ?? Math.floor((this.data.molding?.frameCount ?? 2.5) / 2.5),
-      ),
+      this.data.mode === 'edit' && this.data.molding
+        ? Math.max(0, Number(((this.data.molding.frameCount ?? 0) - (this.data.molding.frameBoxCount ?? 0)).toFixed(1)))
+        : 0,
       [Validators.required, Validators.min(0)],
     ],
-    frameBoxCount: [
-      this.normalizeIntegerCount(this.data.molding?.frameBoxCount ?? 0),
-      [Validators.required, Validators.min(0)],
-    ],
+    frameBoxCount: [this.data.molding?.frameBoxCount ?? 0, [Validators.required, Validators.min(0)]],
     frameThresholdCount: [0, [Validators.required, Validators.min(0)]],
     frameThresholdPrice: [0, [Validators.required, Validators.min(0)]],
     frameCount: [this.data.molding?.frameCount ?? 2.5, [Validators.required, Validators.min(0)]],
@@ -93,9 +90,9 @@ export class MoldingDialogComponent {
     platbandLength: [this.data.molding?.platbandLength ?? null, [Validators.min(0)]],
     platbandPrice: [this.data.molding?.platbandPrice ?? null, [Validators.min(0)]],
     platbandSetCount: [
-      this.normalizeIntegerCount(
-        this.data.molding?.platbandSetCount ?? Math.floor((this.data.molding?.platbandCount ?? 2.5) / 2.5),
-      ),
+      this.data.mode === 'edit' && this.data.molding
+        ? Math.max(0, Number(((this.data.molding.platbandSetCount ?? 0) * 2.5).toFixed(1)))
+        : 0,
       [Validators.required, Validators.min(0)],
     ],
     platbandCount: [this.getInitialPlatbandAdditionalCount(), [Validators.required, Validators.min(0)]],
@@ -147,10 +144,11 @@ export class MoldingDialogComponent {
     this.dialogRef.close({
       type: OrderItemType.Molding,
       supplier: value.supplier.trim(),
+      costPrice: this.data.molding?.costPrice ?? 0,
       frameLength: value.frameLength == null ? null : Math.max(0, value.frameLength),
       framePrice: value.framePrice ?? 0,
-      frameSetCount: this.normalizeIntegerCount(value.frameSetCount),
-      frameBoxCount: this.normalizeIntegerCount(value.frameBoxCount),
+      frameSetCount: Math.max(0, Number((value.frameSetCount ?? 0).toFixed(1))),
+      frameBoxCount: Math.max(0, Number((value.frameBoxCount ?? 0).toFixed(1))),
       frameThresholdCount: 0,
       frameThresholdPrice: 0,
       frameCount: this.calculateFrameCount(value.frameSetCount, value.frameBoxCount),
@@ -158,7 +156,7 @@ export class MoldingDialogComponent {
       platbandFigure: value.platbandType === MoldingPlatbandType.Figure ? value.platbandFigure.trim() || null : null,
       platbandLength: value.platbandLength == null ? null : Math.max(0, value.platbandLength),
       platbandPrice: value.platbandPrice ?? 0,
-      platbandSetCount: this.normalizeIntegerCount(value.platbandSetCount),
+      platbandSetCount: Math.max(0, Number((value.platbandSetCount ?? 0).toFixed(1))),
       platbandCount: this.getPlatbandCount(),
       platbandDeductionPrice:
         value.platbandType === MoldingPlatbandType.Figure ? Number(value.platbandDeductionPrice ?? 0) : 0,
@@ -192,14 +190,11 @@ export class MoldingDialogComponent {
   }
 
   private calculateFrameCount(setCount: number | null | undefined, boxCount: number | null | undefined): number {
-    return Number((this.normalizeIntegerCount(setCount) * 2.5 + this.normalizeIntegerCount(boxCount)).toFixed(1));
+    return Number((Number(setCount ?? 0) + Number(boxCount ?? 0)).toFixed(1));
   }
 
   protected getFrameTotal(): number {
-    return (
-      Number(this.form.controls.framePrice.value ?? 0) *
-      this.normalizeIntegerCount(this.form.controls.frameBoxCount.value)
-    );
+    return Number(this.form.controls.framePrice.value ?? 0) * Number(this.form.controls.frameBoxCount.value ?? 0);
   }
 
   protected getPlatbandBaseTotal(): number {
@@ -229,8 +224,7 @@ export class MoldingDialogComponent {
   protected getPlatbandCount(): number {
     return Number(
       (
-        this.normalizeIntegerCount(this.form.controls.platbandSetCount.value) * 2.5 +
-        Number(this.form.controls.platbandCount.value ?? 0)
+        Number(this.form.controls.platbandSetCount.value ?? 0) + Number(this.form.controls.platbandCount.value ?? 0)
       ).toFixed(1),
     );
   }

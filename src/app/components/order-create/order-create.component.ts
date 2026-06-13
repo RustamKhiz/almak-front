@@ -12,7 +12,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatSelectModule } from '@angular/material/select';
 import { Router } from '@angular/router';
-import { Observable, filter, switchMap } from 'rxjs';
+import { Observable, debounceTime, filter, switchMap } from 'rxjs';
 import { ConfirmDialogComponent, ConfirmDialogData } from '../../common/confirm-dialog/confirm-dialog.component';
 import { INTERIOR_DOOR_COVERING_OPTIONS } from '../../common/constants/interior-door-covering';
 import {
@@ -181,6 +181,10 @@ export class OrderCreateComponent implements OnInit {
       .subscribe((needsDelivery) => {
         this.syncDeliveryState(needsDelivery === true);
       });
+
+    this.form.valueChanges.pipe(debounceTime(800), takeUntilDestroyed(this.destroyRef)).subscribe(() => {
+      this.autoSaveDraft();
+    });
   }
 
   ngOnInit(): void {
@@ -227,6 +231,7 @@ export class OrderCreateComponent implements OnInit {
 
         config.collection.set(addItem(config.collection(), result));
         this.syncQuantity();
+        this.autoSaveDraft();
       });
   }
 
@@ -248,6 +253,7 @@ export class OrderCreateComponent implements OnInit {
 
         config.collection.set(updateItem(config.collection(), id, result));
         this.syncQuantity();
+        this.autoSaveDraft();
       });
   }
 
@@ -255,12 +261,14 @@ export class OrderCreateComponent implements OnInit {
     const config = this.getEntityConfig(entity);
     config.collection.set(removeItem(config.collection(), id));
     this.syncQuantity();
+    this.autoSaveDraft();
   }
 
   protected onDuplicateItemClick(entity: OrderItemEntity, id: number): void {
     const config = this.getEntityConfig(entity);
     config.collection.set(duplicateItem(config.collection(), id));
     this.syncQuantity();
+    this.autoSaveDraft();
   }
 
   protected onItemEditClick(event: OrderItemActionEvent): void {
@@ -524,6 +532,13 @@ export class OrderCreateComponent implements OnInit {
     const draft = this.draftsService.saveDraft(this.buildOrderPayload(), this.activeDraftId());
     this.activeDraftId.set(draft.temporaryId);
     return draft;
+  }
+
+  private autoSaveDraft(): void {
+    if (this.isEditMode()) {
+      return;
+    }
+    this.saveDraft();
   }
 
   private syncDeliveryState(needsDelivery: boolean, options?: { clearAddressWhenDisabled?: boolean }): void {

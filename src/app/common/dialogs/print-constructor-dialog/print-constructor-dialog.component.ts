@@ -40,6 +40,7 @@ export class PrintConstructorDialogComponent {
   protected readonly showDeliveryInfo = signal(true);
   protected readonly showComments = signal(true);
   protected readonly showSignatures = signal(true);
+  protected readonly showSupplier = signal(false);
 
   protected readonly presets: readonly PrintPreset[] = [
     {
@@ -100,6 +101,10 @@ export class PrintConstructorDialogComponent {
     this.selectAll();
   }
 
+  protected toggleSupplier(checked: boolean): void {
+    this.showSupplier.set(checked);
+  }
+
   protected togglePrices(checked: boolean): void {
     this.showPrices.set(checked);
     if (!checked) {
@@ -152,6 +157,7 @@ export class PrintConstructorDialogComponent {
         showDeliveryInfo: this.showDeliveryInfo(),
         showComments: this.showComments(),
         showSignatures: this.showSignatures(),
+        showSupplier: this.showSupplier(),
       },
     });
   }
@@ -170,6 +176,7 @@ export class PrintConstructorDialogComponent {
       showDeliveryInfo: true,
       showComments: true,
       showSignatures: true,
+      showSupplier: false,
     };
   }
 

@@ -121,6 +121,7 @@ export class ExtensionDialogComponent {
     this.dialogRef.close({
       type: OrderItemType.Extension,
       supplier: value.supplier?.trim() ?? '',
+      costPrice: this.data.extension?.costPrice ?? 0,
       color: value.color?.trim(),
       covering: value.covering,
       width: value.width,

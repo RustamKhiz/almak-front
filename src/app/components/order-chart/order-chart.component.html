@@ -59,6 +59,17 @@
       </div>
 
       <section class="chart-panel chart-panel_wide">
+        <h2>По поставщикам</h2>
+        @if (isLoadingSuppliers()) {
+          <div class="chart-state">Загружаем данные по поставщикам...</div>
+        } @else {
+          <div class="chart-frame chart-frame_suppliers">
+            <canvas #supplierCanvas></canvas>
+          </div>
+        }
+      </section>
+
+      <section class="chart-panel chart-panel_wide">
         <h2>Сумма заказов и оплат по месяцам</h2>
         <div class="chart-frame">
           <canvas #revenueCanvas></canvas>

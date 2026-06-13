@@ -94,6 +94,7 @@ export class CapitalDialogComponent {
     this.dialogRef.close({
       type: OrderItemType.Capital,
       supplier: value.supplier?.trim() || '',
+      costPrice: this.data.capital?.costPrice ?? 0,
       name: value.name?.trim(),
       color: value.color?.trim(),
       covering: value.covering,

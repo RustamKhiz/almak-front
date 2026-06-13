@@ -47,6 +47,9 @@
         <mat-checkbox [checked]="showSignatures()" (change)="showSignatures.set($event.checked)">
           Показывать подписи
         </mat-checkbox>
+        <mat-checkbox [checked]="showSupplier()" (change)="toggleSupplier($event.checked)">
+          Показывать поставщика
+        </mat-checkbox>
       </div>
     </section>
 
