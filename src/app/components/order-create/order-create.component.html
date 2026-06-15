@@ -72,7 +72,7 @@
         <mat-label>Телефон</mat-label>
         <input matInput formControlName="phone" appPhoneMask autocomplete="tel" />
         @if (form.controls.phone.touched && form.controls.phone.invalid) {
-          <mat-error>Введите телефон в формате +7 (999) 123-45-67</mat-error>
+          <mat-error>Обязательное поле</mat-error>
         }
       </mat-form-field>
 

@@ -70,7 +70,7 @@ import {
 import { addItem, duplicateItem, findItemById, hasItems, removeItem, updateItem } from './order-item-helpers';
 import { OrderItemActionEvent, OrderItemEntity, OrderEntityItem } from './order-item-types';
 import { OrderItemsListComponent } from './order-items-list/order-items-list.component';
-import { bindLeadingCapitalization } from '../../common/utils/form-text';
+import { bindEachWordCapitalization, bindLeadingCapitalization } from '../../common/utils/form-text';
 
 interface ItemCollection<T> {
   (): readonly T[];
@@ -173,7 +173,7 @@ export class OrderCreateComponent implements OnInit {
   });
 
   constructor() {
-    bindLeadingCapitalization(this.form.controls.name, this.destroyRef);
+    bindEachWordCapitalization(this.form.controls.name, this.destroyRef);
     bindLeadingCapitalization(this.form.controls.defaultColor, this.destroyRef);
 
     this.form.controls.needsDelivery.valueChanges
