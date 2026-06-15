@@ -190,7 +190,7 @@ export class OrderDocumentService {
             @page { size: A4 portrait; margin: 8mm; }
             * { box-sizing: border-box; }
             html, body { width: 100%; }
-            body { font-family: "Times New Roman", serif; font-size: 10px; line-height: 1.15; color: #111; margin: 0; padding: 0; }
+            body { font-family: "Times New Roman", serif; font-size: 12px; line-height: 1.15; color: #111; margin: 0; padding: 0; }
             .doc { border: 1px solid #111; padding: 10px 12px; }
             table.doc-header { width: 100%; margin: 0 0 8px 0; border-collapse: collapse; table-layout: fixed; border-bottom: 1px solid #111; }
             table.doc-header td { border: 0; padding: 0 0 6px 0; vertical-align: top; }
@@ -200,12 +200,12 @@ export class OrderDocumentService {
             table.company-wrap td { border: 0; padding: 0; vertical-align: top; }
             .logo-cell { width: 84px; }
             .logo { display: block; width: 76px; height: 76px; max-width: 76px; max-height: 76px; object-fit: contain; filter: grayscale(100%) contrast(120%); -webkit-filter: grayscale(100%) contrast(120%); }
-            .company { font-size: 11px; }
-            .company strong { font-size: 13px; }
+            .company { font-size: 13px; }
+            .company strong { font-size: 15px; }
             .order-title { text-align: right; }
-            .order-title h1 { margin: 0; font-size: 18px; letter-spacing: 0.2px; }
-            .order-title .num { margin-top: 2px; font-size: 12px; }
-            .section-title { margin: 8px 0 4px; font-size: 12px; font-weight: bold; text-transform: uppercase; }
+            .order-title h1 { margin: 0; font-size: 22px; letter-spacing: 0.2px; }
+            .order-title .num { margin-top: 2px; font-size: 14px; }
+            .section-title { margin: 8px 0 4px; font-size: 14px; font-weight: bold; text-transform: uppercase; }
             .meta-grid { display: grid; grid-template-columns: 1.2fr 1fr 1fr; gap: 4px 12px; margin-bottom: 4px; }
             .meta-line { border-bottom: 1px dashed #666; padding-bottom: 2px; }
             table { width: 100%; border-collapse: collapse; margin-top: 6px; table-layout: fixed; mso-table-layout-alt: fixed; }
@@ -219,38 +219,38 @@ export class OrderDocumentService {
             col.col-price { width: 68px; }
             col.col-amount { width: 65px; }
             th, td { border: 1px solid #111; padding: 3px 4px; vertical-align: top; word-break: break-word; overflow-wrap: anywhere; }
-            th { text-align: center; font-weight: bold; font-size: 10px; line-height: 1.05; }
-            td { font-size: 10px; line-height: 1.05; }
+            th { text-align: center; font-weight: bold; font-size: 12px; line-height: 1.05; }
+            td { font-size: 12px; line-height: 1.05; }
             td.num { text-align: center; white-space: nowrap; }
             td.money { text-align: right; white-space: nowrap; }
             .totals { margin-top: 8px; width: 260px; margin-left: auto; border: 1px solid #111; padding: 6px 8px; }
             .totals-row { display: flex; justify-content: space-between; gap: 12px; margin: 2px 0; }
             .comment { margin-top: 8px; min-height: 34px; border: 1px solid #111; padding: 6px 8px; }
             table.footer { margin-top: 12px; border-collapse: separate; border-spacing: 14px 0; table-layout: fixed; page-break-inside: avoid; break-inside: avoid; }
-            table.footer td { border: 0; padding: 0; vertical-align: bottom; font-size: 10px; line-height: 1.15; }
+            table.footer td { border: 0; padding: 0; vertical-align: bottom; font-size: 12px; line-height: 1.15; }
             .footer-stamp-cell { width: 120px; }
             .sign-block { min-height: 58px; text-align: left; }
             .sign-block--manager { text-align: right; }
             .sign-line { border-bottom: 1px solid #111; height: 34px; margin-bottom: 5px; }
             .stamp { border: 1px dashed #111; height: 68px; line-height: 68px; text-align: center; font-weight: bold; }
-            .muted { color: #444; font-size: 10px; margin-top: 6px; }
+            .muted { color: #444; font-size: 12px; margin-top: 6px; }
             .compact .doc { padding: 8px 10px; }
             .compact table.doc-header { margin-bottom: 6px; }
             .compact table.doc-header td { padding-bottom: 4px; }
-            .compact .section-title { margin: 6px 0 3px; font-size: 11px; }
+            .compact .section-title { margin: 6px 0 3px; font-size: 13px; }
             .compact .meta-grid { gap: 3px 8px; }
-            .compact th, .compact td { padding: 2px 3px; font-size: 9px; line-height: 1; }
+            .compact th, .compact td { padding: 2px 3px; font-size: 11px; line-height: 1; }
             .compact .totals { margin-top: 6px; width: 240px; padding: 4px 6px; }
             .compact .comment { margin-top: 6px; min-height: 28px; padding: 4px 6px; }
             .compact .footer { margin-top: 8px; gap: 8px; }
             .compact .sign-block { min-height: 48px; }
             .compact .sign-line { height: 28px; }
             .compact .stamp { min-height: 56px; }
-            .compact .muted { margin-top: 4px; font-size: 9px; }
-            .ultra-compact .company { font-size: 10px; }
-            .ultra-compact .company strong { font-size: 12px; }
-            .ultra-compact .order-title h1 { font-size: 16px; }
-            .ultra-compact .order-title .num { font-size: 11px; }
+            .compact .muted { margin-top: 4px; font-size: 11px; }
+            .ultra-compact .company { font-size: 12px; }
+            .ultra-compact .company strong { font-size: 14px; }
+            .ultra-compact .order-title h1 { font-size: 19px; }
+            .ultra-compact .order-title .num { font-size: 13px; }
             .ultra-compact .meta-grid { grid-template-columns: 1fr 1fr 1fr; }
             .ultra-compact .totals { width: 220px; }
             .ultra-compact .comment { min-height: 24px; }
@@ -309,7 +309,7 @@ export class OrderDocumentService {
             @page { size: A4 portrait; margin: 8mm; }
             * { box-sizing: border-box; }
             html, body { width: 100%; }
-            body { font-family: "Times New Roman", serif; font-size: 10px; line-height: 1.15; color: #111; margin: 0; padding: 0; }
+            body { font-family: "Times New Roman", serif; font-size: 12px; line-height: 1.15; color: #111; margin: 0; padding: 0; }
             .doc { border: 1px solid #111; padding: 10px 12px; }
             table.doc-header { width: 100%; margin: 0 0 8px 0; border-collapse: collapse; table-layout: fixed; border-bottom: 1px solid #111; }
             table.doc-header td { border: 0; padding: 0 0 6px 0; vertical-align: top; }
@@ -319,12 +319,12 @@ export class OrderDocumentService {
             table.company-wrap td { border: 0; padding: 0; vertical-align: top; }
             .logo-cell { width: 84px; }
             .logo { display: block; width: 76px; height: 76px; max-width: 76px; max-height: 76px; object-fit: contain; filter: grayscale(100%) contrast(120%); -webkit-filter: grayscale(100%) contrast(120%); }
-            .company { font-size: 11px; }
-            .company strong { font-size: 13px; }
+            .company { font-size: 13px; }
+            .company strong { font-size: 15px; }
             .order-title { text-align: right; }
-            .order-title h1 { margin: 0; font-size: 18px; letter-spacing: 0.2px; }
-            .order-title .num { margin-top: 2px; font-size: 12px; }
-            .section-title { margin: 8px 0 4px; font-size: 12px; font-weight: bold; text-transform: uppercase; }
+            .order-title h1 { margin: 0; font-size: 22px; letter-spacing: 0.2px; }
+            .order-title .num { margin-top: 2px; font-size: 14px; }
+            .section-title { margin: 8px 0 4px; font-size: 14px; font-weight: bold; text-transform: uppercase; }
             .meta-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px 12px; margin-bottom: 4px; }
             .meta-line { border-bottom: 1px dashed #666; padding-bottom: 2px; }
             table { width: 100%; border-collapse: collapse; margin-top: 6px; table-layout: fixed; mso-table-layout-alt: fixed; }
@@ -338,23 +338,23 @@ export class OrderDocumentService {
             col.col-price { width: 68px; }
             col.col-amount { width: 65px; }
             th, td { border: 1px solid #111; padding: 3px 4px; vertical-align: top; word-break: break-word; overflow-wrap: anywhere; }
-            th { text-align: center; font-weight: bold; font-size: 10px; line-height: 1.05; }
-            td { font-size: 10px; line-height: 1.05; }
+            th { text-align: center; font-weight: bold; font-size: 12px; line-height: 1.05; }
+            td { font-size: 12px; line-height: 1.05; }
             td.num { text-align: center; white-space: nowrap; }
             td.money { text-align: right; white-space: nowrap; }
             .totals { margin-top: 8px; width: 290px; margin-left: auto; border: 1px solid #111; padding: 6px 8px; }
             .totals-row { display: flex; justify-content: space-between; gap: 12px; margin: 2px 0; }
             .comment { margin-top: 8px; min-height: 34px; border: 1px solid #111; padding: 6px 8px; }
             table.footer { margin-top: 12px; border-collapse: separate; border-spacing: 14px 0; table-layout: fixed; page-break-inside: avoid; break-inside: avoid; }
-            table.footer td { border: 0; padding: 0; vertical-align: bottom; font-size: 10px; line-height: 1.15; }
+            table.footer td { border: 0; padding: 0; vertical-align: bottom; font-size: 12px; line-height: 1.15; }
             .footer-stamp-cell { width: 120px; }
             .sign-block { min-height: 58px; text-align: left; }
             .sign-block--manager { text-align: right; }
             .sign-line { border-bottom: 1px solid #111; height: 34px; margin-bottom: 5px; }
             .stamp { border: 1px dashed #111; height: 68px; line-height: 68px; text-align: center; font-weight: bold; }
-            .muted { color: #444; font-size: 10px; margin-top: 6px; }
+            .muted { color: #444; font-size: 12px; margin-top: 6px; }
             .compact .doc { padding: 8px 10px; }
-            .compact th, .compact td { padding: 2px 3px; font-size: 9px; line-height: 1; }
+            .compact th, .compact td { padding: 2px 3px; font-size: 11px; line-height: 1; }
             .compact .totals { width: 260px; padding: 4px 6px; }
             .compact table.footer { margin-top: 8px; border-spacing: 8px 0; }
             .compact .sign-block { min-height: 48px; }
