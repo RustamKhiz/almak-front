@@ -141,14 +141,7 @@
         <div class="order-create__summary-label">Общая стоимость заказа</div>
         <div class="order-create__summary-value">{{ orderTotal() | number: '1.0-0' }} ₽</div>
       </div>
-      <div class="order-create__summary-row">
-        <div class="order-create__summary-label">Итого к оплате</div>
-        <div class="order-create__summary-value">{{ totalToPay() | number: '1.0-0' }} ₽</div>
-      </div>
-      <div class="order-create__summary-row">
-        <div class="order-create__summary-label">Долг клиента</div>
-        <div class="order-create__summary-value">{{ customerDebt() | number: '1.0-0' }} ₽</div>
-      </div>
+
     </div>
 
     <div class="order-create__save-actions">

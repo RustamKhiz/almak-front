@@ -52,7 +52,7 @@ import {
   PanelingDialogData,
 } from '../../common/dialogs/paneling-dialog/paneling-dialog.component';
 import { PhoneMaskDirective } from '../../common/directives/phone-mask.directive';
-import { getCustomerDebt, getOrderTotal, getTotalToPay } from '../../common/utils/order-calculations';
+import { getOrderTotal } from '../../common/utils/order-calculations';
 import { OrderDraftsService } from '../../services/order-drafts.service';
 import { OrdersService } from '../../services/orders.service';
 import {
@@ -139,20 +139,6 @@ export class OrderCreateComponent implements OnInit {
   protected readonly orderItemEntity = OrderItemEntity;
   protected readonly orderTotal = computed(() =>
     getOrderTotal({
-      ...this.buildOrderPayload(),
-      prepayment: this.prepayment(),
-      discount: this.discount(),
-    }),
-  );
-  protected readonly totalToPay = computed(() =>
-    getTotalToPay({
-      ...this.buildOrderPayload(),
-      prepayment: this.prepayment(),
-      discount: this.discount(),
-    }),
-  );
-  protected readonly customerDebt = computed(() =>
-    getCustomerDebt({
       ...this.buildOrderPayload(),
       prepayment: this.prepayment(),
       discount: this.discount(),
