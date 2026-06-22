@@ -1,4 +1,3 @@
-import { DecimalPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -25,7 +24,6 @@ export type SkirtingDialogResult = Omit<SkirtingItem, 'id'>;
 @Component({
   selector: 'app-skirting-dialog',
   imports: [
-    DecimalPipe,
     ReactiveFormsModule,
     MatButtonModule,
     MatDialogModule,
