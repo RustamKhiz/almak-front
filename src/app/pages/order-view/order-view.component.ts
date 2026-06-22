@@ -31,12 +31,14 @@ import {
   getCapitalTotal,
   getCustomerDebt,
   getExtensionTotal,
+  getFrameTotal,
   getHardwareTotal,
   getInteriorDoorTotal,
-  getMoldingTotal,
   getOrderTotal,
   getPaidAmount,
   getPanelingTotal,
+  getPlatbandTotal,
+  getSkirtingTotal,
   getTotalToPay,
 } from '../../common/utils/order-calculations';
 import {
@@ -66,6 +68,7 @@ import {
   OrderPayment,
   OrderStatus,
   PanelingItem,
+  SkirtingItem,
 } from '../../types/order.types';
 
 type SupplierItemEntity =
@@ -75,7 +78,8 @@ type SupplierItemEntity =
   | 'extensions'
   | 'capitals'
   | 'hardwares'
-  | 'panelings';
+  | 'panelings'
+  | 'skirtings';
 
 interface OrderViewState {
   id: number;
@@ -191,23 +195,6 @@ export class OrderViewComponent {
           this.isLoading.set(false);
         },
       });
-  }
-
-  protected onDownloadClick(): void {
-    const current = this.state();
-    if (current) {
-      this.fileDownloadService.download(
-        this.orderDocumentService.createDocBlob(current.id, current.data),
-        `order-${current.id}.doc`,
-      );
-    }
-  }
-
-  protected onPrintClick(): void {
-    const current = this.state();
-    if (current) {
-      this.orderPrintService.printHtml(this.orderDocumentService.buildOrderHtml(current.id, current.data));
-    }
   }
 
   protected onPrintConstructorClick(): void {
@@ -537,11 +524,16 @@ export class OrderViewComponent {
     return [
       ...order.entranceDoors.map((item) => this.buildEntranceDoorCard(item)),
       ...order.interiorDoors.map((item) => this.buildInteriorDoorCard(item)),
-      ...order.moldings.map((item) => this.buildMoldingCard(item)),
+      ...order.moldings.map((item) =>
+        item.platbandCount > 0 && item.frameCount === 0 && item.frameBoxCount === 0 && item.frameSetCount === 0
+          ? this.buildPlatbandCard(item)
+          : this.buildFrameCard(item),
+      ),
       ...order.extensions.map((item) => this.buildExtensionCard(item)),
       ...order.capitals.map((item) => this.buildCapitalCard(item)),
       ...order.hardwares.map((item) => this.buildHardwareCard(item)),
       ...order.panelings.map((item) => this.buildPanelingCard(item)),
+      ...order.skirtings.map((item) => this.buildSkirtingCard(item)),
     ];
   }
 
@@ -581,6 +573,14 @@ export class OrderViewComponent {
                   ['Высота', `${item.height2 ?? item.height} см`],
                   ['Цена', this.formatMoney(item.price2 ?? 0)],
                   ['Количество', `${item.count2 ?? 0} шт.`],
+                ]),
+              ]
+            : []),
+          ...(item.leafType === 'Double' && item.rebateBarCount > 0
+            ? [
+                this.section('Притворная планка', [
+                  ['Количество', `${item.rebateBarCount} шт.`],
+                  ['Цена', item.rebateBarPrice != null ? this.formatMoney(item.rebateBarPrice) : 'Не указана'],
                 ]),
               ]
             : []),
@@ -634,47 +634,82 @@ export class OrderViewComponent {
     };
   }
 
-  private buildMoldingCard(item: MoldingItem): OrderViewProductCard {
+  private buildFrameCard(item: MoldingItem): OrderViewProductCard {
+    const total = getFrameTotal(item);
     return {
       key: `molding-${item.id}`,
       entity: 'moldings',
       itemId: item.id,
-      typeLabel: 'Погонаж',
+      typeLabel: 'Коробки',
       title: `${item.color} · ${this.moldingCoveringLabels[item.covering] ?? item.covering}`,
-      summary: `Коробка ${item.frameCount} шт. · Наличник ${item.platbandCount} шт. · Притворная планка ${item.rebateBarCount} шт.`,
+      summary: `Коробок в комплекте ${item.frameSetCount} · Доп. коробок ${item.frameBoxCount} шт.`,
       supplier: item.supplier,
       costPrice: item.costPrice,
-      countLabel: `${item.frameCount + item.platbandCount + item.rebateBarCount} шт.`,
-      total: getMoldingTotal(item),
+      countLabel: `${item.frameCount} шт.`,
+      total,
       details: {
-        title: 'Погонаж',
+        title: 'Коробки',
         subtitle: 'Полная информация по позиции заказа.',
         badges: [item.color, this.moldingCoveringLabels[item.covering] ?? item.covering],
-        total: getMoldingTotal(item),
+        total,
         sections: [
           this.section('Коробка', [
             ['Длина', item.frameLength !== null ? `${item.frameLength} см` : 'Не указана'],
-            ['Общее количество коробок', `${item.frameCount} шт.`],
-            ['Комплект коробок', `${item.frameSetCount}`],
-            ['Дополнительные коробки', `${item.frameBoxCount}`],
+            ['В комплекте', `${item.frameSetCount} шт.`],
+            ['Дополнительные', `${item.frameBoxCount} шт.`],
+            ['Всего', `${item.frameCount} шт.`],
             ['Цена дополнительной коробки', this.formatMoney(item.framePrice)],
-            ['Общая стоимость коробок', this.formatMoney(item.framePrice * item.frameBoxCount)],
-          ]),
-          this.section('Наличник', [
-            ['Тип', this.moldingPlatbandTypeLabels[item.platbandType]],
-            ['Модель', item.platbandFigure || 'Не указана'],
-            ['Длина', item.platbandLength !== null ? `${item.platbandLength} см` : 'Не указана'],
-            ['Комплект наличников', `${item.platbandSetCount}`],
-            ['Общее количество наличников', `${item.platbandCount} шт.`],
-            ['Цена за штуку', this.formatMoney(item.platbandPrice)],
-            ['Стоимость', this.formatMoney(item.platbandPrice * item.platbandCount)],
-            ['Минус стоимость наличников', this.formatMoney(item.platbandDeductionPrice * item.platbandCount)],
+            ['Общая стоимость', this.formatMoney(total)],
           ]),
           this.section('Дополнительно', [
             ['Цвет', item.color],
             ['Покрытие', this.moldingCoveringLabels[item.covering] ?? item.covering],
-            ['Притворная планка', `${item.rebateBarCount} шт.`],
-            ['Цена притворной планки', this.formatMoney(item.rebateBarPrice)],
+            ['Поставщик', item.supplier || 'Не указан'],
+            ['Комментарий', item.comment || 'Нет'],
+          ]),
+        ],
+      },
+    };
+  }
+
+  private buildPlatbandCard(item: MoldingItem): OrderViewProductCard {
+    const extraCount = Math.max(0, item.platbandCount - item.platbandSetCount);
+    const total = getPlatbandTotal(item);
+    return {
+      key: `molding-${item.id}`,
+      entity: 'moldings',
+      itemId: item.id,
+      typeLabel: 'Наличники',
+      title: `${this.moldingPlatbandTypeLabels[item.platbandType]} · ${item.color} · ${this.moldingCoveringLabels[item.covering] ?? item.covering}`,
+      summary: `В комплекте ${item.platbandSetCount} · Доп. ${extraCount} шт. · Всего ${item.platbandCount} шт.`,
+      supplier: item.supplier,
+      costPrice: item.costPrice,
+      countLabel: `${item.platbandCount} шт.`,
+      total,
+      details: {
+        title: 'Наличники',
+        subtitle: 'Цена умножается только на дополнительные наличники.',
+        badges: [
+          this.moldingPlatbandTypeLabels[item.platbandType],
+          item.color,
+          this.moldingCoveringLabels[item.covering] ?? item.covering,
+        ],
+        total,
+        sections: [
+          this.section('Наличник', [
+            ['Тип', this.moldingPlatbandTypeLabels[item.platbandType]],
+            ...(item.platbandFigure ? [['Модель', item.platbandFigure] as [string, string]] : []),
+            ['Длина', item.platbandLength !== null ? `${item.platbandLength} см` : 'Не указана'],
+            ['В комплекте', `${item.platbandSetCount} шт.`],
+            ['Дополнительные', `${extraCount} шт.`],
+            ['Всего', `${item.platbandCount} шт.`],
+            ['Цена за штуку', this.formatMoney(item.platbandPrice)],
+            ['Стоимость (доп.)', this.formatMoney(total)],
+          ]),
+          this.section('Дополнительно', [
+            ['Цвет', item.color],
+            ['Покрытие', this.moldingCoveringLabels[item.covering] ?? item.covering],
+            ['Поставщик', item.supplier || 'Не указан'],
             ['Комментарий', item.comment || 'Нет'],
           ]),
         ],
@@ -781,8 +816,48 @@ export class OrderViewComponent {
             ['Накладка', this.formatCountPrice(item.escutcheonCount, item.escutcheonPrice)],
             ['Щелчок', this.formatCountPrice(item.clickCount, item.clickPrice)],
             ['Шпингалет', this.formatCountPrice(item.boltCount, item.boltPrice)],
-            ['Петли', this.formatCountPrice(item.hingeCount, item.hingePrice)],
+            ['Петли правые', this.formatCountPrice(item.hingeRightCount, item.hingePrice)],
+            ['Петли левые', this.formatCountPrice(item.hingeLeftCount, item.hingePrice)],
             ['Ограничитель', this.formatCountPrice(item.doorStopCount, item.doorStopPrice)],
+            ['Комментарий', item.comment || 'Нет'],
+          ]),
+        ],
+      },
+    };
+  }
+
+  private buildSkirtingCard(item: SkirtingItem): OrderViewProductCard {
+    const totalLength = Number((item.length * item.count).toFixed(2));
+    const total = getSkirtingTotal(item);
+    return {
+      key: `skirting-${item.id}`,
+      entity: 'skirtings',
+      itemId: item.id,
+      typeLabel: 'Плинтус',
+      title: `${item.model} · ${item.color}`,
+      summary: `${item.height} мм · ${item.length} м × ${item.count} шт. = ${totalLength} м`,
+      supplier: item.supplier,
+      costPrice: item.costPrice,
+      countLabel: `${totalLength} м`,
+      total,
+      details: {
+        title: 'Плинтус',
+        subtitle: 'Стоимость = цена за метр × всего метров.',
+        badges: [item.model, item.color],
+        total,
+        sections: [
+          this.section('Параметры', [
+            ['Модель', item.model],
+            ['Цвет', item.color],
+            ['Высота', `${item.height} мм`],
+            ['Длина', `${item.length} м`],
+            ['Количество', `${item.count} шт.`],
+            ['Всего метров', `${totalLength} м`],
+          ]),
+          this.section('Стоимость', [
+            ['Цена за метр', this.formatMoney(item.price)],
+            ['Итого', this.formatMoney(total)],
+            ['Поставщик', item.supplier || 'Не указан'],
             ['Комментарий', item.comment || 'Нет'],
           ]),
         ],
@@ -925,8 +1000,11 @@ export class OrderViewComponent {
     if (item.cylinderCount !== null) {
       parts.push(`барабанов ${item.cylinderCount}`);
     }
-    if (item.hingeCount !== null) {
-      parts.push(`петель ${item.hingeCount}`);
+    if (item.hingeRightCount !== null) {
+      parts.push(`петель правых ${item.hingeRightCount}`);
+    }
+    if (item.hingeLeftCount !== null) {
+      parts.push(`петель левых ${item.hingeLeftCount}`);
     }
 
     return parts.join(' · ') || 'Набор комплектующих без дополнительных уточнений';

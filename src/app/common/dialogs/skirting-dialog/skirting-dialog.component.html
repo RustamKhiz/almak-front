@@ -1,0 +1,59 @@
+<h2 mat-dialog-title>{{ title() }}</h2>
+<mat-dialog-content>
+  <form class="dialog-form" [formGroup]="form">
+    <mat-form-field appearance="outline">
+      <mat-label>Модель</mat-label>
+      <input matInput formControlName="model" />
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Цвет</mat-label>
+      <input matInput formControlName="color" />
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Высота (мм)</mat-label>
+      <input matInput type="number" formControlName="height" placeholder="0" />
+    </mat-form-field>
+
+    <div class="dialog-row">
+      <mat-form-field appearance="outline">
+        <mat-label>Длина (м)</mat-label>
+        <input matInput type="number" formControlName="length" placeholder="0.00" step="0.01" />
+      </mat-form-field>
+
+      <app-quantity-field formControlName="count" label="Количество" [min]="1" [step]="1" />
+    </div>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Всего метров</mat-label>
+      <input matInput type="number" [value]="totalLength()" readonly tabindex="-1" />
+      <mat-hint>Длина × Количество</mat-hint>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Цена (₽/м)</mat-label>
+      <input matInput type="number" formControlName="price" placeholder="0" />
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Стоимость</mat-label>
+      <input matInput type="number" [value]="totalCost()" readonly tabindex="-1" />
+      <mat-hint>Цена × Всего метров</mat-hint>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Комментарий</mat-label>
+      <textarea matInput rows="2" formControlName="comment"></textarea>
+    </mat-form-field>
+
+    <app-catalog-autocomplete-field title="Поставщик" formControlName="supplier" [options]="supplierOptions()" />
+  </form>
+</mat-dialog-content>
+
+<div mat-dialog-actions align="end">
+  <button mat-stroked-button type="button" (click)="onCancelClick()">Отмена</button>
+  <button mat-flat-button color="primary" type="button" [disabled]="form.invalid" (click)="onSaveClick()">
+    Сохранить
+  </button>
+</div>

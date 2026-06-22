@@ -97,6 +97,8 @@ export class InteriorDoorDialogComponent {
     count: [this.data.door?.count ?? 1, [Validators.required, Validators.min(1)]],
     count2: [(this.data.door?.count2 ?? this.data.door?.count ?? 1) as number | null],
     covering: [this.data.door?.covering ?? this.data.defaultCovering ?? 'Эмаль', [Validators.required]],
+    rebateBarCount: [this.data.door?.rebateBarCount ?? 0, [Validators.required, Validators.min(0)]],
+    rebateBarPrice: [this.data.door?.rebateBarPrice ?? null, [Validators.min(0)]],
     comment: [this.data.door?.comment ?? ''],
   });
 
@@ -121,6 +123,13 @@ export class InteriorDoorDialogComponent {
 
     this.form.controls.leafType.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((leafType) => {
       this.updateSecondLeafControls(leafType);
+      if (leafType === DoorLeafType.Double && this.form.controls.rebateBarCount.value === 0) {
+        this.form.controls.rebateBarCount.setValue(this.form.controls.count.value ?? 1, { emitEvent: false });
+      }
+      if (leafType !== DoorLeafType.Double) {
+        this.form.controls.rebateBarCount.setValue(0, { emitEvent: false });
+        this.form.controls.rebateBarPrice.setValue(null, { emitEvent: false });
+      }
     });
 
     if (this.form.controls.hasGlass.value === true) {
@@ -158,6 +167,7 @@ export class InteriorDoorDialogComponent {
     }
 
     const value = this.form.getRawValue();
+    const isDouble = value.leafType === DoorLeafType.Double;
     this.dialogRef.close({
       type: OrderItemType.InteriorDoor,
       supplier: value.supplier?.trim() || '',
@@ -167,15 +177,17 @@ export class InteriorDoorDialogComponent {
       hasGlass: value.hasGlass,
       glassComment: value.hasGlass ? value.glassComment?.trim() || '' : '',
       width: value.width,
-      width2: value.leafType === DoorLeafType.Double ? value.width2! : null,
+      width2: isDouble ? value.width2! : null,
       height: value.height,
-      height2: value.leafType === DoorLeafType.Double ? value.height2! : null,
+      height2: isDouble ? value.height2! : null,
       price: value.price,
-      price2: value.leafType === DoorLeafType.Double ? (value.price2 ?? null) : null,
+      price2: isDouble ? (value.price2 ?? null) : null,
       leafType: value.leafType,
       count: value.count,
-      count2: value.leafType === DoorLeafType.Double ? value.count2! : null,
+      count2: isDouble ? value.count2! : null,
       covering: value.covering,
+      rebateBarCount: isDouble ? Math.max(0, value.rebateBarCount ?? 0) : 0,
+      rebateBarPrice: isDouble ? (value.rebateBarPrice ?? null) : null,
       comment: value.comment?.trim() || '',
     });
   }

@@ -9,7 +9,8 @@ export type PrintableOrderItemType =
   | 'extension'
   | 'capital'
   | 'hardware'
-  | 'paneling';
+  | 'paneling'
+  | 'skirting';
 
 export interface PrintConstructorOptions {
   selectedItemKeys: readonly string[];

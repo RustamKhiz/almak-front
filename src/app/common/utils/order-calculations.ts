@@ -7,18 +7,24 @@ import {
   MoldingItem,
   OrderCreatePayload,
   PanelingItem,
+  SkirtingItem,
 } from '../../types/order.types';
 
 export function getOptionalTotal(count: number | null, price: number | null): number {
   return Number(count ?? 0) * Number(price ?? 0);
 }
 
+export function getFrameTotal(item: MoldingItem): number {
+  return item.framePrice * item.frameBoxCount;
+}
+
+export function getPlatbandTotal(item: MoldingItem): number {
+  const extraCount = Math.max(0, item.platbandCount - item.platbandSetCount);
+  return item.platbandPrice * extraCount;
+}
+
 export function getMoldingTotal(item: MoldingItem): number {
-  return (
-    item.framePrice * item.frameBoxCount +
-    (item.platbandPrice - item.platbandDeductionPrice) * item.platbandCount +
-    item.rebateBarPrice * item.rebateBarCount
-  );
+  return getFrameTotal(item) + getPlatbandTotal(item);
 }
 
 export function getExtensionTotal(item: ExtensionItem): number {
@@ -35,11 +41,17 @@ export function getCapitalTotal(item: CapitalItem): number {
 
 export function getInteriorDoorTotal(item: InteriorDoorItem): number {
   const firstLeafTotal = item.price * item.count;
+  const rebateBarTotal = (item.rebateBarPrice ?? 0) * item.rebateBarCount;
+
   if (item.leafType !== DoorLeafType.Double) {
     return firstLeafTotal;
   }
 
-  return firstLeafTotal + Number(item.price2 ?? 0) * Number(item.count2 ?? 0);
+  return firstLeafTotal + Number(item.price2 ?? 0) * Number(item.count2 ?? 0) + rebateBarTotal;
+}
+
+export function getSkirtingTotal(item: SkirtingItem): number {
+  return item.price * item.length * item.count;
 }
 
 export function getHardwareTotal(item: HardwareItem): number {
@@ -65,7 +77,8 @@ export function getOrderTotal(order: OrderCreatePayload): number {
     order.extensions.reduce((sum, item) => sum + getExtensionTotal(item), 0) +
     order.capitals.reduce((sum, item) => sum + getCapitalTotal(item), 0) +
     order.hardwares.reduce((sum, item) => sum + getHardwareTotal(item), 0) +
-    order.panelings.reduce((sum, item) => sum + getPanelingTotal(item), 0)
+    order.panelings.reduce((sum, item) => sum + getPanelingTotal(item), 0) +
+    order.skirtings.reduce((sum, item) => sum + getSkirtingTotal(item), 0)
   );
 }
 

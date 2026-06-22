@@ -73,7 +73,8 @@ export class HardwareDialogComponent {
       cylinderPrice: this.data.hardware?.cylinderPrice ?? null,
       boltCount: [this.data.hardware?.boltCount ?? null, [optionalIntegerValidator(), Validators.min(0)]],
       boltPrice: this.data.hardware?.boltPrice ?? null,
-      hingeCount: [this.data.hardware?.hingeCount ?? null, [optionalIntegerValidator(), Validators.min(0)]],
+      hingeRightCount: [this.data.hardware?.hingeRightCount ?? null, [optionalIntegerValidator(), Validators.min(0)]],
+      hingeLeftCount: [this.data.hardware?.hingeLeftCount ?? null, [optionalIntegerValidator(), Validators.min(0)]],
       hingePrice: this.data.hardware?.hingePrice ?? null,
       doorStopCount: [this.data.hardware?.doorStopCount ?? null, [optionalIntegerValidator(), Validators.min(0)]],
       doorStopPrice: this.data.hardware?.doorStopPrice ?? null,
@@ -130,7 +131,9 @@ export class HardwareDialogComponent {
       cylinderPrice: value.cylinderPrice,
       boltCount: normalizeOptionalInteger(value.boltCount),
       boltPrice: value.boltPrice,
-      hingeCount: normalizeOptionalInteger(value.hingeCount),
+      hingeRightCount: normalizeOptionalInteger(value.hingeRightCount),
+      hingeLeftCount: normalizeOptionalInteger(value.hingeLeftCount),
+      hingeCount: sumOptionalIntegers(value.hingeRightCount, value.hingeLeftCount),
       hingePrice: value.hingePrice,
       doorStopCount: normalizeOptionalInteger(value.doorStopCount),
       doorStopPrice: value.doorStopPrice,
@@ -156,6 +159,11 @@ function normalizeOptionalInteger(value: number | null): number | null {
   }
 
   return Math.round(value);
+}
+
+function sumOptionalIntegers(a: number | null, b: number | null): number | null {
+  const sum = (a ?? 0) + (b ?? 0);
+  return sum > 0 ? sum : null;
 }
 
 function hardwareNotEmptyValidator(): ValidatorFn {

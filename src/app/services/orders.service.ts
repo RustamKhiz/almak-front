@@ -27,6 +27,7 @@ import {
   PanelingItem,
   PanelingKind,
   PanelingSize,
+  SkirtingItem,
 } from '../types/order.types';
 import { getOrderTotal } from '../common/utils/order-calculations';
 import { CoreService } from './core.service';
@@ -52,6 +53,7 @@ interface BackendOrder {
   capitals?: BackendCapital[];
   hardwares?: BackendHardware[];
   panelings?: BackendPaneling[];
+  skirtings?: BackendSkirting[];
   created_at?: string;
 }
 
@@ -84,6 +86,8 @@ interface BackendInteriorDoor {
   count: number;
   count2?: number | null;
   covering?: string;
+  rebateBarCount?: number;
+  rebateBarPrice?: number | null;
   comment?: string;
 }
 interface BackendEntranceDoor {
@@ -183,6 +187,8 @@ interface BackendHardware {
   cylinderPrice?: number | null;
   boltCount?: number | null;
   boltPrice?: number | null;
+  hingeRightCount?: number | null;
+  hingeLeftCount?: number | null;
   hingeCount?: number | null;
   hingePrice?: number | null;
   doorStopCount?: number | null;
@@ -211,6 +217,19 @@ interface BackendPanelingSize {
   width: number;
   height: number;
 }
+interface BackendSkirting {
+  id: number;
+  order_id: number;
+  supplier?: string;
+  costPrice?: number;
+  model: string;
+  color: string;
+  height: number;
+  length: number;
+  count: number;
+  price: number;
+  comment?: string;
+}
 
 interface BackendOrderPayload {
   customer: string;
@@ -231,6 +250,7 @@ interface BackendOrderPayload {
   capitals: BackendCapitalPayload[];
   hardwares: BackendHardwarePayload[];
   panelings: BackendPanelingPayload[];
+  skirtings: BackendSkirtingPayload[];
 }
 
 interface BackendInteriorDoorPayload {
@@ -250,6 +270,8 @@ interface BackendInteriorDoorPayload {
   count: number;
   count2?: number | null;
   covering: string;
+  rebateBarCount: number;
+  rebateBarPrice: number | null;
   comment: string;
 }
 interface BackendEntranceDoorPayload {
@@ -339,6 +361,8 @@ interface BackendHardwarePayload {
   cylinderPrice?: number | null;
   boltCount?: number | null;
   boltPrice?: number | null;
+  hingeRightCount?: number | null;
+  hingeLeftCount?: number | null;
   hingeCount?: number | null;
   hingePrice?: number | null;
   doorStopCount?: number | null;
@@ -355,6 +379,17 @@ interface BackendPanelingPayload {
   kind: string;
   sizes: readonly PanelingSize[];
   totalArea: number;
+  count: number;
+  price: number;
+  comment: string;
+}
+interface BackendSkirtingPayload {
+  supplier: string;
+  costPrice: number;
+  model: string;
+  color: string;
+  height: number;
+  length: number;
   count: number;
   price: number;
   comment: string;
@@ -476,6 +511,7 @@ export class OrdersService {
       capitals: (order.capitals ?? []).map((item) => this.mapBackendCapitalToItem(item)),
       hardwares: (order.hardwares ?? []).map((item) => this.mapBackendHardwareToItem(item)),
       panelings: (order.panelings ?? []).map((item) => this.mapBackendPanelingToItem(item)),
+      skirtings: (order.skirtings ?? []).map((item) => this.mapBackendSkirtingToItem(item)),
     };
   }
 
@@ -509,6 +545,8 @@ export class OrdersService {
         count: this.toPositiveInteger(item.count),
         count2: this.toNullablePositiveInteger(item.count2),
         covering: item.covering,
+        rebateBarCount: this.toNonNegativeInteger(item.rebateBarCount),
+        rebateBarPrice: this.toNullableNonNegativeNumber(item.rebateBarPrice),
         comment: item.comment,
       })),
       entranceDoors: payload.entranceDoors.map((item) => ({
@@ -598,6 +636,8 @@ export class OrdersService {
         cylinderPrice: item.cylinderPrice,
         boltCount: item.boltCount,
         boltPrice: item.boltPrice,
+        hingeRightCount: item.hingeRightCount,
+        hingeLeftCount: item.hingeLeftCount,
         hingeCount: item.hingeCount,
         hingePrice: item.hingePrice,
         doorStopCount: item.doorStopCount,
@@ -616,6 +656,17 @@ export class OrdersService {
         totalArea: item.totalArea,
         count: item.count,
         price: item.price,
+        comment: item.comment,
+      })),
+      skirtings: payload.skirtings.map((item) => ({
+        supplier: item.supplier,
+        costPrice: item.costPrice,
+        model: item.model,
+        color: item.color,
+        height: this.toPositiveInteger(item.height),
+        length: this.toNonNegativeNumber(item.length),
+        count: this.toPositiveInteger(item.count),
+        price: this.toNonNegativeNumber(item.price),
         comment: item.comment,
       })),
     };
@@ -652,6 +703,8 @@ export class OrdersService {
       count: door.count,
       count2: door.count2 ?? null,
       covering: this.mapInteriorCovering(door.covering),
+      rebateBarCount: door.rebateBarCount ?? 0,
+      rebateBarPrice: door.rebateBarPrice ?? null,
       comment: door.comment ?? '',
     };
   }
@@ -761,6 +814,8 @@ export class OrdersService {
       cylinderPrice: item.cylinderPrice ?? null,
       boltCount: item.boltCount ?? null,
       boltPrice: item.boltPrice ?? null,
+      hingeRightCount: item.hingeRightCount ?? item.hingeCount ?? null,
+      hingeLeftCount: item.hingeLeftCount ?? null,
       hingeCount: item.hingeCount ?? null,
       hingePrice: item.hingePrice ?? null,
       doorStopCount: item.doorStopCount ?? null,
@@ -787,6 +842,22 @@ export class OrdersService {
       kind: this.mapPanelingKind(item.kind),
       sizes,
       totalArea,
+      count: item.count,
+      price: item.price,
+      comment: item.comment ?? '',
+    };
+  }
+
+  private mapBackendSkirtingToItem(item: BackendSkirting): SkirtingItem {
+    return {
+      id: item.id,
+      type: OrderItemType.Skirting,
+      supplier: item.supplier ?? '',
+      costPrice: item.costPrice ?? 0,
+      model: item.model ?? '',
+      color: item.color ?? '',
+      height: item.height,
+      length: item.length,
       count: item.count,
       price: item.price,
       comment: item.comment ?? '',

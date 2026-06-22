@@ -11,6 +11,7 @@ export enum OrderItemType {
   Capital = 'capital',
   Hardware = 'hardware',
   Paneling = 'paneling',
+  Skirting = 'skirting',
 }
 
 export enum InteriorDoorCovering {
@@ -110,6 +111,8 @@ export interface InteriorDoorItem {
   count: number;
   count2: number | null;
   covering: string;
+  rebateBarCount: number;
+  rebateBarPrice: number | null;
   comment: string;
 }
 
@@ -214,6 +217,20 @@ export interface PanelingSize {
   height: number;
 }
 
+export interface SkirtingItem {
+  id: number;
+  type: OrderItemType.Skirting;
+  supplier: string;
+  costPrice: number;
+  model: string;
+  color: string;
+  height: number;
+  length: number;
+  count: number;
+  price: number;
+  comment: string;
+}
+
 export interface HardwareItem {
   id: number;
   type: OrderItemType.Hardware;
@@ -237,6 +254,8 @@ export interface HardwareItem {
   cylinderPrice: number | null;
   boltCount: number | null;
   boltPrice: number | null;
+  hingeRightCount: number | null;
+  hingeLeftCount: number | null;
   hingeCount: number | null;
   hingePrice: number | null;
   doorStopCount: number | null;
@@ -275,4 +294,5 @@ export interface OrderCreatePayload extends OrderCustomerForm {
   capitals: readonly CapitalItem[];
   hardwares: readonly HardwareItem[];
   panelings: readonly PanelingItem[];
+  skirtings: readonly SkirtingItem[];
 }

@@ -48,11 +48,20 @@ import {
   MoldingDialogData,
 } from '../../common/dialogs/molding-dialog/molding-dialog.component';
 import {
+  PlatbandDialogComponent,
+  PlatbandDialogData,
+  PlatbandDialogResult,
+} from '../../common/dialogs/platband-dialog/platband-dialog.component';
+import {
   PanelingDialogComponent,
   PanelingDialogData,
 } from '../../common/dialogs/paneling-dialog/paneling-dialog.component';
+import {
+  SkirtingDialogComponent,
+  SkirtingDialogData,
+} from '../../common/dialogs/skirting-dialog/skirting-dialog.component';
 import { PhoneMaskDirective } from '../../common/directives/phone-mask.directive';
-import { getCustomerDebt, getOrderTotal, getTotalToPay } from '../../common/utils/order-calculations';
+import { getOrderTotal } from '../../common/utils/order-calculations';
 import { OrderDraftsService } from '../../services/order-drafts.service';
 import { OrdersService } from '../../services/orders.service';
 import {
@@ -66,6 +75,7 @@ import {
   OrderCreatePayload,
   OrderStatus,
   PanelingItem,
+  SkirtingItem,
 } from '../../types/order.types';
 import { addItem, duplicateItem, findItemById, hasItems, removeItem, updateItem } from './order-item-helpers';
 import { OrderItemActionEvent, OrderItemEntity, OrderEntityItem } from './order-item-types';
@@ -123,6 +133,7 @@ export class OrderCreateComponent implements OnInit {
   protected readonly capitals = signal<readonly CapitalItem[]>([]);
   protected readonly hardwares = signal<readonly HardwareItem[]>([]);
   protected readonly panelings = signal<readonly PanelingItem[]>([]);
+  protected readonly skirtings = signal<readonly SkirtingItem[]>([]);
   protected readonly showOrdersError = signal(false);
   protected readonly isEditMode = signal(false);
   protected readonly isLoadingOrder = signal(false);
@@ -139,20 +150,6 @@ export class OrderCreateComponent implements OnInit {
   protected readonly orderItemEntity = OrderItemEntity;
   protected readonly orderTotal = computed(() =>
     getOrderTotal({
-      ...this.buildOrderPayload(),
-      prepayment: this.prepayment(),
-      discount: this.discount(),
-    }),
-  );
-  protected readonly totalToPay = computed(() =>
-    getTotalToPay({
-      ...this.buildOrderPayload(),
-      prepayment: this.prepayment(),
-      discount: this.discount(),
-    }),
-  );
-  protected readonly customerDebt = computed(() =>
-    getCustomerDebt({
       ...this.buildOrderPayload(),
       prepayment: this.prepayment(),
       discount: this.discount(),
@@ -218,6 +215,11 @@ export class OrderCreateComponent implements OnInit {
   }
 
   protected onAddItemClick(entity: OrderItemEntity): void {
+    if (entity === OrderItemEntity.Platband) {
+      this.openAddPlatbandDialog();
+      return;
+    }
+
     const config = this.getEntityConfig(entity);
 
     this.dialog
@@ -236,6 +238,11 @@ export class OrderCreateComponent implements OnInit {
   }
 
   protected onEditItemClick(entity: OrderItemEntity, id: number): void {
+    if (entity === OrderItemEntity.Platband) {
+      this.openEditPlatbandDialog(id);
+      return;
+    }
+
     const config = this.getEntityConfig(entity);
     const item = this.findById(config.collection(), id);
     if (!item) {
@@ -252,6 +259,50 @@ export class OrderCreateComponent implements OnInit {
         }
 
         config.collection.set(updateItem(config.collection(), id, result));
+        this.syncQuantity();
+        this.autoSaveDraft();
+      });
+  }
+
+  private openAddPlatbandDialog(): void {
+    const data: PlatbandDialogData = {
+      mode: 'create',
+      ...this.getDefaultDialogData(MOLDING_COVERING_OPTIONS),
+      defaultSetCount: this.calcMoldingDefaultFromDoors(),
+    };
+    this.dialog
+      .open(PlatbandDialogComponent, { width: '640px', data })
+      .afterClosed()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((result: PlatbandDialogResult | undefined) => {
+        if (!result?.length) {
+          return;
+        }
+        let collection = this.moldings();
+        for (const item of result) {
+          collection = addItem(collection, item);
+        }
+        this.moldings.set(collection);
+        this.syncQuantity();
+        this.autoSaveDraft();
+      });
+  }
+
+  private openEditPlatbandDialog(id: number): void {
+    const item = this.findById(this.moldings(), id) as MoldingItem | undefined;
+    if (!item) {
+      return;
+    }
+    const data: PlatbandDialogData = { mode: 'edit', molding: item };
+    this.dialog
+      .open(PlatbandDialogComponent, { width: '640px', data })
+      .afterClosed()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((result: PlatbandDialogResult | undefined) => {
+        if (!result?.length) {
+          return;
+        }
+        this.moldings.set(updateItem(this.moldings(), id, result[0]));
         this.syncQuantity();
         this.autoSaveDraft();
       });
@@ -370,11 +421,23 @@ export class OrderCreateComponent implements OnInit {
           getEditData: (item) => ({ mode: 'edit', door: item as EntranceDoorItem }) as EntranceDoorDialogData,
         };
       case OrderItemEntity.Molding:
+      case OrderItemEntity.Frame:
         return {
           collection: this.moldings as ItemCollection<OrderEntityItem>,
           dialogComponent: MoldingDialogComponent,
-          createData: { mode: 'create', ...this.getDefaultDialogData(MOLDING_COVERING_OPTIONS) } as MoldingDialogData,
+          createData: {
+            mode: 'create',
+            ...this.getDefaultDialogData(MOLDING_COVERING_OPTIONS),
+            defaultFrameSetCount: this.calcMoldingDefaultFromDoors(),
+          } as MoldingDialogData,
           getEditData: (item) => ({ mode: 'edit', molding: item as MoldingItem }) as MoldingDialogData,
+        };
+      case OrderItemEntity.Platband:
+        return {
+          collection: this.moldings as ItemCollection<OrderEntityItem>,
+          dialogComponent: PlatbandDialogComponent,
+          createData: {} as never,
+          getEditData: () => ({}) as never,
         };
       case OrderItemEntity.Extension:
         return {
@@ -407,6 +470,13 @@ export class OrderCreateComponent implements OnInit {
           createData: { mode: 'create', ...this.getDefaultDialogData(PANELING_COVERING_OPTIONS) } as PanelingDialogData,
           getEditData: (item) => ({ mode: 'edit', paneling: item as PanelingItem }) as PanelingDialogData,
         };
+      case OrderItemEntity.Skirting:
+        return {
+          collection: this.skirtings as ItemCollection<OrderEntityItem>,
+          dialogComponent: SkirtingDialogComponent,
+          createData: { mode: 'create', ...this.getDefaultDialogData() } as SkirtingDialogData,
+          getEditData: (item) => ({ mode: 'edit', skirting: item as SkirtingItem }) as SkirtingDialogData,
+        };
     }
   }
 
@@ -427,6 +497,11 @@ export class OrderCreateComponent implements OnInit {
     };
   }
 
+  private calcMoldingDefaultFromDoors(): number {
+    const totalCount = this.interiorDoors().reduce((sum, door) => sum + door.count, 0);
+    return totalCount * 2.5;
+  }
+
   private hasOrderItems(): boolean {
     return hasItems([
       this.interiorDoors,
@@ -436,6 +511,7 @@ export class OrderCreateComponent implements OnInit {
       this.capitals,
       this.hardwares,
       this.panelings,
+      this.skirtings,
     ]);
   }
 
@@ -474,6 +550,7 @@ export class OrderCreateComponent implements OnInit {
       capitals: this.capitals(),
       hardwares: this.hardwares(),
       panelings: this.panelings(),
+      skirtings: this.skirtings(),
     };
   }
 
@@ -485,6 +562,7 @@ export class OrderCreateComponent implements OnInit {
     this.capitals.set(order.capitals);
     this.hardwares.set(order.hardwares);
     this.panelings.set(order.panelings);
+    this.skirtings.set(order.skirtings);
 
     this.form.patchValue(
       {
