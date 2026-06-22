@@ -41,8 +41,6 @@
     @if ($state) {
       <div class="order-view__actions">
         <button mat-flat-button color="warn" type="button" (click)="onDeleteClick()">Удалить</button>
-        <button mat-stroked-button type="button" (click)="onPrintClick()">Печать</button>
-        <button mat-stroked-button type="button" (click)="onDownloadClick()">Скачать .doc</button>
         <button mat-stroked-button type="button" (click)="onPrintConstructorClick()">Конструктор печати</button>
         <button mat-flat-button color="primary" type="button" [routerLink]="['/order', $state.id, 'edit']">
           Редактировать

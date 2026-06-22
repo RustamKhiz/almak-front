@@ -2,33 +2,33 @@
 
 <mat-dialog-content>
   <form class="dialog-form" [formGroup]="form">
-    <div class="door-kind">
-      <div class="door-kind__label">Тип входной двери</div>
-      <mat-radio-group formControlName="kind">
-        @for (kind of kindOptions; track kind) {
-          <mat-radio-button [value]="kind">{{ kindLabels[kind] }}</mat-radio-button>
-        }
-      </mat-radio-group>
-    </div>
+    <div class="dialog-row">
+      <mat-form-field appearance="outline">
+        <mat-label>Тип двери</mat-label>
+        <mat-select formControlName="kind">
+          @for (kind of kindOptions; track kind) {
+            <mat-option [value]="kind">{{ kindLabels[kind] }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
 
-    <div class="door-kind">
-      <div class="door-kind__label">Створки</div>
-      <mat-radio-group formControlName="leafType">
-        @for (leafType of leafTypeOptions; track leafType) {
-          <mat-radio-button [value]="leafType">
-            {{ leafType === 'Double' ? 'Две створки' : 'Одна створка' }}
-          </mat-radio-button>
-        }
-      </mat-radio-group>
-    </div>
+      <mat-form-field appearance="outline">
+        <mat-label>Створки</mat-label>
+        <mat-select formControlName="leafType">
+          @for (leafType of leafTypeOptions; track leafType) {
+            <mat-option [value]="leafType">{{ leafType === 'Double' ? 'Двустворчатая' : 'Одностворчатая' }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
 
-    <div class="door-kind">
-      <div class="door-kind__label">Открывание</div>
-      <mat-radio-group formControlName="opening">
-        @for (opening of openingOptions; track opening) {
-          <mat-radio-button [value]="opening">{{ openingLabels[opening] }}</mat-radio-button>
-        }
-      </mat-radio-group>
+      <mat-form-field appearance="outline">
+        <mat-label>Открывание</mat-label>
+        <mat-select formControlName="opening">
+          @for (opening of openingOptions; track opening) {
+            <mat-option [value]="opening">{{ openingLabels[opening] }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
     </div>
 
     <mat-form-field appearance="outline">

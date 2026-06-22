@@ -128,8 +128,12 @@
         <div class="dialog-section__title">Петли</div>
         <div class="dialog-row">
           <mat-form-field appearance="outline">
-            <mat-label>Кол-во</mat-label>
-            <input matInput type="number" formControlName="hingeCount" min="0" step="1" />
+            <mat-label>Правые, кол-во</mat-label>
+            <input matInput type="number" formControlName="hingeRightCount" min="0" step="1" />
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Левые, кол-во</mat-label>
+            <input matInput type="number" formControlName="hingeLeftCount" min="0" step="1" />
           </mat-form-field>
           <mat-form-field appearance="outline">
             <mat-label>Цена</mat-label>

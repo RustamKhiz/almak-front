@@ -94,6 +94,17 @@
       }
     </div>
 
+    @if (form.controls.leafType.value === doorLeafType.Double) {
+      <div class="dialog-row">
+        <app-quantity-field formControlName="rebateBarCount" label="Притворная планка, кол-во" [min]="0" [step]="1" />
+        <mat-form-field appearance="outline">
+          <mat-label>Цена притворной планки</mat-label>
+          <input matInput type="number" formControlName="rebateBarPrice" placeholder="0" />
+          <mat-hint>Необязательно</mat-hint>
+        </mat-form-field>
+      </div>
+    }
+
     <div class="total-preview">
       <span>Стоимость</span>
       <strong>{{ getDraftTotal() | number: '1.0-0' }} ₽</strong>

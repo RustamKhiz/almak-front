@@ -1,20 +1,13 @@
 import { DecimalPipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, DestroyRef, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, DestroyRef, inject } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialogModule, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
-import { MatRadioModule } from '@angular/material/radio';
 import { MatSelectModule } from '@angular/material/select';
-import {
-  DEFAULT_MOLDING_COVERING,
-  DEFAULT_MOLDING_PLATBAND_TYPE,
-  MOLDING_COVERING_OPTIONS,
-  MOLDING_PLATBAND_TYPE_LABELS,
-  MOLDING_PLATBAND_TYPE_OPTIONS,
-} from '../../constants/molding-catalog';
+import { DEFAULT_MOLDING_COVERING, MOLDING_COVERING_OPTIONS } from '../../constants/molding-catalog';
 import { CATALOG_KEYS } from '../../constants/catalog-keys';
 import { SUPPLIER_OPTIONS } from '../../constants/reference-catalogs';
 import { CatalogsService } from '../../../services/catalogs.service';
@@ -28,6 +21,7 @@ export interface MoldingDialogData {
   molding?: MoldingItem;
   defaultColor?: string;
   defaultCovering?: string;
+  defaultFrameSetCount?: number;
 }
 
 export type MoldingDialogResult = Omit<MoldingItem, 'id'>;
@@ -41,7 +35,6 @@ export type MoldingDialogResult = Omit<MoldingItem, 'id'>;
     MatDialogModule,
     MatFormFieldModule,
     MatInputModule,
-    MatRadioModule,
     MatSelectModule,
     CatalogAutocompleteFieldComponent,
     QuantityFieldComponent,
@@ -58,8 +51,6 @@ export class MoldingDialogComponent {
 
   private readonly catalogsService = inject(CatalogsService);
 
-  protected readonly platbandTypeOptions = MOLDING_PLATBAND_TYPE_OPTIONS;
-  protected readonly platbandTypeLabels = MOLDING_PLATBAND_TYPE_LABELS;
   protected readonly coveringOptions = toSignal(
     this.catalogsService.getItemsByKey(CATALOG_KEYS.moldingCoverings, [...MOLDING_COVERING_OPTIONS]),
     { initialValue: [...MOLDING_COVERING_OPTIONS] as readonly string[] },
@@ -68,8 +59,6 @@ export class MoldingDialogComponent {
     this.catalogsService.getItemsByKey(CATALOG_KEYS.suppliers, SUPPLIER_OPTIONS),
     { initialValue: SUPPLIER_OPTIONS },
   );
-  protected readonly platbandType = MoldingPlatbandType;
-  protected readonly isFigureType = signal(this.data.molding?.platbandType === MoldingPlatbandType.Figure);
 
   protected readonly form = this.fb.nonNullable.group({
     supplier: this.data.molding?.supplier ?? '',
@@ -78,27 +67,11 @@ export class MoldingDialogComponent {
     frameSetCount: [
       this.data.mode === 'edit' && this.data.molding
         ? Math.max(0, Number(((this.data.molding.frameCount ?? 0) - (this.data.molding.frameBoxCount ?? 0)).toFixed(1)))
-        : 0,
+        : (this.data.defaultFrameSetCount ?? 0),
       [Validators.required, Validators.min(0)],
     ],
     frameBoxCount: [this.data.molding?.frameBoxCount ?? 0, [Validators.required, Validators.min(0)]],
-    frameThresholdCount: [0, [Validators.required, Validators.min(0)]],
-    frameThresholdPrice: [0, [Validators.required, Validators.min(0)]],
-    frameCount: [this.data.molding?.frameCount ?? 2.5, [Validators.required, Validators.min(0)]],
-    platbandType: [this.data.molding?.platbandType ?? DEFAULT_MOLDING_PLATBAND_TYPE, [Validators.required]],
-    platbandFigure: this.data.molding?.platbandFigure ?? '',
-    platbandLength: [this.data.molding?.platbandLength ?? null, [Validators.min(0)]],
-    platbandPrice: [this.data.molding?.platbandPrice ?? null, [Validators.min(0)]],
-    platbandSetCount: [
-      this.data.mode === 'edit' && this.data.molding
-        ? Math.max(0, Number(((this.data.molding.platbandSetCount ?? 0) * 2.5).toFixed(1)))
-        : 0,
-      [Validators.required, Validators.min(0)],
-    ],
-    platbandCount: [this.getInitialPlatbandAdditionalCount(), [Validators.required, Validators.min(0)]],
-    platbandDeductionPrice: [this.data.molding?.platbandDeductionPrice ?? 0, [Validators.min(0)]],
-    rebateBarCount: [this.data.molding?.rebateBarCount ?? 0, [Validators.required, Validators.min(0)]],
-    rebateBarPrice: [this.data.molding?.rebateBarPrice ?? null, [Validators.min(0)]],
+    frameCount: [this.data.molding?.frameCount ?? 0, [Validators.required, Validators.min(0)]],
     color: [this.data.molding?.color ?? this.data.defaultColor ?? '', [Validators.required]],
     covering: [
       this.data.molding?.covering ?? this.data.defaultCovering ?? DEFAULT_MOLDING_COVERING,
@@ -107,27 +80,19 @@ export class MoldingDialogComponent {
     comment: this.data.molding?.comment ?? '',
   });
 
-  protected readonly title = computed(() => (this.data.mode === 'edit' ? 'Редактировать погонаж' : 'Добавить погонаж'));
+  protected readonly title = computed(() => (this.data.mode === 'edit' ? 'Редактировать коробки' : 'Добавить коробки'));
 
   constructor() {
     bindLeadingCapitalization(this.form.controls.color, this.destroyRef);
-    bindLeadingCapitalization(this.form.controls.platbandFigure, this.destroyRef);
 
     this.form.controls.frameSetCount.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
       this.updateFrameCount();
     });
-
     this.form.controls.frameBoxCount.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
       this.updateFrameCount();
     });
 
-    this.form.controls.platbandType.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((value) => {
-      const isFigure = value === MoldingPlatbandType.Figure;
-      this.isFigureType.set(isFigure);
-      this.syncFigureState(isFigure);
-    });
-
-    this.syncFigureState(this.form.controls.platbandType.value === MoldingPlatbandType.Figure);
+    this.updateFrameCount();
   }
 
   protected onCancelClick(): void {
@@ -152,37 +117,27 @@ export class MoldingDialogComponent {
       frameThresholdCount: 0,
       frameThresholdPrice: 0,
       frameCount: this.calculateFrameCount(value.frameSetCount, value.frameBoxCount),
-      platbandType: value.platbandType,
-      platbandFigure: value.platbandType === MoldingPlatbandType.Figure ? value.platbandFigure.trim() || null : null,
-      platbandLength: value.platbandLength == null ? null : Math.max(0, value.platbandLength),
-      platbandPrice: value.platbandPrice ?? 0,
-      platbandSetCount: Math.max(0, Number((value.platbandSetCount ?? 0).toFixed(1))),
-      platbandCount: this.getPlatbandCount(),
-      platbandDeductionPrice:
-        value.platbandType === MoldingPlatbandType.Figure ? Number(value.platbandDeductionPrice ?? 0) : 0,
-      rebateBarCount: value.rebateBarCount,
-      rebateBarPrice: value.rebateBarPrice ?? 0,
+      platbandType: MoldingPlatbandType.Oval,
+      platbandFigure: null,
+      platbandLength: null,
+      platbandPrice: 0,
+      platbandSetCount: 0,
+      platbandCount: 0,
+      platbandDeductionPrice: 0,
+      rebateBarCount: 0,
+      rebateBarPrice: 0,
       color: value.color.trim(),
       covering: value.covering,
       comment: value.comment.trim(),
     });
   }
 
-  private syncFigureState(isFigure: boolean): void {
-    if (isFigure) {
-      this.form.controls.platbandFigure.enable({ emitEvent: false });
-      this.form.controls.platbandFigure.addValidators([Validators.required]);
-    } else {
-      this.form.controls.platbandFigure.disable({ emitEvent: false });
-      this.form.controls.platbandFigure.removeValidators([Validators.required]);
-      this.form.controls.platbandFigure.setValue('', { emitEvent: false });
-    }
-
-    this.form.controls.platbandFigure.updateValueAndValidity({ emitEvent: false });
-  }
-
   protected getFrameCount(): number {
     return this.calculateFrameCount(this.form.controls.frameSetCount.value, this.form.controls.frameBoxCount.value);
+  }
+
+  protected getFrameTotal(): number {
+    return Number(this.form.controls.framePrice.value ?? 0) * Number(this.form.controls.frameBoxCount.value ?? 0);
   }
 
   private updateFrameCount(): void {
@@ -191,55 +146,5 @@ export class MoldingDialogComponent {
 
   private calculateFrameCount(setCount: number | null | undefined, boxCount: number | null | undefined): number {
     return Number((Number(setCount ?? 0) + Number(boxCount ?? 0)).toFixed(1));
-  }
-
-  protected getFrameTotal(): number {
-    return Number(this.form.controls.framePrice.value ?? 0) * Number(this.form.controls.frameBoxCount.value ?? 0);
-  }
-
-  protected getPlatbandBaseTotal(): number {
-    return Number(this.form.controls.platbandPrice.value ?? 0) * this.getPlatbandCount();
-  }
-
-  protected getPlatbandDeductionTotal(): number {
-    if (this.form.controls.platbandType.value !== MoldingPlatbandType.Figure) {
-      return 0;
-    }
-
-    return Number(this.form.controls.platbandDeductionPrice.value ?? 0) * this.getPlatbandCount();
-  }
-
-  protected getPlatbandTotal(): number {
-    return this.getPlatbandBaseTotal() - this.getPlatbandDeductionTotal();
-  }
-
-  protected getRebateBarTotal(): number {
-    return Number(this.form.controls.rebateBarPrice.value ?? 0) * Number(this.form.controls.rebateBarCount.value ?? 0);
-  }
-
-  protected getDraftTotal(): number {
-    return this.getFrameTotal() + this.getPlatbandTotal() + this.getRebateBarTotal();
-  }
-
-  protected getPlatbandCount(): number {
-    return Number(
-      (
-        Number(this.form.controls.platbandSetCount.value ?? 0) + Number(this.form.controls.platbandCount.value ?? 0)
-      ).toFixed(1),
-    );
-  }
-
-  private getInitialPlatbandAdditionalCount(): number {
-    const totalCount = this.data.molding?.platbandCount;
-    if (totalCount == null) {
-      return 0;
-    }
-
-    const setCount = this.data.molding?.platbandSetCount ?? Math.floor((this.data.molding?.platbandCount ?? 2.5) / 2.5);
-    return Math.max(0, Number((totalCount - this.normalizeIntegerCount(setCount) * 2.5).toFixed(1)));
-  }
-
-  private normalizeIntegerCount(value: number | null | undefined): number {
-    return Math.max(0, Math.round(Number(value ?? 0)));
   }
 }

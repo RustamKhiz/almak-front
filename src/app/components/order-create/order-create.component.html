@@ -42,11 +42,13 @@
         <button mat-menu-item type="button" (click)="onAddItemClick(orderItemEntity.InteriorDoor)">
           Межкомнатная дверь
         </button>
-        <button mat-menu-item type="button" (click)="onAddItemClick(orderItemEntity.Molding)">Погонаж</button>
+        <button mat-menu-item type="button" (click)="onAddItemClick(orderItemEntity.Frame)">Коробки</button>
+        <button mat-menu-item type="button" (click)="onAddItemClick(orderItemEntity.Platband)">Наличники</button>
         <button mat-menu-item type="button" (click)="onAddItemClick(orderItemEntity.Extension)">Доборы</button>
         <button mat-menu-item type="button" (click)="onAddItemClick(orderItemEntity.Capital)">Капитель</button>
         <button mat-menu-item type="button" (click)="onAddItemClick(orderItemEntity.Hardware)">Фурнитура</button>
         <button mat-menu-item type="button" (click)="onAddItemClick(orderItemEntity.Paneling)">Обшивка</button>
+        <button mat-menu-item type="button" (click)="onAddItemClick(orderItemEntity.Skirting)">Плинтус</button>
       </mat-menu>
     </div>
   </header>
@@ -129,6 +131,7 @@
     [capitals]="capitals()"
     [hardwares]="hardwares()"
     [panelings]="panelings()"
+    [skirtings]="skirtings()"
     [showOrdersError]="showOrdersError()"
     (editClick)="onItemEditClick($event)"
     (duplicateClick)="onItemDuplicateClick($event)"
@@ -141,7 +144,6 @@
         <div class="order-create__summary-label">Общая стоимость заказа</div>
         <div class="order-create__summary-value">{{ orderTotal() | number: '1.0-0' }} ₽</div>
       </div>
-
     </div>
 
     <div class="order-create__save-actions">

@@ -11,6 +11,7 @@ import {
   OrderCreatePayload,
   PanelingItem,
   PanelingKind,
+  SkirtingItem,
 } from '../types/order.types';
 import { PrintConstructorOptions } from '../common/dialogs/print-constructor-dialog/print-constructor.types';
 import {
@@ -57,7 +58,8 @@ export class OrderDocumentService {
       order.extensions.reduce((sum, item) => sum + this.getExtensionTotal(item), 0) +
       order.capitals.reduce((sum, item) => sum + this.getCapitalTotal(item), 0) +
       order.hardwares.reduce((sum, item) => sum + this.getHardwareTotal(item), 0) +
-      order.panelings.reduce((sum, item) => sum + this.getPanelingTotal(item), 0);
+      order.panelings.reduce((sum, item) => sum + this.getPanelingTotal(item), 0) +
+      order.skirtings.reduce((sum, item) => sum + this.getSkirtingTotal(item), 0);
     const totalToPay = Math.max(totalAmount - order.discount, 0);
     const paidAmount =
       order.payments.length > 0 ? order.payments.reduce((sum, payment) => sum + payment.amount, 0) : order.prepayment;
@@ -69,7 +71,8 @@ export class OrderDocumentService {
       order.extensions.length +
       order.capitals.length +
       order.hardwares.length +
-      order.panelings.length;
+      order.panelings.length +
+      order.skirtings.length;
     const layoutMode = this.getLayoutMode(order, rowCount);
 
     let rowNumber = 1;
@@ -179,7 +182,22 @@ export class OrderDocumentService {
         ),
       )
       .join('');
-    const rows = `${interiorRows}${entranceRows}${moldingRows}${extensionRows}${capitalRows}${hardwareRows}${panelingRows}`;
+    const skirtingRows = order.skirtings
+      .map((item) =>
+        this.buildRow(
+          rowNumber++,
+          'Плинтус',
+          item.model || 'Плинтус',
+          `${item.height} мм`,
+          `${item.color}, ${item.length} м × ${item.count} шт. = ${Number((item.length * item.count).toFixed(2))} м`,
+          item.comment || '-',
+          item.count,
+          item.price,
+          this.getSkirtingTotal(item),
+        ),
+      )
+      .join('');
+    const rows = `${interiorRows}${entranceRows}${moldingRows}${extensionRows}${capitalRows}${hardwareRows}${panelingRows}${skirtingRows}`;
 
     return `
       <html>
@@ -804,6 +822,10 @@ export class OrderDocumentService {
     return item.totalArea * item.price;
   }
 
+  private getSkirtingTotal(item: SkirtingItem): number {
+    return item.price * item.length * item.count;
+  }
+
   private getCapitalTotal(item: { price: number; count: number }): number {
     return item.price * item.count;
   }
@@ -862,8 +884,11 @@ export class OrderDocumentService {
     if (item.boltCount !== null || item.boltPrice !== null) {
       details.push(`шпингалет ${this.formatCountPrice(item.boltCount, item.boltPrice)}`);
     }
-    if (item.hingeCount !== null || item.hingePrice !== null) {
-      details.push(`петли ${this.formatCountPrice(item.hingeCount, item.hingePrice)}`);
+    if (item.hingeRightCount !== null || item.hingePrice !== null) {
+      details.push(`петли правые ${this.formatCountPrice(item.hingeRightCount, item.hingePrice)}`);
+    }
+    if (item.hingeLeftCount !== null) {
+      details.push(`петли левые ${this.formatCountPrice(item.hingeLeftCount, item.hingePrice)}`);
     }
     if (item.doorStopCount !== null || item.doorStopPrice !== null) {
       details.push(`ограничитель ${this.formatCountPrice(item.doorStopCount, item.doorStopPrice)}`);
@@ -883,6 +908,7 @@ export class OrderDocumentService {
       Number(item.boltCount ?? 0) +
       Number(item.hingeCount ?? 0) +
       Number(item.doorStopCount ?? 0)
+      // hingeCount already includes right+left
     );
   }
 

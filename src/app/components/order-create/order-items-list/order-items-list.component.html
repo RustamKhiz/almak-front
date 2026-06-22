@@ -1,6 +1,8 @@
 @let interiorDoorItems = interiorDoors();
+@let skirtingItems = skirtings();
 @let entranceDoorItems = entranceDoors();
-@let moldingItems = moldings();
+@let frames = frameItems();
+@let platbands = platbandItems();
 @let extensionItems = extensions();
 @let capitalItems = capitals();
 @let hardwareItems = hardwares();
@@ -27,6 +29,12 @@
                 @if (door.hasGlass) {
                   @if (door.glassComment) {
                     ({{ door.glassComment }})
+                  }
+                }
+                @if (door.rebateBarCount > 0) {
+                  · притворная планка {{ door.rebateBarCount }} шт.
+                  @if (door.rebateBarPrice) {
+                    · {{ door.rebateBarPrice | number: '1.0-0' }} ₽
                   }
                 }
                 @if (door.comment) {
@@ -133,50 +141,36 @@
       </div>
     }
 
-    @if (moldingItems.length) {
+    @if (frames.length) {
       <div class="door-section">
-        <div class="door-section__title">Погонаж</div>
-        @for (molding of moldingItems; track molding.id) {
+        <div class="door-section__title">Коробки</div>
+        @for (item of frames; track item.id) {
           <div class="door-item">
             <div class="door-item__main">
               <div class="door-item__title">
-                Погонаж · {{ molding.color }} · {{ moldingCoveringLabels[molding.covering] }}
+                Коробка · {{ item.color }} · {{ moldingCoveringLabels[item.covering] }}
               </div>
               <div class="door-item__meta">
-                Коробка: всего {{ molding.frameCount }} шт. / комплект {{ molding.frameSetCount }} / доп.
-                {{ molding.frameBoxCount }} шт.
-                @if (molding.frameLength !== null) {
-                  · {{ molding.frameLength }} см
+                В комплекте {{ item.frameSetCount }} / доп. {{ item.frameBoxCount }} / всего {{ item.frameCount }} шт.
+                @if (item.frameLength !== null) {
+                  · {{ item.frameLength }} см
                 }
-                @if (molding.framePrice > 0) {
-                  · {{ molding.framePrice | number: '1.0-0' }} ₽
+                @if (item.framePrice > 0) {
+                  · {{ item.framePrice | number: '1.0-0' }} ₽
                 }
-                · Наличник {{ moldingPlatbandTypeLabels[molding.platbandType] }}
-                @if (molding.platbandFigure) {
-                  · модель {{ molding.platbandFigure }}
-                }
-                · всего {{ molding.platbandCount }} шт.
-                @if (molding.platbandLength !== null) {
-                  · {{ molding.platbandLength }} см
-                }
-                · притворная планка {{ molding.rebateBarCount }} шт.
-                @if (molding.rebateBarPrice > 0) {
-                  · {{ molding.rebateBarPrice | number: '1.0-0' }} ₽
-                }
-                @if (molding.comment) {
-                  · {{ molding.comment }}
+                @if (item.comment) {
+                  · {{ item.comment }}
                 }
               </div>
             </div>
-
             <div class="door-item__aside">
-              <div class="door-item__price">{{ getMoldingTotal(molding) | number: '1.0-0' }} ₽</div>
+              <div class="door-item__price">{{ getFrameTotal(item) | number: '1.0-0' }} ₽</div>
               <div class="door-item__actions">
                 <button
                   mat-icon-button
                   type="button"
                   aria-label="Дублировать"
-                  (click)="onDuplicateClick(orderItemEntity.Molding, molding.id)"
+                  (click)="onDuplicateClick(orderItemEntity.Frame, item.id)"
                 >
                   <mat-icon>content_copy</mat-icon>
                 </button>
@@ -184,7 +178,7 @@
                   mat-icon-button
                   type="button"
                   aria-label="Редактировать"
-                  (click)="onEditClick(orderItemEntity.Molding, molding.id)"
+                  (click)="onEditClick(orderItemEntity.Frame, item.id)"
                 >
                   <mat-icon>edit</mat-icon>
                 </button>
@@ -193,7 +187,69 @@
                   type="button"
                   color="warn"
                   aria-label="Удалить"
-                  (click)="onRemoveClick(orderItemEntity.Molding, molding.id)"
+                  (click)="onRemoveClick(orderItemEntity.Frame, item.id)"
+                >
+                  <mat-icon>delete</mat-icon>
+                </button>
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+    }
+
+    @if (platbands.length) {
+      <div class="door-section">
+        <div class="door-section__title">Наличники</div>
+        @for (item of platbands; track item.id) {
+          <div class="door-item">
+            <div class="door-item__main">
+              <div class="door-item__title">
+                Наличник {{ moldingPlatbandTypeLabels[item.platbandType] }} · {{ item.color }} ·
+                {{ moldingCoveringLabels[item.covering] }}
+              </div>
+              <div class="door-item__meta">
+                @if (item.platbandFigure) {
+                  модель {{ item.platbandFigure }} ·
+                }
+                В комплекте {{ item.platbandSetCount }} / доп. {{ getPlatbandExtraCount(item) }} / всего
+                {{ item.platbandCount }} шт.
+                @if (item.platbandLength !== null) {
+                  · {{ item.platbandLength }} см
+                }
+                @if (item.platbandPrice > 0) {
+                  · {{ item.platbandPrice | number: '1.0-0' }} ₽
+                }
+                @if (item.comment) {
+                  · {{ item.comment }}
+                }
+              </div>
+            </div>
+            <div class="door-item__aside">
+              <div class="door-item__price">{{ getPlatbandTotal(item) | number: '1.0-0' }} ₽</div>
+              <div class="door-item__actions">
+                <button
+                  mat-icon-button
+                  type="button"
+                  aria-label="Дублировать"
+                  (click)="onDuplicateClick(orderItemEntity.Platband, item.id)"
+                >
+                  <mat-icon>content_copy</mat-icon>
+                </button>
+                <button
+                  mat-icon-button
+                  type="button"
+                  aria-label="Редактировать"
+                  (click)="onEditClick(orderItemEntity.Platband, item.id)"
+                >
+                  <mat-icon>edit</mat-icon>
+                </button>
+                <button
+                  mat-icon-button
+                  type="button"
+                  color="warn"
+                  aria-label="Удалить"
+                  (click)="onRemoveClick(orderItemEntity.Platband, item.id)"
                 >
                   <mat-icon>delete</mat-icon>
                 </button>
@@ -348,8 +404,11 @@
                 @if (item.boltCount !== null) {
                   · шпингалетов {{ item.boltCount }}
                 }
-                @if (item.hingeCount !== null) {
-                  · петель {{ item.hingeCount }}
+                @if (item.hingeRightCount !== null) {
+                  · петель правых {{ item.hingeRightCount }}
+                }
+                @if (item.hingeLeftCount !== null) {
+                  · петель левых {{ item.hingeLeftCount }}
                 }
                 @if (item.doorStopCount !== null) {
                   · ограничителей {{ item.doorStopCount }}
@@ -437,6 +496,59 @@
                   color="warn"
                   aria-label="Удалить"
                   (click)="onRemoveClick(orderItemEntity.Paneling, item.id)"
+                >
+                  <mat-icon>delete</mat-icon>
+                </button>
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+    }
+
+    @if (skirtingItems.length) {
+      <div class="door-section">
+        <div class="door-section__title">Плинтус</div>
+        @for (item of skirtingItems; track item.id) {
+          <div class="door-item">
+            <div class="door-item__main">
+              <div class="door-item__title">Плинтус · {{ item.model }} · {{ item.color }}</div>
+              <div class="door-item__meta">
+                высота {{ item.height }} мм · {{ item.length }} м × {{ item.count }} шт. =
+                {{ getSkirtingTotalLength(item) }} м
+                @if (item.price > 0) {
+                  · {{ item.price | number: '1.0-0' }} ₽/м
+                }
+                @if (item.comment) {
+                  · {{ item.comment }}
+                }
+              </div>
+            </div>
+            <div class="door-item__aside">
+              <div class="door-item__price">{{ getSkirtingTotal(item) | number: '1.0-0' }} ₽</div>
+              <div class="door-item__actions">
+                <button
+                  mat-icon-button
+                  type="button"
+                  aria-label="Дублировать"
+                  (click)="onDuplicateClick(orderItemEntity.Skirting, item.id)"
+                >
+                  <mat-icon>content_copy</mat-icon>
+                </button>
+                <button
+                  mat-icon-button
+                  type="button"
+                  aria-label="Редактировать"
+                  (click)="onEditClick(orderItemEntity.Skirting, item.id)"
+                >
+                  <mat-icon>edit</mat-icon>
+                </button>
+                <button
+                  mat-icon-button
+                  type="button"
+                  color="warn"
+                  aria-label="Удалить"
+                  (click)="onRemoveClick(orderItemEntity.Skirting, item.id)"
                 >
                   <mat-icon>delete</mat-icon>
                 </button>

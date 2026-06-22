@@ -6,7 +6,7 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
-import { MatRadioModule } from '@angular/material/radio';
+import { MatSelectModule } from '@angular/material/select';
 import {
   ENTRANCE_DOOR_HEIGHT_OPTIONS,
   ENTRANCE_DOOR_KIND_LABELS,
@@ -47,7 +47,7 @@ export type EntranceDoorDialogResult = Omit<EntranceDoorItem, 'id'>;
     MatDialogModule,
     MatFormFieldModule,
     MatInputModule,
-    MatRadioModule,
+    MatSelectModule,
     CatalogAutocompleteFieldComponent,
     QuantityFieldComponent,
   ],
@@ -92,9 +92,9 @@ export class EntranceDoorDialogComponent {
 
   protected readonly form = this.fb.nonNullable.group({
     supplier: this.data.door?.supplier ?? '',
-    kind: [this.data.door?.kind ?? EntranceDoorKind.Factory, [Validators.required]],
-    opening: [this.data.door?.opening ?? EntranceDoorOpening.Left, [Validators.required]],
-    leafType: [this.data.door?.leafType ?? DoorLeafType.Single, [Validators.required]],
+    kind: [this.data.door?.kind ?? (null as EntranceDoorKind | null), [Validators.required]],
+    opening: [this.data.door?.opening ?? (null as EntranceDoorOpening | null), [Validators.required]],
+    leafType: [this.data.door?.leafType ?? (null as DoorLeafType | null), [Validators.required]],
     model: [this.data.door?.model ?? '', [Validators.required]],
     width: [this.data.door?.width ?? ENTRANCE_DOOR_WIDTH_OPTIONS[0], [Validators.required, Validators.min(1)]],
     height: [this.data.door?.height ?? ENTRANCE_DOOR_HEIGHT_OPTIONS[2], [Validators.required, Validators.min(1)]],
@@ -136,15 +136,15 @@ export class EntranceDoorDialogComponent {
     }
 
     const value = this.form.getRawValue();
-    const kind = value.kind;
+    const kind = value.kind!;
 
     this.dialogRef.close({
       type: OrderItemType.EntranceDoor,
       supplier: value.supplier.trim(),
       costPrice: this.data.door?.costPrice ?? 0,
       kind,
-      opening: value.opening,
-      leafType: value.leafType,
+      opening: value.opening!,
+      leafType: value.leafType!,
       model: value.model.trim(),
       width: value.width,
       height: value.height,

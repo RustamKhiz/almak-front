@@ -16,10 +16,12 @@ import {
 import {
   getCapitalTotal,
   getExtensionTotal,
+  getFrameTotal,
   getHardwareTotal,
   getInteriorDoorTotal,
-  getMoldingTotal,
+  getPlatbandTotal,
   getPanelingTotal,
+  getSkirtingTotal,
 } from '../../../common/utils/order-calculations';
 import {
   CapitalItem,
@@ -29,6 +31,7 @@ import {
   InteriorDoorItem,
   MoldingItem,
   PanelingItem,
+  SkirtingItem,
 } from '../../../types/order.types';
 import { OrderItemActionEvent, OrderItemEntity } from '../order-item-types';
 
@@ -47,6 +50,7 @@ export class OrderItemsListComponent {
   readonly capitals = input<readonly CapitalItem[]>([]);
   readonly hardwares = input<readonly HardwareItem[]>([]);
   readonly panelings = input<readonly PanelingItem[]>([]);
+  readonly skirtings = input<readonly SkirtingItem[]>([]);
   readonly showOrdersError = input(false);
 
   readonly editClick = output<OrderItemActionEvent>();
@@ -63,6 +67,16 @@ export class OrderItemsListComponent {
   protected readonly capitalCoveringLabels = CAPITAL_COVERING_LABELS;
   protected readonly panelingCoveringLabels = PANELING_COVERING_LABELS;
   protected readonly panelingKindLabels = PANELING_KIND_LABELS;
+
+  protected readonly frameItems = computed(() =>
+    this.moldings().filter((item) => item.frameCount > 0 || item.frameBoxCount > 0 || item.frameSetCount > 0),
+  );
+  protected readonly platbandItems = computed(() =>
+    this.moldings().filter(
+      (item) => item.platbandCount > 0 && item.frameCount === 0 && item.frameBoxCount === 0 && item.frameSetCount === 0,
+    ),
+  );
+
   protected readonly hasItems = computed(
     () =>
       this.interiorDoors().length > 0 ||
@@ -71,11 +85,26 @@ export class OrderItemsListComponent {
       this.extensions().length > 0 ||
       this.capitals().length > 0 ||
       this.hardwares().length > 0 ||
-      this.panelings().length > 0,
+      this.panelings().length > 0 ||
+      this.skirtings().length > 0,
   );
 
-  protected getMoldingTotal(item: MoldingItem): number {
-    return getMoldingTotal(item);
+  protected getFrameTotal(item: MoldingItem): number {
+    return getFrameTotal(item);
+  }
+
+  protected getPlatbandTotal(item: MoldingItem): number {
+    return getPlatbandTotal(item);
+  }
+
+  protected getPlatbandExtraCount(item: MoldingItem): number {
+    return Math.max(0, Number((item.platbandCount - item.platbandSetCount).toFixed(1)));
+  }
+
+  protected getMoldingEntity(item: MoldingItem): OrderItemEntity {
+    return item.platbandCount > 0 && item.frameCount === 0 && item.frameBoxCount === 0 && item.frameSetCount === 0
+      ? OrderItemEntity.Platband
+      : OrderItemEntity.Frame;
   }
 
   protected getInteriorDoorTotal(item: InteriorDoorItem): number {
@@ -96,6 +125,14 @@ export class OrderItemsListComponent {
 
   protected getHardwareTotal(item: HardwareItem): number {
     return getHardwareTotal(item);
+  }
+
+  protected getSkirtingTotal(item: SkirtingItem): number {
+    return getSkirtingTotal(item);
+  }
+
+  protected getSkirtingTotalLength(item: SkirtingItem): number {
+    return Number((item.length * item.count).toFixed(2));
   }
 
   protected getPanelingSizesLabel(item: PanelingItem): string {

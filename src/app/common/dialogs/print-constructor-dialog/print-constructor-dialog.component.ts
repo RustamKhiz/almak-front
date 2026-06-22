@@ -10,6 +10,7 @@ import {
   getInteriorDoorTotal,
   getMoldingTotal,
   getPanelingTotal,
+  getSkirtingTotal,
 } from '../../utils/order-calculations';
 import {
   PrintConstructorDialogData,
@@ -238,6 +239,14 @@ export class PrintConstructorDialogComponent {
         title: item.color,
         summary: `${item.totalArea} м2${this.getSupplierSummary(item.supplier)}`,
         total: getPanelingTotal(item),
+      })),
+      ...order.skirtings.map((item) => ({
+        key: `skirting:${item.id}`,
+        type: 'skirting' as const,
+        typeLabel: 'Плинтус',
+        title: item.model || 'Плинтус',
+        summary: `${item.color}, ${item.height} мм, ${Number((item.length * item.count).toFixed(2))} м${this.getSupplierSummary(item.supplier)}`,
+        total: getSkirtingTotal(item),
       })),
     ];
   }
