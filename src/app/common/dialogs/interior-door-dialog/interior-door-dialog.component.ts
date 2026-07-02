@@ -1,4 +1,4 @@
-import { DecimalPipe } from '@angular/common';
+﻿import { DecimalPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, DestroyRef, inject } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -25,6 +25,7 @@ import { DoorLeafType, InteriorDoorItem, OrderItemType } from '../../../types/or
 import { CatalogAutocompleteFieldComponent } from '../../../ui/catalog-autocomplete-field/catalog-autocomplete-field.component';
 import { QuantityFieldComponent } from '../../../ui/quantity-field/quantity-field.component';
 import { bindLeadingCapitalization } from '../../utils/form-text';
+import { DraggableDialogTitleComponent } from '../draggable-dialog-title/draggable-dialog-title.component';
 
 export interface InteriorDoorDialogData {
   mode: 'create' | 'edit';
@@ -38,6 +39,7 @@ export type InteriorDoorDialogResult = Omit<InteriorDoorItem, 'id'>;
 @Component({
   selector: 'app-interior-door-dialog',
   imports: [
+    DraggableDialogTitleComponent,
     ReactiveFormsModule,
     MatButtonModule,
     MatDialogModule,

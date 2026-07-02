@@ -1,0 +1,32 @@
+<h2
+  mat-dialog-title
+  class="draggable-dialog-title"
+  cdkDrag
+  cdkDragRootElement=".cdk-overlay-pane"
+  cdkDragBoundary=".cdk-overlay-container"
+  #dialogDrag="cdkDrag"
+>
+  <span class="draggable-dialog-title__text"><ng-content></ng-content></span>
+  <span class="draggable-dialog-title__actions">
+    <button
+      mat-icon-button
+      type="button"
+      class="draggable-dialog-title__button"
+      aria-label="Центрировать окно"
+      title="Центрировать"
+      (click)="dialogDrag.reset()"
+    >
+      <mat-icon>center_focus_strong</mat-icon>
+    </button>
+    <button
+      mat-icon-button
+      type="button"
+      class="draggable-dialog-title__button draggable-dialog-title__drag-button"
+      aria-label="Перетащить окно"
+      title="Перетащить"
+      cdkDragHandle
+    >
+      <mat-icon>open_with</mat-icon>
+    </button>
+  </span>
+</h2>

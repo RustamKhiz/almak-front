@@ -1,4 +1,4 @@
-import { DecimalPipe } from '@angular/common';
+﻿import { DecimalPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, DestroyRef, inject } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -15,6 +15,7 @@ import { MoldingItem, MoldingPlatbandType, OrderItemType } from '../../../types/
 import { CatalogAutocompleteFieldComponent } from '../../../ui/catalog-autocomplete-field/catalog-autocomplete-field.component';
 import { QuantityFieldComponent } from '../../../ui/quantity-field/quantity-field.component';
 import { bindLeadingCapitalization } from '../../utils/form-text';
+import { DraggableDialogTitleComponent } from '../draggable-dialog-title/draggable-dialog-title.component';
 
 export interface PlatbandDialogData {
   mode: 'create' | 'edit';
@@ -29,6 +30,7 @@ export type PlatbandDialogResult = Omit<MoldingItem, 'id'>[];
 @Component({
   selector: 'app-platband-dialog',
   imports: [
+    DraggableDialogTitleComponent,
     ReactiveFormsModule,
     DecimalPipe,
     MatButtonModule,

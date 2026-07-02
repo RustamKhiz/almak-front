@@ -1,4 +1,4 @@
-import { DecimalPipe } from '@angular/common';
+﻿import { DecimalPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCheckboxModule } from '@angular/material/checkbox';
@@ -19,10 +19,11 @@ import {
   PrintPreset,
 } from './print-constructor.types';
 import { ENTRANCE_DOOR_OPENING_LABELS } from '../../constants/entrance-door-catalog';
+import { DraggableDialogTitleComponent } from '../draggable-dialog-title/draggable-dialog-title.component';
 
 @Component({
   selector: 'app-print-constructor-dialog',
-  imports: [DecimalPipe, MatButtonModule, MatCheckboxModule, MatDialogModule],
+  imports: [DraggableDialogTitleComponent, DecimalPipe, MatButtonModule, MatCheckboxModule, MatDialogModule],
   templateUrl: './print-constructor-dialog.component.html',
   styleUrl: './print-constructor-dialog.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
