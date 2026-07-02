@@ -77,17 +77,18 @@ export class OrderDocumentService {
 
     let rowNumber = 1;
     const interiorRows = order.interiorDoors
-      .map((item) =>
+      .flatMap((item) => this.buildInteriorDoorDocumentRows(item))
+      .map((row) =>
         this.buildRow(
           rowNumber++,
-          'Межкомнатная дверь',
-          item.model,
-          this.formatInteriorDoorSize(item),
-          `${this.getLeafTypeLabel(item.leafType)}, ${item.color}, ${this.getInteriorDoorGlassLabel(item)}`,
-          item.comment || '-',
-          this.getInteriorDoorCount(item),
-          this.getInteriorDoorTotal(item),
-          this.getInteriorDoorTotal(item),
+          row.type,
+          row.title,
+          row.size,
+          row.color,
+          row.comment,
+          row.count,
+          row.price,
+          row.amount,
         ),
       )
       .join('');
@@ -510,20 +511,7 @@ export class OrderDocumentService {
 
   private buildCustomRows(order: OrderCreatePayload): readonly CustomDocumentRow[] {
     return [
-      ...order.interiorDoors.map(
-        (item): CustomDocumentRow => ({
-          key: `interiorDoor:${item.id}`,
-          type: 'Межкомнатная дверь',
-          title: item.model,
-          size: this.formatInteriorDoorSize(item),
-          color: `${this.getLeafTypeLabel(item.leafType)}, ${item.color}, ${this.getInteriorDoorGlassLabel(item)}`,
-          comment: item.comment || '-',
-          supplier: item.supplier,
-          count: this.getInteriorDoorCount(item),
-          price: this.getInteriorDoorTotal(item),
-          amount: this.getInteriorDoorTotal(item),
-        }),
-      ),
+      ...order.interiorDoors.flatMap((item) => this.buildInteriorDoorDocumentRows(item)),
       ...order.entranceDoors.map(
         (item): CustomDocumentRow => ({
           key: `entranceDoor:${item.id}`,
@@ -823,15 +811,13 @@ export class OrderDocumentService {
 
   private getInteriorDoorTotal(item: InteriorDoorItem): number {
     const firstLeafTotal = item.price * item.count;
+    const rebateBarTotal = Number(item.rebateBarPrice ?? 0) * item.rebateBarCount;
+
     if (item.leafType !== DoorLeafType.Double) {
       return firstLeafTotal;
     }
 
-    return firstLeafTotal + Number(item.price2 ?? 0) * Number(item.count2 ?? 0);
-  }
-
-  private getInteriorDoorCount(item: InteriorDoorItem): number {
-    return item.count + (item.leafType === DoorLeafType.Double ? Number(item.count2 ?? 0) : 0);
+    return firstLeafTotal + Number(item.price2 ?? 0) * Number(item.count2 ?? 0) + rebateBarTotal;
   }
 
   private getInteriorDoorGlassLabel(item: InteriorDoorItem): string {
@@ -840,6 +826,50 @@ export class OrderDocumentService {
     }
 
     return `со стеклом${item.glassComment ? `: ${item.glassComment}` : ''}`;
+  }
+
+  private buildInteriorDoorDocumentRows(item: InteriorDoorItem): readonly CustomDocumentRow[] {
+    const common = {
+      key: `interiorDoor:${item.id}`,
+      type: 'Межкомнатная дверь',
+      color: `${this.getLeafTypeLabel(item.leafType)}, ${item.color}, ${this.getInteriorDoorGlassLabel(item)}`,
+      comment: item.comment || '-',
+      supplier: item.supplier,
+    };
+    const rows: CustomDocumentRow[] = [
+      {
+        ...common,
+        title: item.model,
+        size: this.formatDoorSize(item.width, item.height, null),
+        count: item.count,
+        price: item.price,
+        amount: item.price * item.count,
+      },
+    ];
+
+    if (item.leafType === DoorLeafType.Double) {
+      rows.push({
+        ...common,
+        title: `${item.model} (створка 2)`,
+        size: this.formatDoorSize(item.width2 ?? 0, item.height2 ?? item.height, null),
+        count: Number(item.count2 ?? 0),
+        price: Number(item.price2 ?? 0),
+        amount: Number(item.price2 ?? 0) * Number(item.count2 ?? 0),
+      });
+
+      if (item.rebateBarCount > 0 || item.rebateBarPrice !== null) {
+        rows.push({
+          ...common,
+          title: 'Притворная планка',
+          size: '-',
+          count: item.rebateBarCount,
+          price: Number(item.rebateBarPrice ?? 0),
+          amount: Number(item.rebateBarPrice ?? 0) * item.rebateBarCount,
+        });
+      }
+    }
+
+    return rows;
   }
 
   private buildHardwareDocumentRows(item: HardwareItem): readonly CustomDocumentRow[] {

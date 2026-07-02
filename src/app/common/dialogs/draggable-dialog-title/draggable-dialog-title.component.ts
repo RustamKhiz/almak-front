@@ -1,7 +1,7 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { CdkDrag, CdkDragHandle } from '@angular/cdk/drag-drop';
 import { MatButtonModule } from '@angular/material/button';
-import { MatDialogModule } from '@angular/material/dialog';
+import { MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 
 @Component({
@@ -11,4 +11,10 @@ import { MatIconModule } from '@angular/material/icon';
   styleUrl: './draggable-dialog-title.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class DraggableDialogTitleComponent {}
+export class DraggableDialogTitleComponent {
+  private readonly dialogRef = inject(MatDialogRef, { optional: true });
+
+  protected close(): void {
+    this.dialogRef?.close();
+  }
+}
