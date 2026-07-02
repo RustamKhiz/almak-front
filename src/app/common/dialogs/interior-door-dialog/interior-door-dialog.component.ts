@@ -123,8 +123,8 @@ export class InteriorDoorDialogComponent {
 
     this.form.controls.leafType.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((leafType) => {
       this.updateSecondLeafControls(leafType);
-      if (leafType === DoorLeafType.Double && this.form.controls.rebateBarCount.value === 0) {
-        this.form.controls.rebateBarCount.setValue(this.form.controls.count.value ?? 1, { emitEvent: false });
+      if (leafType === DoorLeafType.Double) {
+        this.syncRebateBarCountWithFirstLeafCount();
       }
       if (leafType !== DoorLeafType.Double) {
         this.form.controls.rebateBarCount.setValue(0, { emitEvent: false });
@@ -150,6 +150,7 @@ export class InteriorDoorDialogComponent {
       .subscribe(([, nextCount]) => {
         if (this.form.controls.leafType.value === DoorLeafType.Double) {
           this.form.controls.count2.setValue(nextCount, { emitEvent: false });
+          this.syncRebateBarCountWithFirstLeafCount();
         }
       });
 
@@ -227,5 +228,11 @@ export class InteriorDoorDialogComponent {
     }
 
     secondLeafControls.forEach((control) => control.updateValueAndValidity({ emitEvent: false }));
+  }
+
+  private syncRebateBarCountWithFirstLeafCount(): void {
+    this.form.controls.rebateBarCount.setValue(Math.max(0, Number(this.form.controls.count.value ?? 0)), {
+      emitEvent: false,
+    });
   }
 }
