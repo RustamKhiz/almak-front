@@ -121,26 +121,32 @@
       </div>
     }
 
-    <mat-form-field appearance="outline">
-      <mat-label>Цвет</mat-label>
-      <input matInput formControlName="color" />
-    </mat-form-field>
+    <div class="dialog-section dialog-section--common">
+      <div class="dialog-section__title">Общие параметры</div>
 
-    <mat-form-field appearance="outline">
-      <mat-label>Покрытие</mat-label>
-      <mat-select formControlName="covering">
-        @for (covering of coveringOptions(); track covering) {
-          <mat-option [value]="covering">{{ covering }}</mat-option>
-        }
-      </mat-select>
-    </mat-form-field>
+      <div class="dialog-row">
+        <mat-form-field appearance="outline">
+          <mat-label>Цвет</mat-label>
+          <input matInput formControlName="color" />
+        </mat-form-field>
 
-    <mat-form-field appearance="outline">
-      <mat-label>Комментарий</mat-label>
-      <textarea matInput rows="3" formControlName="comment"></textarea>
-    </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Покрытие</mat-label>
+          <mat-select formControlName="covering">
+            @for (covering of coveringOptions(); track covering) {
+              <mat-option [value]="covering">{{ covering }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      </div>
 
-    <app-catalog-autocomplete-field title="Поставщик" formControlName="supplier" [options]="supplierOptions()" />
+      <mat-form-field appearance="outline">
+        <mat-label>Комментарий</mat-label>
+        <textarea matInput rows="3" formControlName="comment"></textarea>
+      </mat-form-field>
+
+      <app-catalog-autocomplete-field title="Поставщик" formControlName="supplier" [options]="supplierOptions()" />
+    </div>
   </form>
 </mat-dialog-content>
 
