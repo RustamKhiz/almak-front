@@ -1,10 +1,11 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+﻿import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CatalogItem } from '../../../types/catalog.types';
+import { DraggableDialogTitleComponent } from '../draggable-dialog-title/draggable-dialog-title.component';
 
 export interface CatalogItemDialogData {
   item?: CatalogItem;
@@ -12,7 +13,14 @@ export interface CatalogItemDialogData {
 
 @Component({
   selector: 'app-catalog-item-dialog',
-  imports: [MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, ReactiveFormsModule],
+  imports: [
+    DraggableDialogTitleComponent,
+    MatDialogModule,
+    MatButtonModule,
+    MatFormFieldModule,
+    MatInputModule,
+    ReactiveFormsModule,
+  ],
   templateUrl: './catalog-item-dialog.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

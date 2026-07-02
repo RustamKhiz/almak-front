@@ -1,4 +1,4 @@
-import { DecimalPipe } from '@angular/common';
+﻿import { DecimalPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, DestroyRef, inject } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -25,6 +25,7 @@ import { DoorLeafType, InteriorDoorItem, OrderItemType } from '../../../types/or
 import { CatalogAutocompleteFieldComponent } from '../../../ui/catalog-autocomplete-field/catalog-autocomplete-field.component';
 import { QuantityFieldComponent } from '../../../ui/quantity-field/quantity-field.component';
 import { bindLeadingCapitalization } from '../../utils/form-text';
+import { DraggableDialogTitleComponent } from '../draggable-dialog-title/draggable-dialog-title.component';
 
 export interface InteriorDoorDialogData {
   mode: 'create' | 'edit';
@@ -38,6 +39,7 @@ export type InteriorDoorDialogResult = Omit<InteriorDoorItem, 'id'>;
 @Component({
   selector: 'app-interior-door-dialog',
   imports: [
+    DraggableDialogTitleComponent,
     ReactiveFormsModule,
     MatButtonModule,
     MatDialogModule,
@@ -123,8 +125,8 @@ export class InteriorDoorDialogComponent {
 
     this.form.controls.leafType.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((leafType) => {
       this.updateSecondLeafControls(leafType);
-      if (leafType === DoorLeafType.Double && this.form.controls.rebateBarCount.value === 0) {
-        this.form.controls.rebateBarCount.setValue(this.form.controls.count.value ?? 1, { emitEvent: false });
+      if (leafType === DoorLeafType.Double) {
+        this.syncRebateBarCountWithFirstLeafCount();
       }
       if (leafType !== DoorLeafType.Double) {
         this.form.controls.rebateBarCount.setValue(0, { emitEvent: false });
@@ -150,6 +152,7 @@ export class InteriorDoorDialogComponent {
       .subscribe(([, nextCount]) => {
         if (this.form.controls.leafType.value === DoorLeafType.Double) {
           this.form.controls.count2.setValue(nextCount, { emitEvent: false });
+          this.syncRebateBarCountWithFirstLeafCount();
         }
       });
 
@@ -227,5 +230,11 @@ export class InteriorDoorDialogComponent {
     }
 
     secondLeafControls.forEach((control) => control.updateValueAndValidity({ emitEvent: false }));
+  }
+
+  private syncRebateBarCountWithFirstLeafCount(): void {
+    this.form.controls.rebateBarCount.setValue(Math.max(0, Number(this.form.controls.count.value ?? 0)), {
+      emitEvent: false,
+    });
   }
 }

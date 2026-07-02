@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+﻿import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -7,6 +7,7 @@ import { CATALOG_KEYS } from '../../../common/constants/catalog-keys';
 import { SUPPLIER_OPTIONS } from '../../constants/reference-catalogs';
 import { CatalogsService } from '../../../services/catalogs.service';
 import { CatalogAutocompleteFieldComponent } from '../../../ui/catalog-autocomplete-field/catalog-autocomplete-field.component';
+import { DraggableDialogTitleComponent } from '../draggable-dialog-title/draggable-dialog-title.component';
 
 export interface SupplierDialogData {
   supplier: string;
@@ -18,7 +19,13 @@ export interface SupplierDialogResult {
 
 @Component({
   selector: 'app-supplier-dialog',
-  imports: [ReactiveFormsModule, MatButtonModule, MatDialogModule, CatalogAutocompleteFieldComponent],
+  imports: [
+    DraggableDialogTitleComponent,
+    ReactiveFormsModule,
+    MatButtonModule,
+    MatDialogModule,
+    CatalogAutocompleteFieldComponent,
+  ],
   templateUrl: './supplier-dialog.component.html',
   styleUrl: './supplier-dialog.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, DestroyRef, inject, signal } from '@angular/core';
+﻿import { ChangeDetectionStrategy, Component, computed, DestroyRef, inject, signal } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -30,6 +30,7 @@ import {
 import { CatalogAutocompleteFieldComponent } from '../../../ui/catalog-autocomplete-field/catalog-autocomplete-field.component';
 import { QuantityFieldComponent } from '../../../ui/quantity-field/quantity-field.component';
 import { bindLeadingCapitalization } from '../../utils/form-text';
+import { DraggableDialogTitleComponent } from '../draggable-dialog-title/draggable-dialog-title.component';
 
 export interface EntranceDoorDialogData {
   mode: 'create' | 'edit';
@@ -41,6 +42,7 @@ export type EntranceDoorDialogResult = Omit<EntranceDoorItem, 'id'>;
 @Component({
   selector: 'app-entrance-door-dialog',
   imports: [
+    DraggableDialogTitleComponent,
     ReactiveFormsModule,
     MatButtonModule,
     MatCheckboxModule,

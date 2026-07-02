@@ -1,8 +1,9 @@
-import { DatePipe } from '@angular/common';
+﻿import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { OrderPayment } from '../../../types/order.types';
+import { DraggableDialogTitleComponent } from '../draggable-dialog-title/draggable-dialog-title.component';
 
 export interface OrderPaymentHistoryDialogData {
   payments: readonly OrderPayment[];
@@ -10,7 +11,7 @@ export interface OrderPaymentHistoryDialogData {
 
 @Component({
   selector: 'app-order-payment-history-dialog',
-  imports: [MatDialogModule, MatButtonModule, DatePipe],
+  imports: [DraggableDialogTitleComponent, MatDialogModule, MatButtonModule, DatePipe],
   templateUrl: './order-payment-history-dialog.component.html',
   styleUrl: './order-payment-history-dialog.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

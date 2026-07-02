@@ -1,0 +1,41 @@
+.draggable-dialog-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 56px;
+  cursor: default;
+  user-select: none;
+}
+
+.draggable-dialog-title__text {
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.draggable-dialog-title__actions {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 2px;
+}
+
+.draggable-dialog-title__button {
+  --mdc-icon-button-state-layer-size: 36px;
+  width: 36px;
+  height: 36px;
+  padding: 6px;
+  color: #4b5563;
+}
+
+.draggable-dialog-title__button mat-icon {
+  width: 20px;
+  height: 20px;
+  font-size: 20px;
+}
+
+.draggable-dialog-title__drag-button {
+  cursor: move;
+}

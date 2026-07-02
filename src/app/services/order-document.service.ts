@@ -70,7 +70,7 @@ export class OrderDocumentService {
       order.moldings.reduce((sum, item) => sum + this.getMoldingDocumentRowCount(item), 0) +
       order.extensions.length +
       order.capitals.length +
-      order.hardwares.length +
+      order.hardwares.reduce((sum, item) => sum + this.getHardwareDocumentRowCount(item), 0) +
       order.panelings.length +
       order.skirtings.length;
     const layoutMode = this.getLayoutMode(order, rowCount);
@@ -153,17 +153,18 @@ export class OrderDocumentService {
       )
       .join('');
     const hardwareRows = order.hardwares
-      .map((item) =>
+      .flatMap((item) => this.buildHardwareDocumentRows(item))
+      .map((row) =>
         this.buildRow(
           rowNumber++,
-          'Фурнитура',
-          this.getHardwareTitle(item),
-          '-',
-          this.getHardwareExecutionLabel(item),
-          item.comment || '-',
-          this.getHardwareCount(item),
-          this.getHardwareTotal(item),
-          this.getHardwareTotal(item),
+          row.type,
+          row.title,
+          row.size,
+          row.color,
+          row.comment,
+          row.count,
+          row.price,
+          row.amount,
         ),
       )
       .join('');
@@ -220,6 +221,7 @@ export class OrderDocumentService {
             .logo { display: block; width: 76px; height: 76px; max-width: 76px; max-height: 76px; object-fit: contain; filter: grayscale(100%) contrast(120%); -webkit-filter: grayscale(100%) contrast(120%); }
             .company { font-size: 13px; }
             .company strong { font-size: 15px; }
+            .company-phone { font-size: 15px; font-weight: bold; }
             .order-title { text-align: right; }
             .order-title h1 { margin: 0; font-size: 22px; letter-spacing: 0.2px; }
             .order-title .num { margin-top: 2px; font-size: 14px; }
@@ -267,6 +269,7 @@ export class OrderDocumentService {
             .compact .muted { margin-top: 4px; font-size: 11px; }
             .ultra-compact .company { font-size: 12px; }
             .ultra-compact .company strong { font-size: 14px; }
+            .ultra-compact .company-phone { font-size: 14px; }
             .ultra-compact .order-title h1 { font-size: 19px; }
             .ultra-compact .order-title .num { font-size: 13px; }
             .ultra-compact .meta-grid { grid-template-columns: 1fr 1fr 1fr; }
@@ -339,6 +342,7 @@ export class OrderDocumentService {
             .logo { display: block; width: 76px; height: 76px; max-width: 76px; max-height: 76px; object-fit: contain; filter: grayscale(100%) contrast(120%); -webkit-filter: grayscale(100%) contrast(120%); }
             .company { font-size: 13px; }
             .company strong { font-size: 15px; }
+            .company-phone { font-size: 15px; font-weight: bold; }
             .order-title { text-align: right; }
             .order-title h1 { margin: 0; font-size: 22px; letter-spacing: 0.2px; }
             .order-title .num { margin-top: 2px; font-size: 14px; }
@@ -416,7 +420,7 @@ export class OrderDocumentService {
   }
 
   private buildHeader(orderId: number, issueDate: string): string {
-    return `<table class="doc-header"><tbody><tr><td class="company-cell"><table class="company-wrap"><tbody><tr><td class="logo-cell"><img class="logo" src="${this.escapeHtml(this.getLogoSrc())}" alt="Логотип" width="76" height="76" /></td><td><div class="company"><div><strong>Двери Алмак</strong></div><div>ИП Хизриев С.С.</div><div>Тел.: ${this.escapeHtml(STORE_PHONE)}</div><div>${this.escapeHtml(STORE_ADDRESS)}</div></div></td></tr></tbody></table></td><td class="title-cell"><div class="order-title"><h1>ЗАКАЗ-НАРЯД</h1><div class="num">№ ${orderId} от ${issueDate}</div></div></td></tr></tbody></table>`;
+    return `<table class="doc-header"><tbody><tr><td class="company-cell"><table class="company-wrap"><tbody><tr><td class="logo-cell"><img class="logo" src="${this.escapeHtml(this.getLogoSrc())}" alt="Логотип" width="76" height="76" /></td><td><div class="company"><div><strong>Двери Алмак</strong></div><div>ИП Хизриев С.С.</div><div>${this.escapeHtml(STORE_ADDRESS)}</div><div class="company-phone">Тел.: ${this.escapeHtml(STORE_PHONE)}</div></div></td></tr></tbody></table></td><td class="title-cell"><div class="order-title"><h1>ЗАКАЗ-НАРЯД</h1><div class="num">№ ${orderId} от ${issueDate}</div></div></td></tr></tbody></table>`;
   }
 
   private buildPrintButton(): string {
@@ -563,20 +567,7 @@ export class OrderDocumentService {
           amount: this.getCapitalTotal(item),
         }),
       ),
-      ...order.hardwares.map(
-        (item): CustomDocumentRow => ({
-          key: `hardware:${item.id}`,
-          type: 'Фурнитура',
-          title: this.getHardwareTitle(item),
-          size: '-',
-          color: this.getHardwareExecutionLabel(item),
-          comment: item.comment || '-',
-          supplier: item.supplier,
-          count: this.getHardwareCount(item),
-          price: this.getHardwareTotal(item),
-          amount: this.getHardwareTotal(item),
-        }),
-      ),
+      ...order.hardwares.flatMap((item) => this.buildHardwareDocumentRows(item)),
       ...order.panelings.map(
         (item): CustomDocumentRow => ({
           key: `paneling:${item.id}`,
@@ -851,65 +842,73 @@ export class OrderDocumentService {
     return `со стеклом${item.glassComment ? `: ${item.glassComment}` : ''}`;
   }
 
-  private getHardwareTitle(item: HardwareItem): string {
-    return item.handleModel ? `Ручка ${item.handleModel}` : 'Ручка';
-  }
+  private buildHardwareDocumentRows(item: HardwareItem): readonly CustomDocumentRow[] {
+    const rows: CustomDocumentRow[] = [];
+    const common = {
+      key: `hardware:${item.id}`,
+      type: 'Фурнитура',
+      size: '-',
+      comment: item.comment || '-',
+      supplier: item.supplier,
+    };
+    const addRow = (title: string, count: number | null, price: number | null, color = '-'): void => {
+      rows.push({
+        ...common,
+        title,
+        color,
+        count: Number(count ?? 0),
+        price: Number(price ?? 0),
+        amount: this.getOptionalTotal(count, price),
+      });
+    };
 
-  private getHardwareExecutionLabel(item: HardwareItem): string {
-    const details: string[] = [];
-    if (item.handleColor) {
-      details.push(`цвет ручки: ${item.handleColor}`);
-    }
-    if (item.handleCount !== null || item.handlePrice !== null) {
-      details.push(`ручка ${this.formatCountPrice(item.handleCount, item.handlePrice)}`);
-    }
-    if (item.fixatorCount !== null || item.fixatorPrice !== null) {
-      details.push(`фиксатор ${this.formatCountPrice(item.fixatorCount, item.fixatorPrice)}`);
-    }
-    if (item.thumbturnCount !== null || item.thumbturnPrice !== null) {
-      details.push(`крутилка ${this.formatCountPrice(item.thumbturnCount, item.thumbturnPrice)}`);
+    if (item.handleModel || item.handleColor || item.handleCount !== null || item.handlePrice !== null) {
+      addRow(
+        item.handleModel ? `Ручка ${item.handleModel}` : 'Ручка',
+        item.handleCount,
+        item.handlePrice,
+        item.handleColor || '-',
+      );
     }
     if (item.lockCount !== null || item.lockPrice !== null) {
-      details.push(`замок ${this.formatCountPrice(item.lockCount, item.lockPrice)}`);
+      addRow('Замок', item.lockCount, item.lockPrice);
     }
-    if (item.cylinderCount !== null || item.cylinderPrice !== null) {
-      details.push(`барабан ${this.formatCountPrice(item.cylinderCount, item.cylinderPrice)}`);
-    }
-    if (item.escutcheonCount !== null || item.escutcheonPrice !== null) {
-      details.push(`накладка ${this.formatCountPrice(item.escutcheonCount, item.escutcheonPrice)}`);
+    if (item.fixatorCount !== null || item.fixatorPrice !== null) {
+      addRow('Фиксатор', item.fixatorCount, item.fixatorPrice);
     }
     if (item.clickCount !== null || item.clickPrice !== null) {
-      details.push(`щелчок ${this.formatCountPrice(item.clickCount, item.clickPrice)}`);
+      addRow('Щелчок', item.clickCount, item.clickPrice);
+    }
+    if (item.thumbturnCount !== null || item.thumbturnPrice !== null) {
+      addRow('Крутилка', item.thumbturnCount, item.thumbturnPrice);
+    }
+    if (item.escutcheonCount !== null || item.escutcheonPrice !== null) {
+      addRow('Накладка', item.escutcheonCount, item.escutcheonPrice);
+    }
+    if (item.cylinderCount !== null || item.cylinderPrice !== null) {
+      addRow('Барабан', item.cylinderCount, item.cylinderPrice);
     }
     if (item.boltCount !== null || item.boltPrice !== null) {
-      details.push(`шпингалет ${this.formatCountPrice(item.boltCount, item.boltPrice)}`);
+      addRow('Шпингалет', item.boltCount, item.boltPrice);
     }
-    if (item.hingeRightCount !== null || item.hingePrice !== null) {
-      details.push(`петли правые ${this.formatCountPrice(item.hingeRightCount, item.hingePrice)}`);
+    if (item.hingeRightCount !== null) {
+      addRow('Петли правые', item.hingeRightCount, item.hingePrice);
     }
     if (item.hingeLeftCount !== null) {
-      details.push(`петли левые ${this.formatCountPrice(item.hingeLeftCount, item.hingePrice)}`);
+      addRow('Петли левые', item.hingeLeftCount, item.hingePrice);
+    }
+    if (item.hingeRightCount === null && item.hingeLeftCount === null && item.hingePrice !== null) {
+      addRow('Петли', null, item.hingePrice);
     }
     if (item.doorStopCount !== null || item.doorStopPrice !== null) {
-      details.push(`ограничитель ${this.formatCountPrice(item.doorStopCount, item.doorStopPrice)}`);
+      addRow('Ограничитель', item.doorStopCount, item.doorStopPrice);
     }
-    return details.join(', ') || '-';
+
+    return rows;
   }
 
-  private getHardwareCount(item: HardwareItem): number {
-    return (
-      Number(item.handleCount ?? 0) +
-      Number(item.lockCount ?? 0) +
-      Number(item.fixatorCount ?? 0) +
-      Number(item.clickCount ?? 0) +
-      Number(item.thumbturnCount ?? 0) +
-      Number(item.escutcheonCount ?? 0) +
-      Number(item.cylinderCount ?? 0) +
-      Number(item.boltCount ?? 0) +
-      Number(item.hingeCount ?? 0) +
-      Number(item.doorStopCount ?? 0)
-      // hingeCount already includes right+left
-    );
+  private getHardwareDocumentRowCount(item: HardwareItem): number {
+    return this.buildHardwareDocumentRows(item).length;
   }
 
   private getHardwareTotal(item: HardwareItem): number {
@@ -941,10 +940,6 @@ export class OrderDocumentService {
 
   private formatPanelingSize(item: PanelingItem): string {
     return item.sizes.map((size) => `${size.width}x${size.height}`).join('; ');
-  }
-
-  private formatCountPrice(count: number | null, price: number | null): string {
-    return `${count ?? 0} x ${this.formatMoney(price ?? 0)}`;
   }
 
   private formatMoney(value: number): string {
