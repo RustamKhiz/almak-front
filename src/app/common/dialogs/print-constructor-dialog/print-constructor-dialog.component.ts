@@ -214,7 +214,7 @@ export class PrintConstructorDialogComponent {
         type: 'extension' as const,
         typeLabel: 'Доборы',
         title: item.color,
-        summary: `${item.width}x${item.height}, ${item.totalArea} м2${this.getSupplierSummary(item.supplier)}`,
+        summary: `${this.formatExtensionSizes(item)}, ${item.quantityPerSet} шт., ${item.totalArea} м2${this.getSupplierSummary(item.supplier)}`,
         total: getExtensionTotal(item),
       })),
       ...order.capitals.map((item) => ({
@@ -254,5 +254,9 @@ export class PrintConstructorDialogComponent {
 
   private getSupplierSummary(supplier: string): string {
     return supplier ? `, поставщик ${supplier}` : ', поставщик не указан';
+  }
+
+  private formatExtensionSizes(item: { sizes: readonly { width: number; height: number; quantity: number }[] }): string {
+    return item.sizes.map((size) => `${size.width}x${size.height}x${size.quantity}`).join('; ');
   }
 }

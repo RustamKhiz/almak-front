@@ -5,13 +5,14 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { DEFAULT_EXTENSION_COVERING, EXTENSION_COVERING_OPTIONS } from '../../constants/molding-catalog';
 import { CATALOG_KEYS } from '../../constants/catalog-keys';
 import { SUPPLIER_OPTIONS } from '../../constants/reference-catalogs';
 import { CatalogsService } from '../../../services/catalogs.service';
-import { ExtensionItem, OrderItemType } from '../../../types/order.types';
+import { ExtensionItem, ExtensionSize, OrderItemType } from '../../../types/order.types';
 import { CatalogAutocompleteFieldComponent } from '../../../ui/catalog-autocomplete-field/catalog-autocomplete-field.component';
 import { QuantityFieldComponent } from '../../../ui/quantity-field/quantity-field.component';
 import { bindLeadingCapitalization } from '../../utils/form-text';
@@ -34,6 +35,7 @@ export type ExtensionDialogResult = Omit<ExtensionItem, 'id'>;
     MatButtonModule,
     MatDialogModule,
     MatFormFieldModule,
+    MatIconModule,
     MatInputModule,
     MatSelectModule,
     DecimalPipe,
@@ -69,10 +71,7 @@ export class ExtensionDialogComponent {
       this.data.extension?.covering ?? this.data.defaultCovering ?? DEFAULT_EXTENSION_COVERING,
       [Validators.required],
     ],
-    width: [this.data.extension?.width ?? null, [Validators.required, Validators.min(1)]],
-    height: [this.data.extension?.height ?? null, [Validators.required, Validators.min(1)]],
-    setCount: [this.normalizeSetCount(this.data.extension?.setCount ?? 0), [Validators.required, Validators.min(0)]],
-    quantityPerSet: [this.data.extension?.quantityPerSet ?? 0, [Validators.required, Validators.min(0)]],
+    sizes: this.fb.array(this.getInitialSizes().map((size) => this.createSizeGroup(size))),
     totalArea: [this.data.extension?.totalArea ?? null, [Validators.required, Validators.min(0)]],
     price: [this.data.extension?.price ?? null, [Validators.required, Validators.min(0)]],
     comment: [this.data.extension?.comment ?? ''],
@@ -83,22 +82,14 @@ export class ExtensionDialogComponent {
   constructor() {
     bindLeadingCapitalization(this.form.controls.color, this.destroyRef);
 
-    this.form.controls.setCount.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((value) => {
-      this.form.controls.quantityPerSet.setValue(Number((Number(value ?? 0) * 2.5).toFixed(1)));
-    });
-
-    this.lastAutoTotalArea = this.calculateArea(
-      this.form.controls.width.value,
-      this.form.controls.height.value,
-      this.form.controls.quantityPerSet.value,
-    );
+    this.lastAutoTotalArea = this.calculateTotalArea(this.form.controls.sizes.getRawValue());
 
     if (this.form.controls.totalArea.value == null) {
       this.form.controls.totalArea.setValue(this.lastAutoTotalArea, { emitEvent: false });
     }
 
-    this.form.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(({ width, height, quantityPerSet }) => {
-      const nextAutoTotalArea = this.calculateArea(width ?? null, height ?? null, quantityPerSet ?? null);
+    this.form.controls.sizes.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((sizes) => {
+      const nextAutoTotalArea = this.calculateTotalArea(sizes);
       const currentTotalArea = this.form.controls.totalArea.value;
 
       if (currentTotalArea == null || currentTotalArea === this.lastAutoTotalArea) {
@@ -109,8 +100,24 @@ export class ExtensionDialogComponent {
     });
   }
 
+  protected get sizeControls() {
+    return this.form.controls.sizes.controls;
+  }
+
   protected onCancelClick(): void {
     this.dialogRef.close();
+  }
+
+  protected onAddSizeClick(): void {
+    this.form.controls.sizes.push(this.createSizeGroup({ width: 0, height: 0, quantity: 1 }));
+  }
+
+  protected onRemoveSizeClick(index: number): void {
+    if (this.form.controls.sizes.length <= 1) {
+      return;
+    }
+
+    this.form.controls.sizes.removeAt(index);
   }
 
   protected onSaveClick(): void {
@@ -120,20 +127,24 @@ export class ExtensionDialogComponent {
     }
 
     const value = this.form.getRawValue();
+    const sizes = this.normalizeSizes(value.sizes);
+    const firstSize = sizes[0];
+    const totalQuantity = this.calculateTotalQuantity(sizes);
     this.dialogRef.close({
       type: OrderItemType.Extension,
       supplier: value.supplier?.trim() ?? '',
       costPrice: this.data.extension?.costPrice ?? 0,
-      color: value.color?.trim(),
-      covering: value.covering,
-      width: value.width,
-      height: value.height,
-      setCount: this.normalizeSetCount(value.setCount),
-      quantityPerSet: value.quantityPerSet,
-      totalArea: value.totalArea,
-      comment: value.comment?.trim(),
+      color: value.color?.trim() ?? '',
+      covering: value.covering ?? DEFAULT_EXTENSION_COVERING,
+      width: firstSize.width,
+      height: firstSize.height,
+      sizes,
+      setCount: 0,
+      quantityPerSet: totalQuantity,
+      totalArea: Number(value.totalArea ?? 0),
+      comment: value.comment?.trim() ?? '',
       count: 1,
-      price: value.price,
+      price: Number(value.price ?? 0),
     });
   }
 
@@ -143,15 +154,73 @@ export class ExtensionDialogComponent {
     return Number(value.totalArea ?? 0) * Number(value.price ?? 0);
   }
 
-  private calculateArea(width: number | null, height: number | null, quantityPerSet: number | null): number {
-    if (width == null || height == null || quantityPerSet == null) {
+  protected calculateSizeArea(width: number | null, height: number | null, quantity: number | null): number {
+    if (width == null || height == null || quantity == null) {
       return 0;
     }
 
-    return Number(((width * height * quantityPerSet) / 10000).toFixed(2));
+    return Number(((width * height * (quantity ?? 0)) / 10000).toFixed(2));
   }
 
-  private normalizeSetCount(value: number | null | undefined): number {
-    return Math.max(0, Math.round(Number(value ?? 0)));
+  protected getTotalQuantity(): number {
+    return this.calculateTotalQuantity(this.form.controls.sizes.getRawValue());
+  }
+
+  protected getAutoTotalArea(): number {
+    return this.calculateTotalArea(this.form.controls.sizes.getRawValue());
+  }
+
+  private getInitialSizes(): ExtensionSize[] {
+    const sizes = this.data.extension?.sizes;
+    if (sizes?.length) {
+      return sizes.map((size) => ({
+        width: size.width,
+        height: size.height,
+        quantity: size.quantity,
+      }));
+    }
+
+    if (this.data.extension?.width && this.data.extension.height) {
+      return [
+        {
+          width: this.data.extension.width,
+          height: this.data.extension.height,
+          quantity: this.data.extension.quantityPerSet || 1,
+        },
+      ];
+    }
+
+    return [{ width: 0, height: 0, quantity: 1 }];
+  }
+
+  private createSizeGroup(size: ExtensionSize) {
+    return this.fb.group({
+      width: [size.width || null, [Validators.required, Validators.min(1)]],
+      height: [size.height || null, [Validators.required, Validators.min(1)]],
+      quantity: [size.quantity || 1, [Validators.required, Validators.min(0.01)]],
+    });
+  }
+
+  private normalizeSizes(sizes: readonly Partial<ExtensionSize>[]): ExtensionSize[] {
+    return sizes.map((size) => ({
+      width: Math.max(1, Math.round(Number(size.width ?? 1))),
+      height: Math.max(1, Math.round(Number(size.height ?? 1))),
+      quantity: Math.max(0, Number(size.quantity ?? 0)),
+    }));
+  }
+
+  private calculateTotalQuantity(sizes: readonly Partial<ExtensionSize>[]): number {
+    const total = sizes.reduce((sum, size) => sum + Number(size.quantity ?? 0), 0);
+
+    return Number(total.toFixed(2));
+  }
+
+  private calculateTotalArea(sizes: readonly Partial<ExtensionSize>[]): number {
+    const total = sizes.reduce(
+      (sum, size) => sum + this.calculateSizeArea(size.width ?? null, size.height ?? null, size.quantity ?? null),
+      0,
+    );
+
+    return Number(total.toFixed(2));
   }
 }

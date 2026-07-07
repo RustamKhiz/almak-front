@@ -171,12 +171,19 @@ export interface ExtensionItem {
   covering: string;
   width: number;
   height: number;
+  sizes: readonly ExtensionSize[];
   setCount: number;
   quantityPerSet: number;
   totalArea: number;
   comment: string;
   count: number;
   price: number;
+}
+
+export interface ExtensionSize {
+  width: number;
+  height: number;
+  quantity: number;
 }
 
 export interface CapitalItem {

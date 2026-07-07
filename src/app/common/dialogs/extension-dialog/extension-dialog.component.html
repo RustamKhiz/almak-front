@@ -15,20 +15,60 @@
       </mat-select>
     </mat-form-field>
 
-    <div class="dialog-row">
-      <mat-form-field appearance="outline">
-        <mat-label>Ширина</mat-label>
-        <input matInput type="number" formControlName="width" placeholder="0" />
-      </mat-form-field>
+    <div class="sizes-list" formArrayName="sizes">
+      @for (sizeGroup of sizeControls; track $index; let index = $index) {
+        <div class="size-row" [formGroupName]="index">
+          <mat-form-field appearance="outline">
+            <mat-label>Ширина {{ index + 1 }}</mat-label>
+            <input matInput type="number" formControlName="width" placeholder="0" />
+          </mat-form-field>
 
-      <mat-form-field appearance="outline">
-        <mat-label>Высота</mat-label>
-        <input matInput type="number" formControlName="height" placeholder="0" />
-      </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Высота {{ index + 1 }}</mat-label>
+            <input matInput type="number" formControlName="height" placeholder="0" />
+          </mat-form-field>
+
+          <app-quantity-field formControlName="quantity" label="Количество" [min]="0.5" [step]="0.5" />
+
+          <div class="size-row__area">
+            <span>Квадратура</span>
+            <strong>
+              {{
+                calculateSizeArea(
+                  sizeGroup.controls.width.value,
+                  sizeGroup.controls.height.value,
+                  sizeGroup.controls.quantity.value
+                ) | number: '1.0-2'
+              }}
+              м²
+            </strong>
+          </div>
+
+          <button
+            mat-icon-button
+            type="button"
+            class="size-row__remove"
+            aria-label="Удалить размер"
+            [disabled]="sizeControls.length <= 1"
+            (click)="onRemoveSizeClick(index)"
+          >
+            <mat-icon>delete</mat-icon>
+          </button>
+        </div>
+      }
     </div>
 
-    <app-quantity-field formControlName="setCount" label="Количество комплектов" [min]="0" [step]="1" />
-    <app-quantity-field formControlName="quantityPerSet" label="Количество доборов" [min]="0" [step]="0.5" />
+    <button mat-stroked-button type="button" class="add-size-button" (click)="onAddSizeClick()">Добавить</button>
+
+    <div class="total-area">
+      <span>Общее количество</span>
+      <strong>{{ getTotalQuantity() | number: '1.0-2' }} шт.</strong>
+    </div>
+
+    <div class="total-area">
+      <span>Расчетная квадратура</span>
+      <strong>{{ getAutoTotalArea() | number: '1.0-2' }} м²</strong>
+    </div>
 
     <mat-form-field appearance="outline">
       <mat-label>Общая квадратура</mat-label>

@@ -129,8 +129,8 @@ export class OrderDocumentService {
           rowNumber++,
           'Доборы',
           '-',
-          `${item.width}x${item.height}`,
-          `${item.color}, ${this.getExtensionCoveringLabel(item.covering)}`,
+          this.formatExtensionSize(item),
+          `${item.color}, ${this.getExtensionCoveringLabel(item.covering)}, общ. кв.м ${item.totalArea}`,
           item.comment || '-',
           item.quantityPerSet,
           item.price,
@@ -532,8 +532,8 @@ export class OrderDocumentService {
           key: `extension:${item.id}`,
           type: 'Доборы',
           title: '-',
-          size: `${item.width}x${item.height}`,
-          color: `${item.color}, ${this.getExtensionCoveringLabel(item.covering)}`,
+          size: this.formatExtensionSize(item),
+          color: `${item.color}, ${this.getExtensionCoveringLabel(item.covering)}, общ. кв.м ${item.totalArea}`,
           comment: item.comment || '-',
           supplier: item.supplier,
           count: item.quantityPerSet,
@@ -970,6 +970,10 @@ export class OrderDocumentService {
 
   private formatPanelingSize(item: PanelingItem): string {
     return item.sizes.map((size) => `${size.width}x${size.height}`).join('; ');
+  }
+
+  private formatExtensionSize(item: ExtensionItem): string {
+    return item.sizes.map((size) => `${size.width}x${size.height}x${size.quantity}`).join('; ');
   }
 
   private formatMoney(value: number): string {

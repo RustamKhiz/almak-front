@@ -12,6 +12,7 @@ import {
   EntranceDoorOpening,
   ExtensionCovering,
   ExtensionItem,
+  ExtensionSize,
   HardwareItem,
   HardwareMechanismType,
   InteriorDoorCovering,
@@ -143,12 +144,18 @@ interface BackendExtension {
   covering?: string;
   width: number;
   height: number;
+  sizes?: BackendExtensionSize[];
   setCount?: number;
   quantityPerSet?: number;
   totalArea?: number;
   comment?: string;
   count: number;
   price: number;
+}
+interface BackendExtensionSize {
+  width: number;
+  height: number;
+  quantity?: number;
 }
 interface BackendCapital {
   id: number;
@@ -321,6 +328,7 @@ interface BackendExtensionPayload {
   covering: string;
   width: number;
   height: number;
+  sizes: readonly ExtensionSize[];
   setCount: number;
   quantityPerSet: number;
   totalArea: number;
@@ -596,6 +604,7 @@ export class OrdersService {
         covering: item.covering,
         width: item.width,
         height: item.height,
+        sizes: item.sizes,
         setCount: item.setCount,
         quantityPerSet: item.quantityPerSet,
         totalArea: item.totalArea,
@@ -757,6 +766,10 @@ export class OrdersService {
     };
   }
   private mapBackendExtensionToItem(item: BackendExtension): ExtensionItem {
+    const sizes = this.normalizeExtensionSizes(item);
+    const totalQuantity = this.calculateExtensionTotalQuantity(sizes);
+    const totalArea = item.totalArea ?? this.calculateExtensionTotalArea(sizes);
+
     return {
       id: item.id,
       type: OrderItemType.Extension,
@@ -766,9 +779,10 @@ export class OrdersService {
       covering: this.mapExtensionCovering(item.covering),
       width: item.width,
       height: item.height,
-      setCount: item.setCount ?? Number(((item.quantityPerSet ?? 0.5) / 2.5).toFixed(1)),
-      quantityPerSet: item.quantityPerSet ?? 0.5,
-      totalArea: item.totalArea ?? Number(((item.width * item.height * 0.5) / 10000).toFixed(2)),
+      sizes,
+      setCount: item.setCount ?? Number(((item.quantityPerSet ?? totalQuantity) / 2.5).toFixed(1)),
+      quantityPerSet: item.quantityPerSet ?? totalQuantity,
+      totalArea,
       comment: item.comment ?? '',
       count: item.count,
       price: item.price,
@@ -942,6 +956,36 @@ export class OrdersService {
     }
 
     return [{ width: item.width, height: item.height }];
+  }
+  private normalizeExtensionSizes(item: BackendExtension): ExtensionSize[] {
+    if (item.sizes?.length) {
+      const sizes = item.sizes
+        .map((size) => ({
+          width: size.width,
+          height: size.height,
+          quantity: size.quantity ?? 0,
+        }))
+        .filter((size) => size.width > 0 && size.height > 0 && size.quantity > 0);
+      if (sizes.length) {
+        return sizes;
+      }
+    }
+
+    return [
+      {
+        width: item.width,
+        height: item.height,
+        quantity: item.quantityPerSet ?? 0.5,
+      },
+    ];
+  }
+  private calculateExtensionTotalQuantity(sizes: readonly ExtensionSize[]): number {
+    return Number(sizes.reduce((sum, size) => sum + size.quantity, 0).toFixed(2));
+  }
+  private calculateExtensionTotalArea(sizes: readonly ExtensionSize[]): number {
+    const totalArea = sizes.reduce((sum, size) => sum + (size.width * size.height * size.quantity) / 10000, 0);
+
+    return Number(totalArea.toFixed(2));
   }
   private parsePanelingSizeList(value?: string): PanelingSize[] {
     if (!value) {

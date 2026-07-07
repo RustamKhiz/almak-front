@@ -25,7 +25,7 @@
       <app-quantity-field formControlName="count" label="Количество" [min]="1" [step]="1" />
     </div>
 
-    <mat-form-field appearance="outline">
+    <mat-form-field appearance="outline" class="readonly-field">
       <mat-label>Всего метров</mat-label>
       <input matInput type="number" [value]="totalLength()" readonly tabindex="-1" />
       <mat-hint>Длина × Количество</mat-hint>
@@ -36,7 +36,7 @@
       <input matInput type="number" formControlName="price" placeholder="0" />
     </mat-form-field>
 
-    <mat-form-field appearance="outline">
+    <mat-form-field appearance="outline" class="readonly-field">
       <mat-label>Стоимость</mat-label>
       <input matInput type="number" [value]="totalCost()" readonly tabindex="-1" />
       <mat-hint>Цена × Всего метров</mat-hint>
