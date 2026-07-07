@@ -16,6 +16,7 @@ import { HardwareItem, OrderItemType } from '../../../types/order.types';
 import { CatalogAutocompleteFieldComponent } from '../../../ui/catalog-autocomplete-field/catalog-autocomplete-field.component';
 import { CATALOG_KEYS } from '../../constants/catalog-keys';
 import { SUPPLIER_OPTIONS } from '../../constants/reference-catalogs';
+import { NumberInputNoWheelDirective } from '../../directives/number-input-no-wheel.directive';
 import { CatalogsService } from '../../../services/catalogs.service';
 import { bindLeadingCapitalization } from '../../utils/form-text';
 import { DraggableDialogTitleComponent } from '../draggable-dialog-title/draggable-dialog-title.component';
@@ -37,6 +38,7 @@ export type HardwareDialogResult = Omit<HardwareItem, 'id'>;
     MatFormFieldModule,
     MatInputModule,
     CatalogAutocompleteFieldComponent,
+    NumberInputNoWheelDirective,
   ],
   templateUrl: './hardware-dialog.component.html',
   styleUrl: './hardware-dialog.component.scss',

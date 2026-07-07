@@ -29,6 +29,7 @@ import {
 } from '../../../types/order.types';
 import { CatalogAutocompleteFieldComponent } from '../../../ui/catalog-autocomplete-field/catalog-autocomplete-field.component';
 import { QuantityFieldComponent } from '../../../ui/quantity-field/quantity-field.component';
+import { NumberInputNoWheelDirective } from '../../directives/number-input-no-wheel.directive';
 import { bindLeadingCapitalization } from '../../utils/form-text';
 import { DraggableDialogTitleComponent } from '../draggable-dialog-title/draggable-dialog-title.component';
 
@@ -52,6 +53,7 @@ export type EntranceDoorDialogResult = Omit<EntranceDoorItem, 'id'>;
     MatSelectModule,
     CatalogAutocompleteFieldComponent,
     QuantityFieldComponent,
+    NumberInputNoWheelDirective,
   ],
   templateUrl: './entrance-door-dialog.component.html',
   styleUrl: './entrance-door-dialog.component.scss',

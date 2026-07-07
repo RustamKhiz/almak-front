@@ -2,10 +2,11 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, forwardRef, inje
 import { ControlValueAccessor, FormsModule, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
+import { NumberInputNoWheelDirective } from '../../common/directives/number-input-no-wheel.directive';
 
 @Component({
   selector: 'app-quantity-field',
-  imports: [FormsModule, MatButtonModule, MatIconModule],
+  imports: [FormsModule, MatButtonModule, MatIconModule, NumberInputNoWheelDirective],
   templateUrl: './quantity-field.component.html',
   styleUrl: './quantity-field.component.scss',
   providers: [
