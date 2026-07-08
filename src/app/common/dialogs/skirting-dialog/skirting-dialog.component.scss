@@ -21,6 +21,10 @@ mat-dialog-content {
   align-items: start;
 }
 
+.dialog-row--triple {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
 mat-form-field,
 app-catalog-autocomplete-field,
 app-quantity-field {

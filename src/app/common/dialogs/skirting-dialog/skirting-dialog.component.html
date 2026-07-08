@@ -1,22 +1,24 @@
 <app-draggable-dialog-title>{{ title() }}</app-draggable-dialog-title>
 <mat-dialog-content>
   <form class="dialog-form" [formGroup]="form">
-    <mat-form-field appearance="outline">
-      <mat-label>Модель</mat-label>
-      <input matInput formControlName="model" />
-    </mat-form-field>
-
-    <mat-form-field appearance="outline">
-      <mat-label>Цвет</mat-label>
-      <input matInput formControlName="color" />
-    </mat-form-field>
-
-    <mat-form-field appearance="outline">
-      <mat-label>Высота (мм)</mat-label>
-      <input matInput type="number" appNumberInputNoWheel formControlName="height" placeholder="0" />
-    </mat-form-field>
-
     <div class="dialog-row">
+      <mat-form-field appearance="outline">
+        <mat-label>Модель</mat-label>
+        <input matInput formControlName="model" />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Цвет</mat-label>
+        <input matInput formControlName="color" />
+      </mat-form-field>
+    </div>
+
+    <div class="dialog-row dialog-row--triple">
+      <mat-form-field appearance="outline">
+        <mat-label>Высота (мм)</mat-label>
+        <input matInput type="number" appNumberInputNoWheel formControlName="height" placeholder="0" />
+      </mat-form-field>
+
       <mat-form-field appearance="outline">
         <mat-label>Длина (м)</mat-label>
         <input matInput type="number" appNumberInputNoWheel formControlName="length" placeholder="0.00" step="0.01" />
@@ -25,16 +27,18 @@
       <app-quantity-field formControlName="count" label="Количество" [min]="1" [step]="1" />
     </div>
 
-    <mat-form-field appearance="outline" class="readonly-field">
-      <mat-label>Всего метров</mat-label>
-      <input matInput type="number" appNumberInputNoWheel [value]="totalLength()" readonly tabindex="-1" />
-      <mat-hint>Длина × Количество</mat-hint>
-    </mat-form-field>
+    <div class="dialog-row">
+      <mat-form-field appearance="outline" class="readonly-field">
+        <mat-label>Всего метров</mat-label>
+        <input matInput type="number" appNumberInputNoWheel [value]="totalLength()" readonly tabindex="-1" />
+        <mat-hint>Длина × Количество</mat-hint>
+      </mat-form-field>
 
-    <mat-form-field appearance="outline">
-      <mat-label>Цена (₽/м)</mat-label>
-      <input matInput type="number" appNumberInputNoWheel formControlName="price" placeholder="0" />
-    </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Цена (₽/м)</mat-label>
+        <input matInput type="number" appNumberInputNoWheel formControlName="price" placeholder="0" />
+      </mat-form-field>
+    </div>
 
     <mat-form-field appearance="outline" class="readonly-field">
       <mat-label>Стоимость</mat-label>
