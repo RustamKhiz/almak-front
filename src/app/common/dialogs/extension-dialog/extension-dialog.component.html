@@ -17,43 +17,47 @@
 
     <div class="sizes-list" formArrayName="sizes">
       @for (sizeGroup of sizeControls; track $index; let index = $index) {
-        <div class="size-row" [formGroupName]="index">
-          <mat-form-field appearance="outline">
-            <mat-label>Ширина {{ index + 1 }}</mat-label>
-            <input matInput type="number" appNumberInputNoWheel formControlName="width" placeholder="0" />
-          </mat-form-field>
+        <div class="size-block" [formGroupName]="index">
+          <div class="size-block__row size-block__row--dimensions">
+            <mat-form-field appearance="outline">
+              <mat-label>Ширина {{ index + 1 }}</mat-label>
+              <input matInput type="number" appNumberInputNoWheel formControlName="width" placeholder="0" />
+            </mat-form-field>
 
-          <mat-form-field appearance="outline">
-            <mat-label>Высота {{ index + 1 }}</mat-label>
-            <input matInput type="number" appNumberInputNoWheel formControlName="height" placeholder="0" />
-          </mat-form-field>
-
-          <app-quantity-field formControlName="quantity" label="Количество" [min]="0.5" [step]="0.5" />
-
-          <div class="size-row__area">
-            <span>Квадратура</span>
-            <strong>
-              {{
-                calculateSizeArea(
-                  sizeGroup.controls.width.value,
-                  sizeGroup.controls.height.value,
-                  sizeGroup.controls.quantity.value
-                ) | number: '1.0-2'
-              }}
-              м²
-            </strong>
+            <mat-form-field appearance="outline">
+              <mat-label>Высота {{ index + 1 }}</mat-label>
+              <input matInput type="number" appNumberInputNoWheel formControlName="height" placeholder="0" />
+            </mat-form-field>
           </div>
 
-          <button
-            mat-icon-button
-            type="button"
-            class="size-row__remove"
-            aria-label="Удалить размер"
-            [disabled]="sizeControls.length <= 1"
-            (click)="onRemoveSizeClick(index)"
-          >
-            <mat-icon>delete</mat-icon>
-          </button>
+          <div class="size-block__row size-block__row--summary">
+            <app-quantity-field formControlName="quantity" label="Количество" [min]="1" [step]="1" />
+
+            <div class="size-block__area">
+              <span>Квадратура</span>
+              <strong>
+                {{
+                  calculateSizeArea(
+                    sizeGroup.controls.width.value,
+                    sizeGroup.controls.height.value,
+                    sizeGroup.controls.quantity.value
+                  ) | number: '1.0-2'
+                }}
+                м²
+              </strong>
+            </div>
+
+            <button
+              mat-icon-button
+              type="button"
+              class="size-block__remove"
+              aria-label="Удалить размер"
+              [disabled]="sizeControls.length <= 1"
+              (click)="onRemoveSizeClick(index)"
+            >
+              <mat-icon>delete</mat-icon>
+            </button>
+          </div>
         </div>
       }
     </div>

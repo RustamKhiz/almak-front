@@ -199,7 +199,7 @@ export class ExtensionDialogComponent {
     return this.fb.group({
       width: [size.width || null, [Validators.required, Validators.min(1)]],
       height: [size.height || null, [Validators.required, Validators.min(1)]],
-      quantity: [size.quantity || 1, [Validators.required, Validators.min(0.01)]],
+      quantity: [size.quantity || 1, [Validators.required, Validators.min(1)]],
     });
   }
 
@@ -207,7 +207,7 @@ export class ExtensionDialogComponent {
     return sizes.map((size) => ({
       width: Math.max(1, Math.round(Number(size.width ?? 1))),
       height: Math.max(1, Math.round(Number(size.height ?? 1))),
-      quantity: Math.max(0, Number(size.quantity ?? 0)),
+      quantity: Math.max(1, Math.round(Number(size.quantity ?? 1))),
     }));
   }
 
