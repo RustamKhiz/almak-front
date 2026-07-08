@@ -7,6 +7,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatNativeDateModule } from '@angular/material/core';
 import { MatSelectModule } from '@angular/material/select';
+import { NumberInputNoWheelDirective } from '../../../common/directives/number-input-no-wheel.directive';
 import { PhoneMaskDirective } from '../../../common/directives/phone-mask.directive';
 import { getOrderStatusLabel, ORDER_STATUS_OPTIONS } from '../../../common/constants/order-status';
 import { OrderStatus } from '../../../types/order.types';
@@ -33,6 +34,7 @@ export interface OrdersTableFilters {
     MatSelectModule,
     MatIconModule,
     PhoneMaskDirective,
+    NumberInputNoWheelDirective,
   ],
   templateUrl: './orders-table-filters.component.html',
   styleUrl: './orders-table-filters.component.scss',

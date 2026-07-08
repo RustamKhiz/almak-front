@@ -724,7 +724,7 @@ export class OrderViewComponent {
       itemId: item.id,
       typeLabel: 'Доборы',
       title: `${item.color} · ${this.extensionCoveringLabels[item.covering] ?? item.covering}`,
-      summary: `${item.width} × ${item.height} см · комплектов ${item.setCount} · доборов ${item.quantityPerSet} · ${item.totalArea} м²`,
+      summary: `${this.formatExtensionSizes(item)} · всего ${item.quantityPerSet} шт. · ${item.totalArea} м²`,
       supplier: item.supplier,
       costPrice: item.costPrice,
       countLabel: `${item.quantityPerSet} шт.`,
@@ -736,10 +736,11 @@ export class OrderViewComponent {
         total: getExtensionTotal(item),
         sections: [
           this.section('Размеры и комплектация', [
-            ['Ширина', `${item.width} см`],
-            ['Высота', `${item.height} см`],
-            ['Количество комплектов', `${item.setCount}`],
-            ['Количество доборов', `${item.quantityPerSet}`],
+            ...item.sizes.map((size, index): [string, string] => [
+              `Размер ${index + 1}`,
+              `${size.width} × ${size.height} см · ${size.quantity} шт. · ${this.formatArea(this.getExtensionSizeArea(size.width, size.height, size.quantity))}`,
+            ]),
+            ['Общее количество', `${item.quantityPerSet} шт.`],
             ['Общая квадратура', `${item.totalArea} м²`],
           ]),
           this.section('Стоимость', [
@@ -950,6 +951,14 @@ export class OrderViewComponent {
 
   private formatPanelingSizes(item: PanelingItem): string {
     return item.sizes.map((size) => `${size.width} × ${size.height} см`).join(' · ');
+  }
+
+  private formatExtensionSizes(item: ExtensionItem): string {
+    return item.sizes.map((size) => `${size.width} × ${size.height} см × ${size.quantity} шт.`).join(' · ');
+  }
+
+  private getExtensionSizeArea(width: number, height: number, quantity: number): number {
+    return Number(((width * height * quantity) / 10000).toFixed(2));
   }
 
   private getPanelingSizeArea(width: number, height: number): number {

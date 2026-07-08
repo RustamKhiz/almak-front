@@ -139,6 +139,10 @@ export class OrderItemsListComponent {
     return item.sizes.map((size) => `${size.width} × ${size.height} см`).join(' · ');
   }
 
+  protected getExtensionSizesLabel(item: ExtensionItem): string {
+    return item.sizes.map((size) => `${size.width} × ${size.height} см × ${size.quantity} шт.`).join(' · ');
+  }
+
   protected onEditClick(entity: OrderItemEntity, id: number): void {
     this.editClick.emit({ entity, id });
   }

@@ -13,6 +13,7 @@ import { CatalogsService } from '../../../services/catalogs.service';
 import { CapitalItem, OrderItemType } from '../../../types/order.types';
 import { CatalogAutocompleteFieldComponent } from '../../../ui/catalog-autocomplete-field/catalog-autocomplete-field.component';
 import { QuantityFieldComponent } from '../../../ui/quantity-field/quantity-field.component';
+import { NumberInputNoWheelDirective } from '../../directives/number-input-no-wheel.directive';
 import { bindLeadingCapitalization } from '../../utils/form-text';
 import { DraggableDialogTitleComponent } from '../draggable-dialog-title/draggable-dialog-title.component';
 
@@ -37,6 +38,7 @@ export type CapitalDialogResult = Omit<CapitalItem, 'id'>;
     MatSelectModule,
     CatalogAutocompleteFieldComponent,
     QuantityFieldComponent,
+    NumberInputNoWheelDirective,
   ],
   templateUrl: './capital-dialog.component.html',
   styleUrl: './capital-dialog.component.scss',

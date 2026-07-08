@@ -24,6 +24,7 @@ import { CatalogsService } from '../../../services/catalogs.service';
 import { DoorLeafType, InteriorDoorItem, OrderItemType } from '../../../types/order.types';
 import { CatalogAutocompleteFieldComponent } from '../../../ui/catalog-autocomplete-field/catalog-autocomplete-field.component';
 import { QuantityFieldComponent } from '../../../ui/quantity-field/quantity-field.component';
+import { NumberInputNoWheelDirective } from '../../directives/number-input-no-wheel.directive';
 import { bindLeadingCapitalization } from '../../utils/form-text';
 import { DraggableDialogTitleComponent } from '../draggable-dialog-title/draggable-dialog-title.component';
 
@@ -50,6 +51,7 @@ export type InteriorDoorDialogResult = Omit<InteriorDoorItem, 'id'>;
     DecimalPipe,
     CatalogAutocompleteFieldComponent,
     QuantityFieldComponent,
+    NumberInputNoWheelDirective,
   ],
   templateUrl: './interior-door-dialog.component.html',
   styleUrl: './interior-door-dialog.component.scss',

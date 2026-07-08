@@ -1,0 +1,56 @@
+.dialog-form {
+  display: grid;
+  gap: 16px;
+  padding: 8px 0;
+}
+
+mat-dialog-content {
+  display: block;
+  max-height: min(70vh, 720px);
+  margin: 0;
+  padding: 0 12px;
+  box-sizing: border-box;
+  overflow: auto;
+  scrollbar-gutter: stable;
+}
+
+.dialog-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  align-items: start;
+}
+
+mat-form-field,
+app-catalog-autocomplete-field,
+app-quantity-field {
+  width: 100%;
+}
+
+.readonly-field {
+  --mdc-outlined-text-field-container-color: #f9fafb;
+}
+
+.readonly-field input {
+  color: #111827;
+  font-weight: 700;
+}
+
+textarea {
+  min-height: 72px;
+  resize: vertical;
+}
+
+[mat-dialog-actions] {
+  padding: 12px 24px 18px;
+}
+
+@media (max-width: 640px) {
+  mat-dialog-content {
+    padding: 0 8px;
+  }
+
+  .dialog-row {
+    grid-template-columns: 1fr;
+  }
+}

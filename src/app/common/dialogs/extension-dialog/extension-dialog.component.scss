@@ -18,6 +18,17 @@ mat-dialog-content {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
 }
+.sizes-list {
+  display: grid;
+  gap: 12px;
+}
+.size-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(150px, 0.7fr) 132px 40px;
+  gap: 12px;
+  align-items: start;
+}
+.size-row__area,
 .total-preview {
   display: flex;
   align-items: center;
@@ -28,17 +39,57 @@ mat-dialog-content {
   border-bottom: 1px solid #e5e7eb;
   color: #374151;
 }
+.size-row__area,
+.total-area {
+  min-height: 56px;
+  display: grid;
+  align-content: center;
+  gap: 4px;
+  padding: 0 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background: #f9fafb;
+}
+.size-row__area span,
+.total-area span {
+  font-size: 12px;
+  color: #6b7280;
+}
+.size-row__area strong,
+.total-area strong {
+  color: #111827;
+  font-size: 16px;
+  font-weight: 700;
+}
+.total-area {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.size-row__remove {
+  margin-top: 8px;
+}
+.add-size-button {
+  justify-self: start;
+}
 .total-preview strong {
   color: #111827;
   font-size: 18px;
   font-weight: 700;
 }
-mat-form-field {
+mat-form-field,
+app-quantity-field {
   width: 100%;
 }
 @media (max-width: 640px) {
-  .dialog-row {
+  .dialog-row,
+  .size-row {
     grid-template-columns: 1fr;
+  }
+  .size-row__remove {
+    justify-self: end;
+    margin-top: -8px;
   }
   mat-dialog-content {
     padding: 0 8px;

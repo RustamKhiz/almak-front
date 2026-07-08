@@ -4,6 +4,7 @@ import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/materia
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
+import { NumberInputNoWheelDirective } from '../../directives/number-input-no-wheel.directive';
 import { DraggableDialogTitleComponent } from '../draggable-dialog-title/draggable-dialog-title.component';
 
 export interface OrderPaymentDialogData {
@@ -29,6 +30,7 @@ export interface OrderPaymentDialogResult {
     MatButtonModule,
     MatFormFieldModule,
     MatInputModule,
+    NumberInputNoWheelDirective,
   ],
   templateUrl: './order-payment-dialog.component.html',
   styleUrl: './order-payment-dialog.component.scss',

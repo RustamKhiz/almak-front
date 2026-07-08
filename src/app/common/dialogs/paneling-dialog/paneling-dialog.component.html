@@ -31,12 +31,12 @@
         <div class="size-row" [formGroupName]="index">
           <mat-form-field appearance="outline">
             <mat-label>Ширина {{ index + 1 }}</mat-label>
-            <input matInput type="number" formControlName="width" placeholder="0" />
+            <input matInput type="number" appNumberInputNoWheel formControlName="width" placeholder="0" />
           </mat-form-field>
 
           <mat-form-field appearance="outline">
             <mat-label>Высота {{ index + 1 }}</mat-label>
-            <input matInput type="number" formControlName="height" placeholder="0" />
+            <input matInput type="number" appNumberInputNoWheel formControlName="height" placeholder="0" />
           </mat-form-field>
 
           <div class="size-row__area">
@@ -57,7 +57,7 @@
 
     <mat-form-field appearance="outline">
       <mat-label>Цена за квадратный метр</mat-label>
-      <input matInput type="number" formControlName="price" placeholder="0" />
+      <input matInput type="number" appNumberInputNoWheel formControlName="price" placeholder="0" />
     </mat-form-field>
 
     <div class="total-area">

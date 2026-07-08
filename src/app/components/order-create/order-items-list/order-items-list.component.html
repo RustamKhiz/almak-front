@@ -270,7 +270,7 @@
                 Доборы · {{ item.color }} · {{ extensionCoveringLabels[item.covering] }}
               </div>
               <div class="door-item__meta">
-                {{ item.width }} × {{ item.height }} см · доборов {{ item.quantityPerSet }} · общая квадратура
+                {{ getExtensionSizesLabel(item) }} · всего {{ item.quantityPerSet }} шт. · общая квадратура
                 {{ item.totalArea | number: '1.0-2' }} м² · {{ item.price | number: '1.0-0' }} ₽/м²
                 @if (item.comment) {
                   · {{ item.comment }}

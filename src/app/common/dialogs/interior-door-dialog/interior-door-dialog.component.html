@@ -65,7 +65,7 @@
         />
         <mat-form-field appearance="outline">
           <mat-label>Цена</mat-label>
-          <input matInput type="number" formControlName="price" placeholder="0" />
+          <input matInput type="number" appNumberInputNoWheel formControlName="price" placeholder="0" />
         </mat-form-field>
         <app-quantity-field formControlName="count" label="Количество 1" />
       </div>
@@ -87,7 +87,7 @@
           />
           <mat-form-field appearance="outline">
             <mat-label>Цена 2</mat-label>
-            <input matInput type="number" formControlName="price2" placeholder="0" />
+            <input matInput type="number" appNumberInputNoWheel formControlName="price2" placeholder="0" />
           </mat-form-field>
           <app-quantity-field formControlName="count2" label="Количество 2" />
         </div>
@@ -99,7 +99,7 @@
         <app-quantity-field formControlName="rebateBarCount" label="Притворная планка, кол-во" [min]="0" [step]="1" />
         <mat-form-field appearance="outline">
           <mat-label>Цена притворной планки</mat-label>
-          <input matInput type="number" formControlName="rebateBarPrice" placeholder="0" />
+          <input matInput type="number" appNumberInputNoWheel formControlName="rebateBarPrice" placeholder="0" />
           <mat-hint>Необязательно</mat-hint>
         </mat-form-field>
       </div>

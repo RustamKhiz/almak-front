@@ -11,7 +11,6 @@ import {
   OrderCreatePayload,
   PanelingItem,
   PanelingKind,
-  SkirtingItem,
 } from '../types/order.types';
 import { PrintConstructorOptions } from '../common/dialogs/print-constructor-dialog/print-constructor.types';
 import {
@@ -20,6 +19,19 @@ import {
   CAPITAL_COVERING_LABELS,
   PANELING_COVERING_LABELS,
 } from '../common/constants/molding-catalog';
+import {
+  getCapitalTotal,
+  getCustomerDebt,
+  getExtensionTotal,
+  getFrameTotal,
+  getOptionalTotal,
+  getOrderTotal,
+  getPaidAmount,
+  getPanelingTotal,
+  getPlatbandTotal,
+  getSkirtingTotal,
+  getTotalToPay,
+} from '../common/utils/order-calculations';
 
 const STORE_PHONE = '+7 (989) 475-09-90';
 const STORE_ADDRESS = 'г. Махачкала, ул. Акушинского 330';
@@ -51,19 +63,10 @@ export class OrderDocumentService {
 
   buildOrderHtml(orderId: number, order: OrderCreatePayload): string {
     const issueDate = this.escapeHtml(order.date);
-    const totalAmount =
-      order.interiorDoors.reduce((sum, item) => sum + this.getInteriorDoorTotal(item), 0) +
-      order.entranceDoors.reduce((sum, item) => sum + item.price * item.count, 0) +
-      order.moldings.reduce((sum, item) => sum + this.getMoldingTotal(item), 0) +
-      order.extensions.reduce((sum, item) => sum + this.getExtensionTotal(item), 0) +
-      order.capitals.reduce((sum, item) => sum + this.getCapitalTotal(item), 0) +
-      order.hardwares.reduce((sum, item) => sum + this.getHardwareTotal(item), 0) +
-      order.panelings.reduce((sum, item) => sum + this.getPanelingTotal(item), 0) +
-      order.skirtings.reduce((sum, item) => sum + this.getSkirtingTotal(item), 0);
-    const totalToPay = Math.max(totalAmount - order.discount, 0);
-    const paidAmount =
-      order.payments.length > 0 ? order.payments.reduce((sum, payment) => sum + payment.amount, 0) : order.prepayment;
-    const customerDebt = Math.max(totalToPay - paidAmount, 0);
+    const totalAmount = getOrderTotal(order);
+    const totalToPay = getTotalToPay(order);
+    const paidAmount = getPaidAmount(order);
+    const customerDebt = getCustomerDebt(order);
     const rowCount =
       order.interiorDoors.length +
       order.entranceDoors.length +
@@ -129,12 +132,12 @@ export class OrderDocumentService {
           rowNumber++,
           'Доборы',
           '-',
-          `${item.width}x${item.height}`,
-          `${item.color}, ${this.getExtensionCoveringLabel(item.covering)}`,
+          this.formatExtensionSize(item),
+          `${item.color}, ${this.getExtensionCoveringLabel(item.covering)}, общ. кв.м ${item.totalArea}`,
           item.comment || '-',
           item.quantityPerSet,
           item.price,
-          this.getExtensionTotal(item),
+          getExtensionTotal(item),
         ),
       )
       .join('');
@@ -149,7 +152,7 @@ export class OrderDocumentService {
           item.comment || '-',
           item.count,
           item.price,
-          this.getCapitalTotal(item),
+          getCapitalTotal(item),
         ),
       )
       .join('');
@@ -180,7 +183,7 @@ export class OrderDocumentService {
           item.comment || '-',
           item.count,
           item.price,
-          this.getPanelingTotal(item),
+          getPanelingTotal(item),
         ),
       )
       .join('');
@@ -195,7 +198,7 @@ export class OrderDocumentService {
           item.comment || '-',
           item.count,
           item.price,
-          this.getSkirtingTotal(item),
+          getSkirtingTotal(item),
         ),
       )
       .join('');
@@ -314,8 +317,7 @@ export class OrderDocumentService {
     const issueDate = this.escapeHtml(order.date);
     const selectedTotal = rows.reduce((sum, row) => sum + row.amount, 0);
     const totalToPay = Math.max(selectedTotal - (normalizedOptions.showDiscount ? order.discount : 0), 0);
-    const paidAmount =
-      order.payments.length > 0 ? order.payments.reduce((sum, payment) => sum + payment.amount, 0) : order.prepayment;
+    const paidAmount = getPaidAmount(order);
     const customerDebt = Math.max(totalToPay - paidAmount, 0);
     const layoutMode = rows.length >= 12 ? 'compact' : '';
     const hasPriceColumns = normalizedOptions.showPrices;
@@ -532,13 +534,13 @@ export class OrderDocumentService {
           key: `extension:${item.id}`,
           type: 'Доборы',
           title: '-',
-          size: `${item.width}x${item.height}`,
-          color: `${item.color}, ${this.getExtensionCoveringLabel(item.covering)}`,
+          size: this.formatExtensionSize(item),
+          color: `${item.color}, ${this.getExtensionCoveringLabel(item.covering)}, общ. кв.м ${item.totalArea}`,
           comment: item.comment || '-',
           supplier: item.supplier,
           count: item.quantityPerSet,
           price: item.price,
-          amount: this.getExtensionTotal(item),
+          amount: getExtensionTotal(item),
         }),
       ),
       ...order.capitals.map(
@@ -552,7 +554,7 @@ export class OrderDocumentService {
           supplier: item.supplier,
           count: item.count,
           price: item.price,
-          amount: this.getCapitalTotal(item),
+          amount: getCapitalTotal(item),
         }),
       ),
       ...order.hardwares.flatMap((item) => this.buildHardwareDocumentRows(item)),
@@ -567,7 +569,21 @@ export class OrderDocumentService {
           supplier: item.supplier,
           count: item.count,
           price: item.price,
-          amount: this.getPanelingTotal(item),
+          amount: getPanelingTotal(item),
+        }),
+      ),
+      ...order.skirtings.map(
+        (item): CustomDocumentRow => ({
+          key: `skirting:${item.id}`,
+          type: 'Плинтус',
+          title: item.model || 'Плинтус',
+          size: `${item.height} мм`,
+          color: `${item.color}, ${item.length} м × ${item.count} шт. = ${Number((item.length * item.count).toFixed(2))} м`,
+          comment: item.comment || '-',
+          supplier: item.supplier,
+          count: item.count,
+          price: item.price,
+          amount: getSkirtingTotal(item),
         }),
       ),
     ];
@@ -632,38 +648,31 @@ export class OrderDocumentService {
     };
     const rows: CustomDocumentRow[] = [];
 
-    if (item.frameCount > 0 || item.framePrice > 0) {
+    const frameTotal = getFrameTotal(item);
+    const platbandExtraCount = Math.max(0, Number((item.platbandCount - item.platbandSetCount).toFixed(1)));
+    const platbandTotal = getPlatbandTotal(item);
+
+    if (item.frameBoxCount > 0 || frameTotal > 0) {
       rows.push({
         ...common,
         title: `Коробка (${item.frameCount} шт.)`,
         size: item.frameLength !== null ? `${item.frameLength}` : '-',
         count: item.frameBoxCount,
         price: item.framePrice,
-        amount: item.framePrice * item.frameBoxCount,
+        amount: frameTotal,
       });
     }
 
-    if (item.platbandCount > 0 || item.platbandPrice > 0) {
+    if (platbandExtraCount > 0 || platbandTotal > 0) {
       rows.push({
         ...common,
         title: `Наличник ${this.getMoldingPlatbandTypeLabel(item.platbandType)}${
           item.platbandFigure ? ` (${item.platbandFigure})` : ''
         }`,
         size: item.platbandLength !== null ? `${item.platbandLength}` : '-',
-        count: item.platbandCount,
+        count: platbandExtraCount,
         price: item.platbandPrice,
-        amount: (item.platbandPrice - item.platbandDeductionPrice) * item.platbandCount,
-      });
-    }
-
-    if (item.rebateBarCount > 0 || item.rebateBarPrice > 0) {
-      rows.push({
-        ...common,
-        title: 'Притворная планка',
-        size: '-',
-        count: item.rebateBarCount,
-        price: item.rebateBarPrice,
-        amount: item.rebateBarPrice * item.rebateBarCount,
+        amount: platbandTotal,
       });
     }
 
@@ -785,41 +794,6 @@ export class OrderDocumentService {
     }
   }
 
-  private getMoldingTotal(item: MoldingItem): number {
-    return (
-      item.framePrice * item.frameBoxCount +
-      (item.platbandPrice - item.platbandDeductionPrice) * item.platbandCount +
-      item.rebateBarPrice * item.rebateBarCount
-    );
-  }
-
-  private getExtensionTotal(item: ExtensionItem): number {
-    return item.totalArea * item.price;
-  }
-
-  private getPanelingTotal(item: PanelingItem): number {
-    return item.totalArea * item.price;
-  }
-
-  private getSkirtingTotal(item: SkirtingItem): number {
-    return item.price * item.length * item.count;
-  }
-
-  private getCapitalTotal(item: { price: number; count: number }): number {
-    return item.price * item.count;
-  }
-
-  private getInteriorDoorTotal(item: InteriorDoorItem): number {
-    const firstLeafTotal = item.price * item.count;
-    const rebateBarTotal = Number(item.rebateBarPrice ?? 0) * item.rebateBarCount;
-
-    if (item.leafType !== DoorLeafType.Double) {
-      return firstLeafTotal;
-    }
-
-    return firstLeafTotal + Number(item.price2 ?? 0) * Number(item.count2 ?? 0) + rebateBarTotal;
-  }
-
   private getInteriorDoorGlassLabel(item: InteriorDoorItem): string {
     if (!item.hasGlass) {
       return 'глухая';
@@ -888,7 +862,7 @@ export class OrderDocumentService {
         color,
         count: Number(count ?? 0),
         price: Number(price ?? 0),
-        amount: this.getOptionalTotal(count, price),
+        amount: getOptionalTotal(count, price),
       });
     };
 
@@ -927,8 +901,12 @@ export class OrderDocumentService {
     if (item.hingeLeftCount !== null) {
       addRow('Петли левые', item.hingeLeftCount, item.hingePrice);
     }
-    if (item.hingeRightCount === null && item.hingeLeftCount === null && item.hingePrice !== null) {
-      addRow('Петли', null, item.hingePrice);
+    if (
+      item.hingeRightCount === null &&
+      item.hingeLeftCount === null &&
+      (item.hingeCount !== null || item.hingePrice !== null)
+    ) {
+      addRow('Петли', item.hingeCount, item.hingePrice);
     }
     if (item.doorStopCount !== null || item.doorStopPrice !== null) {
       addRow('Ограничитель', item.doorStopCount, item.doorStopPrice);
@@ -939,21 +917,6 @@ export class OrderDocumentService {
 
   private getHardwareDocumentRowCount(item: HardwareItem): number {
     return this.buildHardwareDocumentRows(item).length;
-  }
-
-  private getHardwareTotal(item: HardwareItem): number {
-    return (
-      this.getOptionalTotal(item.handleCount, item.handlePrice) +
-      this.getOptionalTotal(item.lockCount, item.lockPrice) +
-      this.getOptionalTotal(item.fixatorCount, item.fixatorPrice) +
-      this.getOptionalTotal(item.clickCount, item.clickPrice) +
-      this.getOptionalTotal(item.thumbturnCount, item.thumbturnPrice) +
-      this.getOptionalTotal(item.escutcheonCount, item.escutcheonPrice) +
-      this.getOptionalTotal(item.cylinderCount, item.cylinderPrice) +
-      this.getOptionalTotal(item.boltCount, item.boltPrice) +
-      this.getOptionalTotal(item.hingeCount, item.hingePrice) +
-      this.getOptionalTotal(item.doorStopCount, item.doorStopPrice)
-    );
   }
 
   private formatDoorSize(width: number, height: number, width2: number | null): string {
@@ -972,12 +935,12 @@ export class OrderDocumentService {
     return item.sizes.map((size) => `${size.width}x${size.height}`).join('; ');
   }
 
-  private formatMoney(value: number): string {
-    return `${value.toLocaleString('ru-RU', { maximumFractionDigits: 2 })} ₽`;
+  private formatExtensionSize(item: ExtensionItem): string {
+    return item.sizes.map((size) => `${size.width}x${size.height}x${size.quantity}`).join('; ');
   }
 
-  private getOptionalTotal(count: number | null, price: number | null): number {
-    return Number(count ?? 0) * Number(price ?? 0);
+  private formatMoney(value: number): string {
+    return `${value.toLocaleString('ru-RU', { maximumFractionDigits: 2 })} ₽`;
   }
 
   private getLogoSrc(): string {
