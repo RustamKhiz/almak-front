@@ -256,7 +256,9 @@ export class PrintConstructorDialogComponent {
     return supplier ? `, поставщик ${supplier}` : ', поставщик не указан';
   }
 
-  private formatExtensionSizes(item: { sizes: readonly { width: number; height: number; quantity: number }[] }): string {
+  private formatExtensionSizes(item: {
+    sizes: readonly { width: number; height: number; quantity: number }[];
+  }): string {
     return item.sizes.map((size) => `${size.width}x${size.height}x${size.quantity}`).join('; ');
   }
 }

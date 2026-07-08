@@ -1,7 +1,7 @@
 import { Directive, ElementRef, HostListener, inject } from '@angular/core';
 
 @Directive({
-  selector: 'input[type=number]',
+  selector: '[appNumberInputNoWheel]',
   standalone: true,
 })
 export class NumberInputNoWheelDirective {
