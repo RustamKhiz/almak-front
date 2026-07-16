@@ -46,7 +46,7 @@ export class OrderPaymentDialogComponent {
       this.data.initialAmount ?? (null as number | null),
       [
         Validators.required,
-        Validators.min(0),
+        Validators.min(0.01),
         ...(this.data.maxAmount != null ? [Validators.max(this.data.maxAmount)] : []),
       ],
     ],

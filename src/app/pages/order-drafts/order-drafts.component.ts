@@ -43,7 +43,8 @@ export class OrderDraftsComponent {
       payload.extensions.length +
       payload.capitals.length +
       payload.hardwares.length +
-      payload.panelings.length
+      payload.panelings.length +
+      payload.skirtings.length
     );
   }
 

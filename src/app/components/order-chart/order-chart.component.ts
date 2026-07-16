@@ -28,6 +28,7 @@ import {
   getInteriorDoorTotal,
   getMoldingTotal,
   getPanelingTotal,
+  getSkirtingTotal,
 } from '../../common/utils/order-calculations';
 import { OrderRecord, OrdersService } from '../../services/orders.service';
 import { OrderCreatePayload, OrderStatus } from '../../types/order.types';
@@ -201,6 +202,7 @@ export class OrderChartComponent implements OnDestroy {
       for (const item of order.capitals) add(item.supplier, getCapitalTotal(item));
       for (const item of order.hardwares) add(item.supplier, getHardwareTotal(item));
       for (const item of order.panelings) add(item.supplier, getPanelingTotal(item));
+      for (const item of order.skirtings) add(item.supplier, getSkirtingTotal(item));
     }
 
     return [...stats.entries()]
