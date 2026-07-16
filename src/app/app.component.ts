@@ -36,7 +36,7 @@ export class AppComponent implements OnInit {
   }
 
   protected onLogoutClick(): void {
-    this.authService.logout();
+    this.authService.logout().pipe(takeUntilDestroyed(this.destroyRef)).subscribe();
     this.router.navigate(['/auth']);
   }
 }
