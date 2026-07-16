@@ -20,7 +20,7 @@ export const appInterceptor: HttpInterceptorFn = (req, next) => {
   const authService = inject(AuthService);
   const snackBar = inject(MatSnackBar);
   const token = authService.getToken();
-  const isAuthRequest = req.url.endsWith('/login') || req.url.endsWith('/refresh');
+  const isAuthRequest = req.url.endsWith('/login') || req.url.endsWith('/refresh') || req.url.endsWith('/logout');
   const request =
     token && !isAuthRequest
       ? req.clone({
@@ -32,9 +32,9 @@ export const appInterceptor: HttpInterceptorFn = (req, next) => {
 
   return next(request).pipe(
     catchError((error: HttpErrorResponse) => {
-      if (error.status !== 401 || isAuthRequest || !authService.getRefreshToken()) {
+      if (error.status !== 401 || isAuthRequest || !authService.canRefresh()) {
         if (error.status === 401) {
-          authService.logout();
+          authService.clearSession();
           if (!router.url.startsWith('/auth')) {
             router.navigate(['/auth']);
           }
@@ -68,7 +68,7 @@ export const appInterceptor: HttpInterceptorFn = (req, next) => {
           ),
         ),
         catchError((refreshError) => {
-          authService.logout();
+          authService.clearSession();
           if (!router.url.startsWith('/auth')) {
             router.navigate(['/auth']);
           }

@@ -29,9 +29,14 @@ export class AuthComponent implements OnInit {
   });
 
   ngOnInit(): void {
-    if (this.authService.hasToken()) {
-      this.router.navigateByUrl('/orders');
-    }
+    this.authService
+      .ensureAuthenticated()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((isAuthenticated) => {
+        if (isAuthenticated) {
+          this.router.navigateByUrl('/orders');
+        }
+      });
   }
 
   protected onSubmitClick(): void {
