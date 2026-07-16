@@ -15,51 +15,14 @@ import { Router } from '@angular/router';
 import { Observable, debounceTime, filter, switchMap } from 'rxjs';
 import { ConfirmDialogComponent, ConfirmDialogData } from '../../common/confirm-dialog/confirm-dialog.component';
 import { INTERIOR_DOOR_COVERING_OPTIONS } from '../../common/constants/interior-door-covering';
-import {
-  CAPITAL_COVERING_OPTIONS,
-  EXTENSION_COVERING_OPTIONS,
-  MOLDING_COVERING_OPTIONS,
-  PANELING_COVERING_OPTIONS,
-} from '../../common/constants/molding-catalog';
+import { MOLDING_COVERING_OPTIONS } from '../../common/constants/molding-catalog';
 import { CATALOG_KEYS } from '../../common/constants/catalog-keys';
 import { CatalogsService } from '../../services/catalogs.service';
-import {
-  CapitalDialogComponent,
-  CapitalDialogData,
-} from '../../common/dialogs/capital-dialog/capital-dialog.component';
-import {
-  EntranceDoorDialogComponent,
-  EntranceDoorDialogData,
-} from '../../common/dialogs/entrance-door-dialog/entrance-door-dialog.component';
-import {
-  ExtensionDialogComponent,
-  ExtensionDialogData,
-} from '../../common/dialogs/extension-dialog/extension-dialog.component';
-import {
-  HardwareDialogComponent,
-  HardwareDialogData,
-} from '../../common/dialogs/hardware-dialog/hardware-dialog.component';
-import {
-  InteriorDoorDialogComponent,
-  InteriorDoorDialogData,
-} from '../../common/dialogs/interior-door-dialog/interior-door-dialog.component';
-import {
-  MoldingDialogComponent,
-  MoldingDialogData,
-} from '../../common/dialogs/molding-dialog/molding-dialog.component';
 import {
   PlatbandDialogComponent,
   PlatbandDialogData,
   PlatbandDialogResult,
 } from '../../common/dialogs/platband-dialog/platband-dialog.component';
-import {
-  PanelingDialogComponent,
-  PanelingDialogData,
-} from '../../common/dialogs/paneling-dialog/paneling-dialog.component';
-import {
-  SkirtingDialogComponent,
-  SkirtingDialogData,
-} from '../../common/dialogs/skirting-dialog/skirting-dialog.component';
 import { PhoneMaskDirective } from '../../common/directives/phone-mask.directive';
 import { getOrderTotal } from '../../common/utils/order-calculations';
 import { OrderDraftsService } from '../../services/order-drafts.service';
@@ -78,21 +41,10 @@ import {
   SkirtingItem,
 } from '../../types/order.types';
 import { addItem, duplicateItem, findItemById, hasItems, removeItem, updateItem } from './order-item-helpers';
+import { createOrderItemEntityConfig, ItemCollection, OrderItemEntityConfig } from './order-item-dialog-config';
 import { OrderItemActionEvent, OrderItemEntity, OrderEntityItem } from './order-item-types';
 import { OrderItemsListComponent } from './order-items-list/order-items-list.component';
 import { bindEachWordCapitalization, bindLeadingCapitalization } from '../../common/utils/form-text';
-
-interface ItemCollection<T> {
-  (): readonly T[];
-  set(value: readonly T[]): void;
-}
-
-interface OrderItemEntityConfig {
-  collection: ItemCollection<OrderEntityItem>;
-  dialogComponent: object;
-  createData: object;
-  getEditData: (item: OrderEntityItem) => object;
-}
 
 @Component({
   selector: 'app-order-create',
@@ -402,82 +354,24 @@ export class OrderCreateComponent implements OnInit {
   }
 
   private getEntityConfig(entity: OrderItemEntity): OrderItemEntityConfig {
-    switch (entity) {
-      case OrderItemEntity.InteriorDoor:
-        return {
-          collection: this.interiorDoors as ItemCollection<OrderEntityItem>,
-          dialogComponent: InteriorDoorDialogComponent,
-          createData: {
-            mode: 'create',
-            ...this.getDefaultDialogData(INTERIOR_DOOR_COVERING_OPTIONS),
-          } as InteriorDoorDialogData,
-          getEditData: (item) => ({ mode: 'edit', door: item as InteriorDoorItem }) as InteriorDoorDialogData,
-        };
-      case OrderItemEntity.EntranceDoor:
-        return {
-          collection: this.entranceDoors as ItemCollection<OrderEntityItem>,
-          dialogComponent: EntranceDoorDialogComponent,
-          createData: { mode: 'create' } as EntranceDoorDialogData,
-          getEditData: (item) => ({ mode: 'edit', door: item as EntranceDoorItem }) as EntranceDoorDialogData,
-        };
-      case OrderItemEntity.Molding:
-      case OrderItemEntity.Frame:
-        return {
-          collection: this.moldings as ItemCollection<OrderEntityItem>,
-          dialogComponent: MoldingDialogComponent,
-          createData: {
-            mode: 'create',
-            ...this.getDefaultDialogData(MOLDING_COVERING_OPTIONS),
-            defaultFrameSetCount: this.calcMoldingDefaultFromDoors(),
-          } as MoldingDialogData,
-          getEditData: (item) => ({ mode: 'edit', molding: item as MoldingItem }) as MoldingDialogData,
-        };
-      case OrderItemEntity.Platband:
-        return {
-          collection: this.moldings as ItemCollection<OrderEntityItem>,
-          dialogComponent: PlatbandDialogComponent,
-          createData: {} as never,
-          getEditData: () => ({}) as never,
-        };
-      case OrderItemEntity.Extension:
-        return {
-          collection: this.extensions as ItemCollection<OrderEntityItem>,
-          dialogComponent: ExtensionDialogComponent,
-          createData: {
-            mode: 'create',
-            ...this.getDefaultDialogData(EXTENSION_COVERING_OPTIONS),
-          } as ExtensionDialogData,
-          getEditData: (item) => ({ mode: 'edit', extension: item as ExtensionItem }) as ExtensionDialogData,
-        };
-      case OrderItemEntity.Capital:
-        return {
-          collection: this.capitals as ItemCollection<OrderEntityItem>,
-          dialogComponent: CapitalDialogComponent,
-          createData: { mode: 'create', ...this.getDefaultDialogData(CAPITAL_COVERING_OPTIONS) } as CapitalDialogData,
-          getEditData: (item) => ({ mode: 'edit', capital: item as CapitalItem }) as CapitalDialogData,
-        };
-      case OrderItemEntity.Hardware:
-        return {
-          collection: this.hardwares as ItemCollection<OrderEntityItem>,
-          dialogComponent: HardwareDialogComponent,
-          createData: { mode: 'create' } as HardwareDialogData,
-          getEditData: (item) => ({ mode: 'edit', hardware: item as HardwareItem }) as HardwareDialogData,
-        };
-      case OrderItemEntity.Paneling:
-        return {
-          collection: this.panelings as ItemCollection<OrderEntityItem>,
-          dialogComponent: PanelingDialogComponent,
-          createData: { mode: 'create', ...this.getDefaultDialogData(PANELING_COVERING_OPTIONS) } as PanelingDialogData,
-          getEditData: (item) => ({ mode: 'edit', paneling: item as PanelingItem }) as PanelingDialogData,
-        };
-      case OrderItemEntity.Skirting:
-        return {
-          collection: this.skirtings as ItemCollection<OrderEntityItem>,
-          dialogComponent: SkirtingDialogComponent,
-          createData: { mode: 'create', ...this.getDefaultDialogData() } as SkirtingDialogData,
-          getEditData: (item) => ({ mode: 'edit', skirting: item as SkirtingItem }) as SkirtingDialogData,
-        };
-    }
+    return createOrderItemEntityConfig(
+      entity,
+      {
+        interiorDoors: this.interiorDoors as ItemCollection<OrderEntityItem>,
+        entranceDoors: this.entranceDoors as ItemCollection<OrderEntityItem>,
+        moldings: this.moldings as ItemCollection<OrderEntityItem>,
+        extensions: this.extensions as ItemCollection<OrderEntityItem>,
+        capitals: this.capitals as ItemCollection<OrderEntityItem>,
+        hardwares: this.hardwares as ItemCollection<OrderEntityItem>,
+        panelings: this.panelings as ItemCollection<OrderEntityItem>,
+        skirtings: this.skirtings as ItemCollection<OrderEntityItem>,
+      },
+      {
+        color: this.form.controls.defaultColor.value.trim(),
+        covering: this.form.controls.defaultCovering.value,
+        frameSetCount: this.calcMoldingDefaultFromDoors(),
+      },
+    );
   }
 
   private getDefaultDialogData<TCovering extends string>(
