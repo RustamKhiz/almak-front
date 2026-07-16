@@ -40,7 +40,11 @@ Angular-приложение для работы с заказами: автор
 
 - [src/app/components/order-create](/c:/main/projects/diplom/almak-front/src/app/components/order-create) — главный экран создания и редактирования заказа.
 - [src/app/pages/order-view](/c:/main/projects/diplom/almak-front/src/app/pages/order-view) — просмотр заказа, смена статуса, печать, скачивание, удаление.
-- [src/app/services/orders.service.ts](/c:/main/projects/diplom/almak-front/src/app/services/orders.service.ts) — центральный mapping между UI и backend API.
+- [src/app/services/orders.service.ts](/c:/main/projects/diplom/almak-front/src/app/services/orders.service.ts) — публичный фасад заказов.
+- [src/app/services/orders-api.service.ts](/c:/main/projects/diplom/almak-front/src/app/services/orders-api.service.ts) — HTTP-запросы заказов.
+- [src/app/services/order.mapper.ts](/c:/main/projects/diplom/almak-front/src/app/services/order.mapper.ts) — mapping между UI и backend API.
+- [src/app/services/order-api.types.ts](/c:/main/projects/diplom/almak-front/src/app/services/order-api.types.ts) — DTO backend API.
+- [src/app/services/order-normalizers.ts](/c:/main/projects/diplom/almak-front/src/app/services/order-normalizers.ts) — числовая и legacy-нормализация.
 - [src/app/services/order-document.service.ts](/c:/main/projects/diplom/almak-front/src/app/services/order-document.service.ts) — генерация HTML и `.doc`.
 - [src/app/types/order.types.ts](/c:/main/projects/diplom/almak-front/src/app/types/order.types.ts) — основные типы заказа.
 - [src/app/common/dialogs](/c:/main/projects/diplom/almak-front/src/app/common/dialogs) — модалки товарных позиций.
@@ -110,7 +114,7 @@ Angular-приложение для работы с заказами: автор
 
 ## Mapping в API
 
-[orders.service.ts](/c:/main/projects/diplom/almak-front/src/app/services/orders.service.ts) отвечает за:
+[orders.service.ts](/c:/main/projects/diplom/almak-front/src/app/services/orders.service.ts) сохраняет публичный API для компонентов и делегирует работу:
 
 - загрузку списка заказов;
 - загрузку одного заказа;
@@ -118,7 +122,8 @@ Angular-приложение для работы с заказами: автор
 - обновление;
 - удаление;
 - смену статуса;
-- преобразование backend JSON в `OrderCreatePayload` и обратно.
+- HTTP-вызовы — `OrdersApiService`;
+- преобразование backend JSON в `OrderCreatePayload` и обратно — `OrderMapper`.
 
 Здесь важно помнить:
 
