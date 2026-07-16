@@ -1,4 +1,4 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import {
@@ -7,6 +7,8 @@ import {
   BackendOrderPayload,
   BackendOrderStatusPayload,
   BackendUpdateOrderDiscountPayload,
+  SupplierStat,
+  SupplierStatsFilters,
 } from './order-api.types';
 import { CoreService } from './core.service';
 
@@ -22,6 +24,16 @@ export class OrdersApiService {
 
   getOrder(id: number): Observable<BackendOrder> {
     return this.http.get<BackendOrder>(`${this.baseUrl}/${id}`);
+  }
+
+  getSupplierStats(filters: SupplierStatsFilters): Observable<SupplierStat[]> {
+    let params = new HttpParams();
+    for (const [key, value] of Object.entries(filters)) {
+      if (value !== undefined && value !== null && value !== '' && value !== 'all') {
+        params = params.set(key, String(value));
+      }
+    }
+    return this.http.get<SupplierStat[]>(`${this.baseUrl}/analytics/suppliers`, { params });
   }
 
   createOrder(payload: BackendOrderPayload): Observable<BackendOrder> {

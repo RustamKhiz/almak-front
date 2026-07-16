@@ -5,11 +5,14 @@ import {
   BackendAddOrderPaymentPayload,
   BackendOrderStatusPayload,
   BackendUpdateOrderDiscountPayload,
+  SupplierStat,
+  SupplierStatsFilters,
 } from './order-api.types';
 import { OrderMapper, OrderRecord } from './order.mapper';
 import { OrdersApiService } from './orders-api.service';
 
 export type { OrderRecord } from './order.mapper';
+export type { SupplierStat, SupplierStatsFilters } from './order-api.types';
 
 @Injectable({ providedIn: 'root' })
 export class OrdersService {
@@ -22,6 +25,10 @@ export class OrdersService {
 
   getOrder(id: number): Observable<OrderCreatePayload> {
     return this.api.getOrder(id).pipe(map((order) => this.mapper.toCreatePayload(order)));
+  }
+
+  getSupplierStats(filters: SupplierStatsFilters): Observable<readonly SupplierStat[]> {
+    return this.api.getSupplierStats(filters);
   }
 
   createOrder(payload: OrderCreatePayload): Observable<number> {

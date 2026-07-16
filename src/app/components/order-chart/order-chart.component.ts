@@ -19,19 +19,9 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { Chart, ChartConfiguration, ChartType, registerables } from 'chart.js';
-import { forkJoin } from 'rxjs';
 import { getOrderStatusLabel, ORDER_STATUS_OPTIONS } from '../../common/constants/order-status';
-import {
-  getCapitalTotal,
-  getExtensionTotal,
-  getHardwareTotal,
-  getInteriorDoorTotal,
-  getMoldingTotal,
-  getPanelingTotal,
-  getSkirtingTotal,
-} from '../../common/utils/order-calculations';
-import { OrderRecord, OrdersService } from '../../services/orders.service';
-import { OrderCreatePayload, OrderStatus } from '../../types/order.types';
+import { OrderRecord, OrdersService, SupplierStat, SupplierStatsFilters } from '../../services/orders.service';
+import { OrderStatus } from '../../types/order.types';
 
 @Component({
   selector: 'app-order-chart',
@@ -61,7 +51,7 @@ export class OrderChartComponent implements OnDestroy {
   private readonly fb = inject(FormBuilder);
   private readonly charts: Chart[] = [];
   private allOrders: readonly OrderRecord[] = [];
-  private allFullOrders: readonly OrderCreatePayload[] = [];
+  private supplierRequestId = 0;
 
   protected readonly isLoading = signal(true);
   protected readonly loadError = signal<string | null>(null);
@@ -69,6 +59,8 @@ export class OrderChartComponent implements OnDestroy {
   protected readonly hasData = signal(false);
   protected readonly filteredOrders = signal<readonly OrderRecord[]>([]);
   protected readonly isLoadingSuppliers = signal(true);
+  protected readonly supplierLoadError = signal<string | null>(null);
+  private readonly supplierStats = signal<readonly SupplierStat[]>([]);
   protected readonly statusOptions = ORDER_STATUS_OPTIONS;
   protected readonly filterForm = this.fb.group({
     dateFrom: [null as Date | null],
@@ -86,6 +78,8 @@ export class OrderChartComponent implements OnDestroy {
       this.hasData();
       this.filteredOrders();
       this.isLoadingSuppliers();
+      this.supplierLoadError();
+      this.supplierStats();
       this.revenueCanvas();
       this.ordersCanvas();
       this.statusCanvas();
@@ -105,7 +99,6 @@ export class OrderChartComponent implements OnDestroy {
           this.applyFilters();
           this.loadError.set(null);
           this.isLoading.set(false);
-          this.loadFullOrders();
         },
         error: () => {
           this.loadError.set('Не удалось загрузить данные для графиков.');
@@ -141,73 +134,46 @@ export class OrderChartComponent implements OnDestroy {
     this.renderStatusChart(canvases.status, orders);
     this.renderPaymentChart(canvases.payment, orders);
 
-    if (!this.isLoadingSuppliers() && canvases.supplier) {
-      const supplierStats = this.getFilteredSupplierStats();
-      this.renderSupplierChart(canvases.supplier, supplierStats);
+    if (!this.isLoadingSuppliers() && !this.supplierLoadError() && canvases.supplier) {
+      this.renderSupplierChart(canvases.supplier, this.supplierStats());
     }
   }
 
-  private loadFullOrders(): void {
-    const ids = this.allOrders.map((o) => o.id);
-    if (ids.length === 0) {
+  private loadSupplierStats(): void {
+    const requestId = ++this.supplierRequestId;
+    if (this.filteredOrders().length === 0) {
+      this.supplierStats.set([]);
+      this.supplierLoadError.set(null);
       this.isLoadingSuppliers.set(false);
       return;
     }
 
-    forkJoin(ids.map((id) => this.ordersService.getOrder(id)))
+    const { dateFrom, dateTo, status, payment } = this.filterForm.getRawValue();
+    const filters: SupplierStatsFilters = {
+      dateFrom: dateFrom ? this.formatFilterDate(dateFrom) : undefined,
+      dateTo: dateTo ? this.formatFilterDate(dateTo) : undefined,
+      status: status ?? undefined,
+      payment: payment ?? 'all',
+    };
+    this.isLoadingSuppliers.set(true);
+    this.supplierLoadError.set(null);
+
+    this.ordersService
+      .getSupplierStats(filters)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-        next: (orders) => {
-          this.allFullOrders = orders;
+        next: (stats) => {
+          if (requestId !== this.supplierRequestId) return;
+          this.supplierStats.set(stats);
           this.isLoadingSuppliers.set(false);
         },
         error: () => {
+          if (requestId !== this.supplierRequestId) return;
+          this.supplierStats.set([]);
+          this.supplierLoadError.set('Не удалось загрузить статистику по поставщикам.');
           this.isLoadingSuppliers.set(false);
         },
       });
-  }
-
-  private getFilteredSupplierStats(): readonly SupplierStat[] {
-    const { dateFrom, dateTo, status, payment } = this.filterForm.getRawValue();
-    const fromTime = dateFrom ? this.getStartOfDay(dateFrom).getTime() : null;
-    const toTime = dateTo ? this.getEndOfDay(dateTo).getTime() : null;
-
-    const filtered = this.allFullOrders.filter((order) => {
-      const orderTime = new Date(order.date).getTime();
-      if (fromTime !== null && orderTime < fromTime) return false;
-      if (toTime !== null && orderTime > toTime) return false;
-      if (status && order.status !== status) return false;
-      if (payment === 'paid' && !order.isPaid) return false;
-      if (payment === 'unpaid' && order.isPaid) return false;
-      return true;
-    });
-
-    return this.aggregateSuppliers(filtered);
-  }
-
-  private aggregateSuppliers(orders: readonly OrderCreatePayload[]): readonly SupplierStat[] {
-    const stats = new Map<string, { count: number; amount: number }>();
-
-    const add = (supplier: string, amount: number) => {
-      const key = supplier || 'Не указан';
-      const cur = stats.get(key) ?? { count: 0, amount: 0 };
-      stats.set(key, { count: cur.count + 1, amount: cur.amount + amount });
-    };
-
-    for (const order of orders) {
-      for (const item of order.interiorDoors) add(item.supplier, getInteriorDoorTotal(item));
-      for (const item of order.entranceDoors) add(item.supplier, item.price * item.count);
-      for (const item of order.moldings) add(item.supplier, getMoldingTotal(item));
-      for (const item of order.extensions) add(item.supplier, getExtensionTotal(item));
-      for (const item of order.capitals) add(item.supplier, getCapitalTotal(item));
-      for (const item of order.hardwares) add(item.supplier, getHardwareTotal(item));
-      for (const item of order.panelings) add(item.supplier, getPanelingTotal(item));
-      for (const item of order.skirtings) add(item.supplier, getSkirtingTotal(item));
-    }
-
-    return [...stats.entries()]
-      .map(([name, { count, amount }]) => ({ name, count, amount }))
-      .sort((a, b) => b.count - a.count);
   }
 
   private renderSupplierChart(canvas: HTMLCanvasElement, stats: readonly SupplierStat[]): void {
@@ -396,6 +362,7 @@ export class OrderChartComponent implements OnDestroy {
 
     this.filteredOrders.set(filtered);
     this.metrics.set(this.buildMetrics(filtered));
+    this.loadSupplierStats();
   }
 
   private getCanvases(): ChartCanvases | null {
@@ -535,6 +502,13 @@ export class OrderChartComponent implements OnDestroy {
   private getEndOfDay(date: Date): Date {
     return new Date(date.getFullYear(), date.getMonth(), date.getDate(), 23, 59, 59, 999);
   }
+
+  private formatFilterDate(date: Date): string {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
 }
 
 interface ChartMetric {
@@ -557,12 +531,6 @@ interface ChartCanvases {
   status: HTMLCanvasElement;
   payment: HTMLCanvasElement;
   supplier?: HTMLCanvasElement;
-}
-
-interface SupplierStat {
-  name: string;
-  count: number;
-  amount: number;
 }
 
 type PaymentFilter = 'all' | 'paid' | 'unpaid';

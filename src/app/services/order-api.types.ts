@@ -398,3 +398,16 @@ export interface BackendAddOrderPaymentPayload {
 export interface BackendUpdateOrderDiscountPayload {
   amount: number;
 }
+
+export interface SupplierStat {
+  name: string;
+  count: number;
+  amount: number;
+}
+
+export interface SupplierStatsFilters {
+  dateFrom?: string;
+  dateTo?: string;
+  status?: number;
+  payment?: 'all' | 'paid' | 'unpaid';
+}
