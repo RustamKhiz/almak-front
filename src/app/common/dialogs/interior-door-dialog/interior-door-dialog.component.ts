@@ -26,6 +26,7 @@ import { CatalogAutocompleteFieldComponent } from '../../../ui/catalog-autocompl
 import { QuantityFieldComponent } from '../../../ui/quantity-field/quantity-field.component';
 import { NumberInputNoWheelDirective } from '../../directives/number-input-no-wheel.directive';
 import { bindLeadingCapitalization } from '../../utils/form-text';
+import { getInteriorDoorTotal } from '../../utils/order-calculations';
 import { DraggableDialogTitleComponent } from '../draggable-dialog-title/draggable-dialog-title.component';
 
 export interface InteriorDoorDialogData {
@@ -199,12 +200,15 @@ export class InteriorDoorDialogComponent {
 
   protected getDraftTotal(): number {
     const value = this.form.getRawValue();
-    const firstLeafTotal = Number(value.price ?? 0) * Number(value.count ?? 0);
-    if (value.leafType !== DoorLeafType.Double) {
-      return firstLeafTotal;
-    }
-
-    return firstLeafTotal + Number(value.price2 ?? 0) * Number(value.count2 ?? 0);
+    return getInteriorDoorTotal({
+      price: Number(value.price ?? 0),
+      count: Number(value.count ?? 0),
+      leafType: value.leafType ?? DoorLeafType.Single,
+      price2: value.price2,
+      count2: value.count2,
+      rebateBarPrice: value.rebateBarPrice,
+      rebateBarCount: Number(value.rebateBarCount ?? 0),
+    });
   }
 
   private updateSecondLeafControls(leafType: DoorLeafType | null): void {

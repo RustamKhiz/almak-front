@@ -39,7 +39,12 @@ export function getCapitalTotal(item: CapitalItem): number {
   return item.price * item.count;
 }
 
-export function getInteriorDoorTotal(item: InteriorDoorItem): number {
+export function getInteriorDoorTotal(
+  item: Pick<
+    InteriorDoorItem,
+    'price' | 'count' | 'leafType' | 'price2' | 'count2' | 'rebateBarPrice' | 'rebateBarCount'
+  >,
+): number {
   const firstLeafTotal = item.price * item.count;
   const rebateBarTotal = (item.rebateBarPrice ?? 0) * item.rebateBarCount;
 
