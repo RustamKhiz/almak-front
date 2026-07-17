@@ -12,19 +12,20 @@ import { MatInputModule } from '@angular/material/input';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatSelectModule } from '@angular/material/select';
 import { Router } from '@angular/router';
-import { Observable, debounceTime, filter, switchMap } from 'rxjs';
-import { ConfirmDialogComponent, ConfirmDialogData } from '../../common/confirm-dialog/confirm-dialog.component';
+import { Observable, debounceTime, filter, finalize, switchMap } from 'rxjs';
+import { CATALOG_KEYS } from '../../common/constants/catalog-keys';
 import { INTERIOR_DOOR_COVERING_OPTIONS } from '../../common/constants/interior-door-covering';
 import { MOLDING_COVERING_OPTIONS } from '../../common/constants/molding-catalog';
-import { CATALOG_KEYS } from '../../common/constants/catalog-keys';
-import { CatalogsService } from '../../services/catalogs.service';
+import { ConfirmDialogComponent, ConfirmDialogData } from '../../common/confirm-dialog/confirm-dialog.component';
 import {
   PlatbandDialogComponent,
   PlatbandDialogData,
   PlatbandDialogResult,
 } from '../../common/dialogs/platband-dialog/platband-dialog.component';
 import { PhoneMaskDirective } from '../../common/directives/phone-mask.directive';
+import { bindEachWordCapitalization, bindLeadingCapitalization } from '../../common/utils/form-text';
 import { getOrderTotal } from '../../common/utils/order-calculations';
+import { CatalogsService } from '../../services/catalogs.service';
 import { OrderDraftsService } from '../../services/order-drafts.service';
 import { OrdersService } from '../../services/orders.service';
 import {
@@ -40,11 +41,18 @@ import {
   PanelingItem,
   SkirtingItem,
 } from '../../types/order.types';
+import {
+  createOrderItemEntityConfig,
+  ItemCollection,
+  OrderItemCollections,
+  OrderItemEntityConfig,
+} from './order-item-dialog-config';
 import { addItem, duplicateItem, findItemById, hasItems, removeItem, updateItem } from './order-item-helpers';
-import { createOrderItemEntityConfig, ItemCollection, OrderItemEntityConfig } from './order-item-dialog-config';
 import { OrderItemActionEvent, OrderItemEntity, OrderEntityItem } from './order-item-types';
 import { OrderItemsListComponent } from './order-items-list/order-items-list.component';
-import { bindEachWordCapitalization, bindLeadingCapitalization } from '../../common/utils/form-text';
+
+const ORDER_ITEM_DIALOG_WIDTH = '640px';
+const MOLDING_SET_COUNT_PER_DOOR = 2.5;
 
 @Component({
   selector: 'app-order-create',
@@ -69,10 +77,11 @@ import { bindEachWordCapitalization, bindLeadingCapitalization } from '../../com
 export class OrderCreateComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly dialog = inject(MatDialog);
-  private readonly ordersService = inject(OrdersService);
-  private readonly draftsService = inject(OrderDraftsService);
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
+
+  private readonly ordersService = inject(OrdersService);
+  private readonly draftsService = inject(OrderDraftsService);
   private readonly catalogsService = inject(CatalogsService);
 
   readonly orderId = input<number | null>(null);
@@ -86,6 +95,18 @@ export class OrderCreateComponent implements OnInit {
   protected readonly hardwares = signal<readonly HardwareItem[]>([]);
   protected readonly panelings = signal<readonly PanelingItem[]>([]);
   protected readonly skirtings = signal<readonly SkirtingItem[]>([]);
+
+  private readonly itemCollections: OrderItemCollections = {
+    interiorDoors: this.interiorDoors as ItemCollection<OrderEntityItem>,
+    entranceDoors: this.entranceDoors as ItemCollection<OrderEntityItem>,
+    moldings: this.moldings as ItemCollection<OrderEntityItem>,
+    extensions: this.extensions as ItemCollection<OrderEntityItem>,
+    capitals: this.capitals as ItemCollection<OrderEntityItem>,
+    hardwares: this.hardwares as ItemCollection<OrderEntityItem>,
+    panelings: this.panelings as ItemCollection<OrderEntityItem>,
+    skirtings: this.skirtings as ItemCollection<OrderEntityItem>,
+  };
+
   protected readonly showOrdersError = signal(false);
   protected readonly isEditMode = signal(false);
   protected readonly isLoadingOrder = signal(false);
@@ -93,20 +114,17 @@ export class OrderCreateComponent implements OnInit {
   protected readonly submitError = signal<string | null>(null);
   protected readonly draftMessage = signal<string | null>(null);
   protected readonly activeDraftId = signal<number | null>(null);
+
   protected readonly defaultCoveringOptions = toSignal(
     this.catalogsService.getItemsByKey(CATALOG_KEYS.interiorDoorCoverings, [...INTERIOR_DOOR_COVERING_OPTIONS]),
     { initialValue: [...INTERIOR_DOOR_COVERING_OPTIONS] as readonly string[] },
   );
+
   protected readonly prepayment = signal(0);
   protected readonly discount = signal(0);
+
   protected readonly orderItemEntity = OrderItemEntity;
-  protected readonly orderTotal = computed(() =>
-    getOrderTotal({
-      ...this.buildOrderPayload(),
-      prepayment: this.prepayment(),
-      discount: this.discount(),
-    }),
-  );
+  protected readonly orderTotal = computed(() => getOrderTotal(this.buildOrderPayload()));
 
   protected readonly form = this.fb.nonNullable.group({
     name: ['', [Validators.required]],
@@ -118,22 +136,13 @@ export class OrderCreateComponent implements OnInit {
     status: [OrderStatus.Accepted, [Validators.required]],
     isPaid: [false, [Validators.required]],
     defaultColor: [''],
-    defaultCovering: [null as string | null],
+    defaultCovering: this.fb.control<string | null>(null),
   });
 
   constructor() {
-    bindEachWordCapitalization(this.form.controls.name, this.destroyRef);
-    bindLeadingCapitalization(this.form.controls.defaultColor, this.destroyRef);
-
-    this.form.controls.needsDelivery.valueChanges
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((needsDelivery) => {
-        this.syncDeliveryState(needsDelivery === true);
-      });
-
-    this.form.valueChanges.pipe(debounceTime(800), takeUntilDestroyed(this.destroyRef)).subscribe(() => {
-      this.autoSaveDraft();
-    });
+    this.bindFormTextNormalization();
+    this.watchDeliveryChanges();
+    this.watchDraftChanges();
   }
 
   ngOnInit(): void {
@@ -148,22 +157,7 @@ export class OrderCreateComponent implements OnInit {
       return;
     }
 
-    this.isEditMode.set(true);
-    this.isLoadingOrder.set(true);
-    this.ordersService
-      .getOrder(id)
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: (order) => {
-          this.applyOrder(order);
-          this.submitError.set(null);
-          this.isLoadingOrder.set(false);
-        },
-        error: () => {
-          this.submitError.set('Не удалось загрузить заказ для редактирования.');
-          this.isLoadingOrder.set(false);
-        },
-      });
+    this.loadOrder(id);
   }
 
   protected onAddItemClick(entity: OrderItemEntity): void {
@@ -175,7 +169,7 @@ export class OrderCreateComponent implements OnInit {
     const config = this.getEntityConfig(entity);
 
     this.dialog
-      .open(config.dialogComponent as never, { width: '640px', data: config.createData })
+      .open(config.dialogComponent as never, { width: ORDER_ITEM_DIALOG_WIDTH, data: config.createData })
       .afterClosed()
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((result: Omit<OrderEntityItem, 'id'> | undefined) => {
@@ -184,8 +178,7 @@ export class OrderCreateComponent implements OnInit {
         }
 
         config.collection.set(addItem(config.collection(), result));
-        this.syncQuantity();
-        this.autoSaveDraft();
+        this.onItemsChanged();
       });
   }
 
@@ -202,7 +195,10 @@ export class OrderCreateComponent implements OnInit {
     }
 
     this.dialog
-      .open(config.dialogComponent as never, { width: '640px', data: config.getEditData(item) })
+      .open(config.dialogComponent as never, {
+        width: ORDER_ITEM_DIALOG_WIDTH,
+        data: config.getEditData(item),
+      })
       .afterClosed()
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((result: Omit<OrderEntityItem, 'id'> | undefined) => {
@@ -211,67 +207,20 @@ export class OrderCreateComponent implements OnInit {
         }
 
         config.collection.set(updateItem(config.collection(), id, result));
-        this.syncQuantity();
-        this.autoSaveDraft();
-      });
-  }
-
-  private openAddPlatbandDialog(): void {
-    const data: PlatbandDialogData = {
-      mode: 'create',
-      ...this.getDefaultDialogData(MOLDING_COVERING_OPTIONS),
-      defaultSetCount: this.calcMoldingDefaultFromDoors(),
-    };
-    this.dialog
-      .open(PlatbandDialogComponent, { width: '640px', data })
-      .afterClosed()
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((result: PlatbandDialogResult | undefined) => {
-        if (!result?.length) {
-          return;
-        }
-        let collection = this.moldings();
-        for (const item of result) {
-          collection = addItem(collection, item);
-        }
-        this.moldings.set(collection);
-        this.syncQuantity();
-        this.autoSaveDraft();
-      });
-  }
-
-  private openEditPlatbandDialog(id: number): void {
-    const item = this.findById(this.moldings(), id) as MoldingItem | undefined;
-    if (!item) {
-      return;
-    }
-    const data: PlatbandDialogData = { mode: 'edit', molding: item };
-    this.dialog
-      .open(PlatbandDialogComponent, { width: '640px', data })
-      .afterClosed()
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((result: PlatbandDialogResult | undefined) => {
-        if (!result?.length) {
-          return;
-        }
-        this.moldings.set(updateItem(this.moldings(), id, result[0]));
-        this.syncQuantity();
-        this.autoSaveDraft();
+        this.onItemsChanged();
       });
   }
 
   protected onRemoveItemClick(entity: OrderItemEntity, id: number): void {
     const config = this.getEntityConfig(entity);
     config.collection.set(removeItem(config.collection(), id));
-    this.syncQuantity();
-    this.autoSaveDraft();
+    this.onItemsChanged();
   }
 
   protected onDuplicateItemClick(entity: OrderItemEntity, id: number): void {
     const config = this.getEntityConfig(entity);
     config.collection.set(duplicateItem(config.collection(), id));
-    this.syncQuantity();
-    this.autoSaveDraft();
+    this.onItemsChanged();
   }
 
   protected onItemEditClick(event: OrderItemActionEvent): void {
@@ -287,9 +236,9 @@ export class OrderCreateComponent implements OnInit {
   }
 
   protected onSaveClick(): void {
-    const hasOrders = this.hasOrderItems();
-    this.showOrdersError.set(!hasOrders);
-    if (this.form.invalid || !hasOrders) {
+    const hasItems = this.hasOrderItems();
+    this.showOrdersError.set(!hasItems);
+    if (this.form.invalid || !hasItems) {
       this.form.markAllAsTouched();
       return;
     }
@@ -311,13 +260,12 @@ export class OrderCreateComponent implements OnInit {
         switchMap(() => {
           this.isSaving.set(true);
           this.submitError.set(null);
-          return this.saveOrder(payload);
+          return this.saveOrder(payload).pipe(finalize(() => this.isSaving.set(false)));
         }),
         takeUntilDestroyed(this.destroyRef),
       )
       .subscribe({
         next: (savedOrderId) => {
-          this.isSaving.set(false);
           const activeDraftId = this.activeDraftId();
           if (activeDraftId) {
             this.draftsService.deleteDraft(activeDraftId);
@@ -325,7 +273,6 @@ export class OrderCreateComponent implements OnInit {
           this.router.navigate(['/order', savedOrderId]);
         },
         error: (error: unknown) => {
-          this.isSaving.set(false);
           if (error instanceof HttpErrorResponse && error.status === 401) {
             const draft = this.saveDraft();
             this.submitError.set(`Сессия истекла. Заказ сохранен как черновик #${draft.temporaryId}.`);
@@ -349,29 +296,104 @@ export class OrderCreateComponent implements OnInit {
     }
   }
 
+  private bindFormTextNormalization(): void {
+    bindEachWordCapitalization(this.form.controls.name, this.destroyRef);
+    bindLeadingCapitalization(this.form.controls.defaultColor, this.destroyRef);
+  }
+
+  private watchDeliveryChanges(): void {
+    this.form.controls.needsDelivery.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((needsDelivery) => {
+        this.syncDeliveryState(needsDelivery);
+      });
+  }
+
+  private watchDraftChanges(): void {
+    this.form.valueChanges.pipe(debounceTime(800), takeUntilDestroyed(this.destroyRef)).subscribe(() => {
+      this.autoSaveDraft();
+    });
+  }
+
+  private loadOrder(id: number): void {
+    this.isEditMode.set(true);
+    this.isLoadingOrder.set(true);
+
+    this.ordersService
+      .getOrder(id)
+      .pipe(
+        finalize(() => this.isLoadingOrder.set(false)),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe({
+        next: (order) => {
+          this.applyOrder(order);
+          this.submitError.set(null);
+        },
+        error: () => {
+          this.submitError.set('Не удалось загрузить заказ для редактирования.');
+        },
+      });
+  }
+
+  private openAddPlatbandDialog(): void {
+    const data: PlatbandDialogData = {
+      mode: 'create',
+      ...this.getDefaultDialogData(MOLDING_COVERING_OPTIONS),
+      defaultSetCount: this.getDefaultMoldingSetCount(),
+    };
+
+    this.dialog
+      .open(PlatbandDialogComponent, { width: ORDER_ITEM_DIALOG_WIDTH, data })
+      .afterClosed()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((result: PlatbandDialogResult | undefined) => {
+        if (!result?.length) {
+          return;
+        }
+
+        let collection = this.moldings();
+        for (const item of result) {
+          collection = addItem(collection, item);
+        }
+
+        this.moldings.set(collection);
+        this.onItemsChanged();
+      });
+  }
+
+  private openEditPlatbandDialog(id: number): void {
+    const item = this.findById(this.moldings(), id) as MoldingItem | undefined;
+    if (!item) {
+      return;
+    }
+
+    const data: PlatbandDialogData = { mode: 'edit', molding: item };
+
+    this.dialog
+      .open(PlatbandDialogComponent, { width: ORDER_ITEM_DIALOG_WIDTH, data })
+      .afterClosed()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((result: PlatbandDialogResult | undefined) => {
+        if (!result?.length) {
+          return;
+        }
+
+        this.moldings.set(updateItem(this.moldings(), id, result[0]));
+        this.onItemsChanged();
+      });
+  }
+
   private findById<T extends { id: number }>(items: readonly T[], id: number): T | undefined {
     return findItemById(items, id);
   }
 
   private getEntityConfig(entity: OrderItemEntity): OrderItemEntityConfig {
-    return createOrderItemEntityConfig(
-      entity,
-      {
-        interiorDoors: this.interiorDoors as ItemCollection<OrderEntityItem>,
-        entranceDoors: this.entranceDoors as ItemCollection<OrderEntityItem>,
-        moldings: this.moldings as ItemCollection<OrderEntityItem>,
-        extensions: this.extensions as ItemCollection<OrderEntityItem>,
-        capitals: this.capitals as ItemCollection<OrderEntityItem>,
-        hardwares: this.hardwares as ItemCollection<OrderEntityItem>,
-        panelings: this.panelings as ItemCollection<OrderEntityItem>,
-        skirtings: this.skirtings as ItemCollection<OrderEntityItem>,
-      },
-      {
-        color: this.form.controls.defaultColor.value.trim(),
-        covering: this.form.controls.defaultCovering.value,
-        frameSetCount: this.calcMoldingDefaultFromDoors(),
-      },
-    );
+    return createOrderItemEntityConfig(entity, this.itemCollections, {
+      color: this.form.controls.defaultColor.value.trim(),
+      covering: this.form.controls.defaultCovering.value,
+      frameSetCount: this.getDefaultMoldingSetCount(),
+    });
   }
 
   private getDefaultDialogData<TCovering extends string>(
@@ -391,9 +413,9 @@ export class OrderCreateComponent implements OnInit {
     };
   }
 
-  private calcMoldingDefaultFromDoors(): number {
+  private getDefaultMoldingSetCount(): number {
     const totalCount = this.interiorDoors().reduce((sum, door) => sum + door.count, 0);
-    return totalCount * 2.5;
+    return totalCount * MOLDING_SET_COUNT_PER_DOOR;
   }
 
   private hasOrderItems(): boolean {
@@ -409,10 +431,15 @@ export class OrderCreateComponent implements OnInit {
     ]);
   }
 
-  private syncQuantity(): void {
+  private updateItemsValidationState(): void {
     if (this.hasOrderItems()) {
       this.showOrdersError.set(false);
     }
+  }
+
+  private onItemsChanged(): void {
+    this.updateItemsValidationState();
+    this.autoSaveDraft();
   }
 
   private saveOrder(payload: OrderCreatePayload): Observable<number> {
@@ -477,7 +504,7 @@ export class OrderCreateComponent implements OnInit {
     this.discount.set(order.discount);
 
     this.syncDeliveryState(order.needsDelivery, { clearAddressWhenDisabled: false });
-    this.syncQuantity();
+    this.updateItemsValidationState();
   }
 
   private normalizeEntranceDoors(items: readonly EntranceDoorItem[]): readonly EntranceDoorItem[] {

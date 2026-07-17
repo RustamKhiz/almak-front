@@ -19,7 +19,6 @@ export class AppComponent implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
   private readonly authService = inject(AuthService);
 
-  protected readonly title = signal<string>('Almak');
   protected readonly isAuthPage = signal<boolean>(false);
 
   ngOnInit(): void {
@@ -36,7 +35,13 @@ export class AppComponent implements OnInit {
   }
 
   protected onLogoutClick(): void {
-    this.authService.logout().pipe(takeUntilDestroyed(this.destroyRef)).subscribe();
-    this.router.navigate(['/auth']);
+    this.authService
+      .logout()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => {
+          this.router.navigate(['/auth']);
+        },
+      });
   }
 }

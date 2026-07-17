@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, inject, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
+import { FormBuilder, FormControl, ReactiveFormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -19,6 +19,14 @@ export interface OrdersTableFilters {
   phone: string;
   date: string | null;
   status: OrderStatus | null;
+}
+
+interface OrdersTableFiltersForm {
+  orderId: FormControl<number | null>;
+  customer: FormControl<string>;
+  phone: FormControl<string>;
+  date: FormControl<Date | null>;
+  status: FormControl<OrderStatus | null>;
 }
 
 @Component({
@@ -46,18 +54,18 @@ export class OrdersTableFiltersComponent {
   readonly clearClick = output<void>();
 
   protected readonly statusOptions = ORDER_STATUS_OPTIONS;
-  protected readonly form = this.fb.group({
-    orderId: [null as number | null],
-    customer: [''],
-    phone: [''],
-    date: [null as Date | null],
-    status: [null as OrderStatus | null],
+  protected readonly form = this.fb.group<OrdersTableFiltersForm>({
+    orderId: this.fb.control<number | null>(null),
+    customer: this.fb.nonNullable.control(''),
+    phone: this.fb.nonNullable.control(''),
+    date: this.fb.control<Date | null>(null),
+    status: this.fb.control<OrderStatus | null>(null),
   });
 
   protected hasAnyValue(): boolean {
     const { orderId, customer, phone, date, status } = this.form.getRawValue();
 
-    return Boolean(orderId || customer?.trim().length || phone?.trim().length || date || status);
+    return Boolean(orderId || customer.trim().length || phone.trim().length || date || status);
   }
 
   protected onApplyClick(): void {
@@ -69,8 +77,8 @@ export class OrdersTableFiltersComponent {
 
     this.applyClick.emit({
       orderId: orderId ?? null,
-      customer: customer?.trim() ?? '',
-      phone: phone?.trim() ?? '',
+      customer: customer.trim(),
+      phone: phone.trim(),
       date: date ? this.toIsoDate(date) : null,
       status: status ?? null,
     });
