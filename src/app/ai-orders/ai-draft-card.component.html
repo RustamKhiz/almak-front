@@ -13,9 +13,9 @@
     }
     <p class="hint">Размеры без единиц — сантиметры. Значения можно исправить вручную.</p>
     <details>
-      <summary>Клиент, доставка и оплата</summary>
+      <summary>{{ showHeader() ? 'Клиент, доставка и оплата' : 'Оплата и скидка' }}</summary>
       <div class="fields">
-        @for (entry of entries(schema.header); track entry[0]) {
+        @for (entry of entries(headerFields()); track entry[0]) {
           <label for="{{ controlPrefix }}-{{ d.id }}-header-{{ entry[0] }}"
             ><span>{{ entry[1].label }}{{ entry[1].required ? ' *' : '' }}</span>
             @if (entry[1].type === 'boolean') {
@@ -48,7 +48,7 @@
           </label>
         }
       </div>
-      @if (!readonly() && !d.order.header['date']) {
+      @if (showHeader() && !readonly() && !d.order.header['date']) {
         <button type="button" (click)="today()">Дата заказа — сегодня</button>
       }
     </details>

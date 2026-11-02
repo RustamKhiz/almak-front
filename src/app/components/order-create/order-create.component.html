@@ -1,164 +1,144 @@
-@if (aiDraftId() && !aiImported()) {
-  <section class="ai-review">
-    <h1>Проверка черновика заказа</h1>
-    <p>
-      Заполните пропуски перед переносом в обычную форму. Неуказанные цены и размеры не заменяются типовыми значениями.
-    </p>
-    @if (aiDraft(); as draft) {
-      <app-ai-draft-card [draftId]="draft.id"></app-ai-draft-card>
-      <label class="ai-approval"
-        ><input
-          type="checkbox"
-          [checked]="aiDefaultsConfirmed()"
-          (change)="aiDefaultsConfirmed.set($any($event.target).checked)"
-        />
-        Подтверждаю: неуказанные дополнительные элементы отсутствуют, неуказанная скидка и внесённая сумма равны нулю,
-        закупка пока не задана. Сведения из заметок проверены.
-      </label>
-      <button
-        mat-flat-button
-        color="primary"
-        type="button"
-        [disabled]="aiRemaining().length > 0 || !aiDefaultsConfirmed()"
-        (click)="applyAiDraft()"
-      >
-        Перенести в форму заказа
-      </button>
-      @if (aiRemaining().length) {
-        <p>Осталось заполнить полей: {{ aiRemaining().length }}. Черновик можно оставить и вернуться позже.</p>
+<section class="order-create">
+  <header class="order-create__header">
+    <div class="order-create__header-content">
+      <div class="order-create__title-row">
+        @if (isEditMode()) {
+          <button mat-icon-button type="button" class="order-create__back-button" (click)="onBackToOrderClick()">
+            <mat-icon>arrow_back</mat-icon>
+          </button>
+        }
+        <h1>{{ isEditMode() ? 'Редактировать заказ' : aiDraftId() ? 'Черновик заказа' : 'Создать заказ' }}</h1>
+      </div>
+      <p>Заполните данные клиента, добавьте товары и проверьте итог перед сохранением.</p>
+      @if (draftMessage()) {
+        <div class="order-create__notice">{{ draftMessage() }}</div>
       }
-    }
-    @if (ai.storageError() || submitError()) {
-      <p role="alert">{{ ai.storageError() || submitError() }}</p>
-    }
-  </section>
-}
-@if (!aiDraftId() || aiImported()) {
-  <section class="order-create">
-    <header class="order-create__header">
-      <div class="order-create__header-content">
-        <div class="order-create__title-row">
-          @if (isEditMode()) {
-            <button mat-icon-button type="button" class="order-create__back-button" (click)="onBackToOrderClick()">
-              <mat-icon>arrow_back</mat-icon>
-            </button>
+      @if (submitError()) {
+        <div class="order-create__error">{{ submitError() }}</div>
+      }
+    </div>
+
+    <div class="order-create__header-actions" [formGroup]="form">
+      <mat-form-field appearance="outline" class="order-create__default-field">
+        <mat-label>Цвет</mat-label>
+        <input matInput formControlName="defaultColor" />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="order-create__default-field">
+        <mat-label>Покрытие</mat-label>
+        <mat-select formControlName="defaultCovering">
+          <mat-option [value]="null">Не выбрано</mat-option>
+          @for (covering of defaultCoveringOptions(); track covering) {
+            <mat-option [value]="covering">{{ covering }}</mat-option>
           }
-          <h1>{{ isEditMode() ? 'Редактировать заказ' : 'Создать заказ' }}</h1>
-        </div>
-        <p>Заполните данные клиента, добавьте товары и проверьте итог перед сохранением.</p>
-        @if (draftMessage()) {
-          <div class="order-create__notice">{{ draftMessage() }}</div>
+        </mat-select>
+      </mat-form-field>
+
+      <button mat-flat-button color="primary" [matMenuTriggerFor]="addItemMenu">Добавить</button>
+      <mat-menu #addItemMenu="matMenu">
+        <button mat-menu-item type="button" (click)="onAddItemClick(orderItemEntity.EntranceDoor)">
+          Входная дверь
+        </button>
+        <button mat-menu-item type="button" (click)="onAddItemClick(orderItemEntity.InteriorDoor)">
+          Межкомнатная дверь
+        </button>
+        <button mat-menu-item type="button" (click)="onAddItemClick(orderItemEntity.Frame)">Коробки</button>
+        <button mat-menu-item type="button" (click)="onAddItemClick(orderItemEntity.Platband)">Наличники</button>
+        <button mat-menu-item type="button" (click)="onAddItemClick(orderItemEntity.Extension)">Доборы</button>
+        <button mat-menu-item type="button" (click)="onAddItemClick(orderItemEntity.Capital)">Капитель</button>
+        <button mat-menu-item type="button" (click)="onAddItemClick(orderItemEntity.Hardware)">Фурнитура</button>
+        <button mat-menu-item type="button" (click)="onAddItemClick(orderItemEntity.Paneling)">Обшивка</button>
+        <button mat-menu-item type="button" (click)="onAddItemClick(orderItemEntity.Skirting)">Плинтус</button>
+      </mat-menu>
+    </div>
+  </header>
+
+  <form class="order-create__form" [formGroup]="form">
+    <div class="order-create__section-header">
+      <div>
+        <h2>Общая информация</h2>
+        <p>Основные данные по клиенту, оплате и доставке.</p>
+      </div>
+    </div>
+
+    <div class="order-create__form-grid">
+      <mat-form-field appearance="outline">
+        <mat-label>Имя клиента</mat-label>
+        <input matInput formControlName="name" />
+        @if (form.controls.name.touched && form.controls.name.invalid) {
+          <mat-error>Обязательное поле</mat-error>
         }
-        @if (submitError()) {
-          <div class="order-create__error">{{ submitError() }}</div>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Телефон</mat-label>
+        <input matInput formControlName="phone" appPhoneMask autocomplete="tel" />
+        @if (form.controls.phone.touched && form.controls.phone.invalid) {
+          <mat-error>Обязательное поле</mat-error>
         }
-      </div>
+      </mat-form-field>
 
-      <div class="order-create__header-actions" [formGroup]="form">
-        <mat-form-field appearance="outline" class="order-create__default-field">
-          <mat-label>Цвет</mat-label>
-          <input matInput formControlName="defaultColor" />
-        </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Дата</mat-label>
+        <input matInput type="date" formControlName="date" />
+        @if (form.controls.date.touched && form.controls.date.invalid) {
+          <mat-error>Обязательное поле</mat-error>
+        }
+      </mat-form-field>
 
-        <mat-form-field appearance="outline" class="order-create__default-field">
-          <mat-label>Покрытие</mat-label>
-          <mat-select formControlName="defaultCovering">
-            <mat-option [value]="null">Не выбрано</mat-option>
-            @for (covering of defaultCoveringOptions(); track covering) {
-              <mat-option [value]="covering">{{ covering }}</mat-option>
-            }
-          </mat-select>
-        </mat-form-field>
-
-        <button mat-flat-button color="primary" [matMenuTriggerFor]="addItemMenu">Добавить</button>
-        <mat-menu #addItemMenu="matMenu">
-          <button mat-menu-item type="button" (click)="onAddItemClick(orderItemEntity.EntranceDoor)">
-            Входная дверь
-          </button>
-          <button mat-menu-item type="button" (click)="onAddItemClick(orderItemEntity.InteriorDoor)">
-            Межкомнатная дверь
-          </button>
-          <button mat-menu-item type="button" (click)="onAddItemClick(orderItemEntity.Frame)">Коробки</button>
-          <button mat-menu-item type="button" (click)="onAddItemClick(orderItemEntity.Platband)">Наличники</button>
-          <button mat-menu-item type="button" (click)="onAddItemClick(orderItemEntity.Extension)">Доборы</button>
-          <button mat-menu-item type="button" (click)="onAddItemClick(orderItemEntity.Capital)">Капитель</button>
-          <button mat-menu-item type="button" (click)="onAddItemClick(orderItemEntity.Hardware)">Фурнитура</button>
-          <button mat-menu-item type="button" (click)="onAddItemClick(orderItemEntity.Paneling)">Обшивка</button>
-          <button mat-menu-item type="button" (click)="onAddItemClick(orderItemEntity.Skirting)">Плинтус</button>
-        </mat-menu>
-      </div>
-    </header>
-
-    <form class="order-create__form" [formGroup]="form">
-      <div class="order-create__section-header">
-        <div>
-          <h2>Общая информация</h2>
-          <p>Основные данные по клиенту, оплате и доставке.</p>
-        </div>
-      </div>
-
-      <div class="order-create__form-grid">
-        <mat-form-field appearance="outline">
-          <mat-label>Имя клиента</mat-label>
-          <input matInput formControlName="name" />
-          @if (form.controls.name.touched && form.controls.name.invalid) {
-            <mat-error>Обязательное поле</mat-error>
-          }
-        </mat-form-field>
-
-        <mat-form-field appearance="outline">
-          <mat-label>Телефон</mat-label>
-          <input matInput formControlName="phone" appPhoneMask autocomplete="tel" />
-          @if (form.controls.phone.touched && form.controls.phone.invalid) {
-            <mat-error>Обязательное поле</mat-error>
-          }
-        </mat-form-field>
-
-        <mat-form-field appearance="outline">
-          <mat-label>Дата</mat-label>
-          <input matInput type="date" formControlName="date" />
-          @if (form.controls.date.touched && form.controls.date.invalid) {
-            <mat-error>Обязательное поле</mat-error>
-          }
-        </mat-form-field>
-
-        <div class="order-create__details-row">
-          <div class="order-create__details-card">
-            <div class="order-create__subcard">
-              <div class="order-create__subcard-title">Комментарий к заказу</div>
-              <mat-form-field appearance="outline" class="order-create__comment">
-                <mat-label>Комментарий</mat-label>
-                <textarea matInput formControlName="comment" rows="2"></textarea>
-              </mat-form-field>
-            </div>
+      <div class="order-create__details-row">
+        <div class="order-create__details-card">
+          <div class="order-create__subcard">
+            <div class="order-create__subcard-title">Комментарий к заказу</div>
+            <mat-form-field appearance="outline" class="order-create__comment">
+              <mat-label>Комментарий</mat-label>
+              <textarea matInput formControlName="comment" rows="2"></textarea>
+            </mat-form-field>
           </div>
+        </div>
 
-          <div class="order-create__details-card order-create__delivery-column">
-            <div class="order-create__subcard">
-              <div class="order-create__subcard-title">Доставка</div>
-              <div class="order-create__delivery-inline">
-                <div class="order-create__delivery-header">
-                  <mat-checkbox formControlName="needsDelivery">Нужна доставка</mat-checkbox>
-                </div>
-
-                @if (form.controls.needsDelivery.value) {
-                  <mat-form-field appearance="outline" class="order-create__delivery-address">
-                    <mat-label>Адрес доставки</mat-label>
-                    <textarea matInput formControlName="deliveryAddress" rows="1"></textarea>
-                    @if (form.controls.deliveryAddress.touched && form.controls.deliveryAddress.invalid) {
-                      <mat-error>Укажите адрес доставки</mat-error>
-                    }
-                  </mat-form-field>
+        <div class="order-create__details-card order-create__delivery-column">
+          <div class="order-create__subcard">
+            <div class="order-create__subcard-title">Доставка</div>
+            <div class="order-create__delivery-inline">
+              <div class="order-create__delivery-header">
+                @if (aiPartial()) {
+                  <mat-form-field appearance="outline"
+                    ><mat-label>Доставка</mat-label
+                    ><mat-select formControlName="needsDelivery">
+                      <mat-option [value]="null">Не указано</mat-option
+                      ><mat-option [value]="true">Нужна доставка</mat-option
+                      ><mat-option [value]="false">Самовывоз</mat-option>
+                    </mat-select></mat-form-field
+                  >
                 } @else {
-                  <div class="order-create__delivery-placeholder">Стоимость по тарифу такси</div>
+                  <mat-checkbox formControlName="needsDelivery">Нужна доставка</mat-checkbox>
                 }
               </div>
+
+              @if (form.controls.needsDelivery.value) {
+                <mat-form-field appearance="outline" class="order-create__delivery-address">
+                  <mat-label>Адрес доставки</mat-label>
+                  <textarea matInput formControlName="deliveryAddress" rows="1"></textarea>
+                  @if (form.controls.deliveryAddress.touched && form.controls.deliveryAddress.invalid) {
+                    <mat-error>Укажите адрес доставки</mat-error>
+                  }
+                </mat-form-field>
+              } @else {
+                <div class="order-create__delivery-placeholder">Стоимость по тарифу такси</div>
+              }
             </div>
           </div>
         </div>
       </div>
-    </form>
+    </div>
+  </form>
 
+  @if (aiPartial()) {
+    @if (aiDraft(); as draft) {
+      <app-ai-draft-card [draftId]="draft.id" [showHeader]="false"></app-ai-draft-card>
+    }
+  } @else {
     <app-order-items-list
       [interiorDoors]="interiorDoors()"
       [entranceDoors]="entranceDoors()"
@@ -173,19 +153,20 @@
       (duplicateClick)="onItemDuplicateClick($event)"
       (removeClick)="onItemRemoveClick($event)"
     />
-
-    <div class="order-create__actions">
-      <div class="order-create__summary">
-        <div class="order-create__summary-row">
-          <div class="order-create__summary-label">Общая стоимость заказа</div>
-          <div class="order-create__summary-value">{{ orderTotal() | number: '1.0-0' }} ₽</div>
+  }
+  <div class="order-create__actions">
+    <div class="order-create__summary">
+      <div class="order-create__summary-row">
+        <div class="order-create__summary-label">
+          {{ aiPartial() ? 'Стоимость будет рассчитана после заполнения позиций' : 'Общая стоимость заказа' }}
         </div>
-      </div>
-
-      <div class="order-create__save-actions">
-        <button mat-stroked-button type="button" (click)="onSaveDraftClick()">Сохранить черновик</button>
-        <button mat-flat-button color="primary" type="button" (click)="onSaveClick()">Сохранить</button>
+        <div class="order-create__summary-value" [hidden]="aiPartial()">{{ orderTotal() | number: '1.0-0' }} ₽</div>
       </div>
     </div>
-  </section>
-}
+
+    <div class="order-create__save-actions">
+      <button mat-stroked-button type="button" (click)="onSaveDraftClick()">Сохранить черновик</button>
+      <button mat-flat-button color="primary" type="button" (click)="onSaveClick()">Сохранить</button>
+    </div>
+  </div>
+</section>

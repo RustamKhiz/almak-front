@@ -135,7 +135,7 @@ export function aiIssues(order: AiOrder): AiIssue[] {
   return result;
 }
 
-// Called only after review and explicit approval of missing optional values.
+// Called only when creating the final order after completeness validation.
 // Incomplete orders are never passed to the legacy mapper or total calculators.
 export function aiToPayload(order: AiOrder): OrderCreatePayload {
   if (aiIssues(order).length) throw new Error('Сначала заполните обязательные данные');

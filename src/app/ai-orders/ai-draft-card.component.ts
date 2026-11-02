@@ -14,6 +14,14 @@ export class AiDraftCardComponent {
   protected readonly controlPrefix = 'ai-' + crypto.randomUUID();
   readonly draftId = input.required<string>();
   readonly readonly = input(false);
+  readonly showHeader = input(true);
+  protected readonly headerFields = computed(() =>
+    this.showHeader()
+      ? AI_SCHEMA.header
+      : Object.fromEntries(
+          Object.entries(AI_SCHEMA.header).filter(([key]) => key === 'prepayment' || key === 'discount'),
+        ),
+  );
   protected readonly ai = inject(AiOrdersService);
   protected readonly schema = AI_SCHEMA;
   protected readonly definitions = Object.entries(AI_SCHEMA.items);

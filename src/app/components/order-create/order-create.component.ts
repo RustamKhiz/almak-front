@@ -1,6 +1,6 @@
 import { AiOrdersService } from '../../ai-orders/ai-orders.service';
 import { AiDraftCardComponent } from '../../ai-orders/ai-draft-card.component';
-import { aiIssues, aiToPayload } from '../../ai-orders/ai-order.types';
+import { AiOrder, aiIssues, aiToPayload } from '../../ai-orders/ai-order.types';
 import { DecimalPipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import {
@@ -11,6 +11,8 @@ import {
   OnChanges,
   SimpleChanges,
   computed,
+  effect,
+  untracked,
   inject,
   input,
   signal,
@@ -102,7 +104,7 @@ export class OrderCreateComponent implements OnInit, OnChanges {
   protected readonly ai = inject(AiOrdersService);
   readonly aiDraftId = input<string | null>(null);
   protected readonly aiImported = signal(false);
-  protected readonly aiDefaultsConfirmed = signal(false);
+  protected readonly aiPartial = computed(() => !!this.aiDraftId() && !this.aiImported());
   protected readonly aiDraft = computed(() => this.ai.drafts().find((d) => d.id === this.aiDraftId()));
   protected readonly aiRemaining = computed(() => (this.aiDraft() ? aiIssues(this.aiDraft()!.order) : []));
 
@@ -152,7 +154,7 @@ export class OrderCreateComponent implements OnInit, OnChanges {
     name: ['', [Validators.required]],
     phone: ['', [Validators.required, Validators.pattern(/^7\d{10}$/)]],
     date: [this.todayIso(), [Validators.required]],
-    needsDelivery: [false],
+    needsDelivery: this.fb.control<boolean | null>(false),
     deliveryAddress: [''],
     comment: [''],
     status: [OrderStatus.Accepted, [Validators.required]],
@@ -165,8 +167,12 @@ export class OrderCreateComponent implements OnInit, OnChanges {
     this.bindFormTextNormalization();
     this.watchDeliveryChanges();
     this.watchDraftChanges();
+    effect(() => {
+      const draft = this.aiDraft();
+      if (draft && !this.aiImported()) untracked(() => this.applyAiHeader(draft.order));
+    });
     this.destroyRef.onDestroy(() => {
-      if (this.aiDraftId() && this.aiImported()) this.saveAiEditor();
+      if (this.aiDraftId()) this.saveAiEditor();
     });
   }
 
@@ -217,6 +223,11 @@ export class OrderCreateComponent implements OnInit, OnChanges {
   }
 
   protected onAddItemClick(entity: OrderItemEntity): void {
+    if (this.aiPartial()) {
+      const type = entity === OrderItemEntity.Frame || entity === OrderItemEntity.Platband ? 'molding' : entity;
+      this.ai.addItem(type, this.aiDraftId()!);
+      return;
+    }
     if (entity === OrderItemEntity.Platband) {
       this.openAddPlatbandDialog();
       return;
@@ -292,7 +303,25 @@ export class OrderCreateComponent implements OnInit, OnChanges {
   }
 
   protected onSaveClick(): void {
-    if (this.aiDraftId() && (!this.aiImported() || !this.saveAiEditor())) return;
+    if (this.aiDraftId()) {
+      if (!this.saveAiEditor()) return;
+      if (this.aiPartial()) {
+        if (this.aiRemaining().length) {
+          this.form.markAllAsTouched();
+          this.submitError.set('Для создания заказа заполните обязательные данные. Черновик сохранён.');
+          return;
+        }
+        const payload = aiToPayload(this.aiDraft()!.order);
+        if (
+          !this.ai.update(this.aiDraftId()!, (draft) => {
+            draft.editorState = { payload, accepted: true, defaultsConfirmed: true };
+          })
+        )
+          return;
+        this.applyOrder(payload);
+        this.aiImported.set(true);
+      }
+    }
     const hasItems = this.hasOrderItems();
     this.showOrdersError.set(!hasItems);
     if (this.form.invalid || !hasItems) {
@@ -381,6 +410,9 @@ export class OrderCreateComponent implements OnInit, OnChanges {
   }
 
   private watchDraftChanges(): void {
+    this.form.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
+      if (this.aiPartial()) this.saveAiEditor();
+    });
     this.form.valueChanges.pipe(debounceTime(800), takeUntilDestroyed(this.destroyRef)).subscribe(() => {
       this.autoSaveDraft();
     });
@@ -529,7 +561,7 @@ export class OrderCreateComponent implements OnInit, OnChanges {
       date: value.date,
       prepayment: this.prepayment(),
       discount: this.discount(),
-      needsDelivery: value.needsDelivery,
+      needsDelivery: value.needsDelivery === true,
       deliveryAddress: value.deliveryAddress.trim(),
       comment: value.comment.trim(),
       status: value.status,
@@ -603,26 +635,52 @@ export class OrderCreateComponent implements OnInit, OnChanges {
     if (payload) {
       this.applyOrder(payload);
       this.aiImported.set(true);
+    } else {
+      this.applyAiHeader(d.order);
     }
   }
 
-  protected applyAiDraft(): void {
-    const d = this.aiDraft();
-    if (!d || this.aiRemaining().length || !this.aiDefaultsConfirmed()) return;
-    const payload = aiToPayload(d.order);
-    if (
-      !this.ai.update(d.id, (value) => {
-        value.editorState = { payload, accepted: true, defaultsConfirmed: true };
-      })
-    )
-      return;
-    this.applyOrder(payload);
-    this.aiImported.set(true);
-    this.draftMessage.set('Данные перенесены. Проверьте заказ перед сохранением.');
+  private applyAiHeader(order: AiOrder): void {
+    const h = order.header;
+    this.form.patchValue(
+      {
+        name: String(h['name'] ?? ''),
+        phone: String(h['phone'] ?? ''),
+        date: String(h['date'] ?? ''),
+        comment: String(h['comment'] ?? ''),
+        needsDelivery: typeof h['needsDelivery'] === 'boolean' ? h['needsDelivery'] : null,
+        deliveryAddress: String(h['deliveryAddress'] ?? ''),
+      },
+      { emitEvent: false },
+    );
+    this.prepayment.set(Number(h['prepayment'] ?? 0));
+    this.discount.set(Number(h['discount'] ?? 0));
+    this.syncDeliveryState(this.form.controls.needsDelivery.value, { clearAddressWhenDisabled: false });
   }
 
   private saveAiEditor(id = this.aiDraftId()): boolean {
-    if (!id || !this.aiImported()) return false;
+    if (!id) return false;
+    if (!this.aiImported()) {
+      const current = this.ai.drafts().find((draft) => draft.id === id);
+      if (!current) return false;
+      const value = this.form.getRawValue();
+      const header = {
+        name: value.name.trim() || null,
+        phone: value.phone || null,
+        date: value.date || null,
+        comment: value.comment.trim() || null,
+        needsDelivery: value.needsDelivery,
+        deliveryAddress: value.deliveryAddress.trim() || null,
+      };
+      const changes = Object.entries(header).filter(([key, next]) => (current.order.header[key] ?? null) !== next);
+      if (!changes.length) return true;
+      return !!this.ai.update(id, (draft) => {
+        for (const [key, next] of changes) {
+          draft.order.header[key] = next;
+          draft.fieldSources['header.' + key] = { text: 'Ручное исправление', manual: true };
+        }
+      });
+    }
     const updated = this.ai.update(id, (d) => {
       d.editorState = { payload: this.buildOrderPayload(), accepted: true, defaultsConfirmed: true };
     });
@@ -651,7 +709,7 @@ export class OrderCreateComponent implements OnInit, OnChanges {
 
   private autoSaveDraft(): void {
     if (this.aiDraftId()) {
-      if (this.aiImported()) this.saveAiEditor();
+      this.saveAiEditor();
       return;
     }
     if (this.isEditMode()) {
@@ -660,7 +718,7 @@ export class OrderCreateComponent implements OnInit, OnChanges {
     this.saveDraft();
   }
 
-  private syncDeliveryState(needsDelivery: boolean, options?: { clearAddressWhenDisabled?: boolean }): void {
+  private syncDeliveryState(needsDelivery: boolean | null, options?: { clearAddressWhenDisabled?: boolean }): void {
     const clearAddressWhenDisabled = options?.clearAddressWhenDisabled ?? true;
     if (needsDelivery) {
       this.form.controls.deliveryAddress.addValidators([Validators.required]);
