@@ -34,6 +34,8 @@ import {
   SkirtingItem,
 } from '../../../types/order.types';
 import { OrderItemActionEvent, OrderItemEntity } from '../order-item-types';
+import { AiItem } from '../../../ai-orders/ai-order.types';
+import { DRAFT_ITEM_GROUPS, draftItemAmount, draftItemDetails, draftItemTitle } from '../order-draft-item';
 
 @Component({
   selector: 'app-order-items-list',
@@ -43,6 +45,18 @@ import { OrderItemActionEvent, OrderItemEntity } from '../order-item-types';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class OrderItemsListComponent {
+  readonly draftItems = input<readonly AiItem[] | null>(null);
+  readonly draftEditClick = output<string>();
+  readonly draftDuplicateClick = output<string>();
+  readonly draftRemoveClick = output<string>();
+  protected readonly draftTitle = draftItemTitle;
+  protected readonly draftDetails = draftItemDetails;
+  protected readonly draftAmount = draftItemAmount;
+  protected readonly draftGroups = computed(() =>
+    Object.entries(DRAFT_ITEM_GROUPS)
+      .map(([type, title]) => ({ type, title, items: this.draftItems()?.filter((item) => item.type === type) ?? [] }))
+      .filter((group) => group.items.length),
+  );
   readonly interiorDoors = input<readonly InteriorDoorItem[]>([]);
   readonly entranceDoors = input<readonly EntranceDoorItem[]>([]);
   readonly moldings = input<readonly MoldingItem[]>([]);

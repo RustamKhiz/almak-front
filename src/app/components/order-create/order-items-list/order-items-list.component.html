@@ -8,7 +8,71 @@
 @let hardwareItems = hardwares();
 @let panelingItems = panelings();
 
-@if (hasItems()) {
+@if (draftItems(); as products) {
+  @if (products.length) {
+    <div class="door-list">
+      @for (group of draftGroups(); track group.type) {
+        <div
+          class="door-section"
+          [class.door-section--interior]="group.type === 'interiorDoor'"
+          [class.door-section--entrance]="group.type === 'entranceDoor'"
+        >
+          <div class="door-section__title">{{ group.title }}</div>
+          @for (item of group.items; track item.itemId) {
+            <div class="door-item">
+              <div class="door-item__main">
+                <div class="door-item__title">{{ draftTitle(item) }}</div>
+                <div class="door-item__meta">{{ draftDetails(item) || 'Параметры пока не указаны' }}</div>
+              </div>
+              <div class="door-item__aside">
+                <div class="door-item__price">
+                  @let amount = draftAmount(item);
+                  @if (amount !== null) {
+                    {{ amount | number: '1.0-0' }} ₽
+                  } @else {
+                    Стоимость уточняется
+                  }
+                </div>
+                <div class="door-item__actions">
+                  <button
+                    mat-icon-button
+                    type="button"
+                    aria-label="Дублировать"
+                    (click)="draftDuplicateClick.emit(item.itemId)"
+                  >
+                    <mat-icon>content_copy</mat-icon>
+                  </button>
+                  <button
+                    mat-icon-button
+                    type="button"
+                    aria-label="Редактировать"
+                    (click)="draftEditClick.emit(item.itemId)"
+                  >
+                    <mat-icon>edit</mat-icon>
+                  </button>
+                  <button
+                    mat-icon-button
+                    type="button"
+                    color="warn"
+                    aria-label="Удалить"
+                    (click)="draftRemoveClick.emit(item.itemId)"
+                  >
+                    <mat-icon>delete</mat-icon>
+                  </button>
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  } @else {
+    <div class="empty">
+      <div class="empty__title">Товары пока не добавлены.</div>
+      <div class="empty__text">Нажмите «Добавить», чтобы начать формирование заказа.</div>
+    </div>
+  }
+} @else if (hasItems()) {
   <div class="door-list">
     @if (interiorDoorItems.length) {
       <div class="door-section door-section--interior">
@@ -566,6 +630,6 @@
   </div>
 }
 
-@if (showOrdersError() && !hasItems()) {
+@if (showOrdersError() && !(draftItems() ? draftItems()!.length : hasItems())) {
   <div class="order-items-list__error">Добавьте хотя бы один товар.</div>
 }

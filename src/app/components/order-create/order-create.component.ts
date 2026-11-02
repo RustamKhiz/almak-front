@@ -1,6 +1,14 @@
 import { AiOrdersService } from '../../ai-orders/ai-orders.service';
-import { AiDraftCardComponent } from '../../ai-orders/ai-draft-card.component';
-import { AiOrder, aiIssues, aiToPayload } from '../../ai-orders/ai-order.types';
+import {
+  AI_SCHEMA,
+  AiItem,
+  AiOrder,
+  AiValue,
+  aiIssues,
+  aiKnownAmount,
+  aiToPayload,
+} from '../../ai-orders/ai-order.types';
+import { OrderDraftItemDialogComponent } from './order-draft-item-dialog/order-draft-item-dialog.component';
 import { DecimalPipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import {
@@ -74,7 +82,6 @@ const MOLDING_SET_COUNT_PER_DOOR = 2.5;
   selector: 'app-order-create',
   imports: [
     DecimalPipe,
-    AiDraftCardComponent,
     ReactiveFormsModule,
     MatButtonModule,
     MatCheckboxModule,
@@ -107,6 +114,7 @@ export class OrderCreateComponent implements OnInit, OnChanges {
   protected readonly aiPartial = computed(() => !!this.aiDraftId() && !this.aiImported());
   protected readonly aiDraft = computed(() => this.ai.drafts().find((d) => d.id === this.aiDraftId()));
   protected readonly aiRemaining = computed(() => (this.aiDraft() ? aiIssues(this.aiDraft()!.order) : []));
+  protected readonly draftAmount = computed(() => (this.aiDraft() ? aiKnownAmount(this.aiDraft()!.order) : null));
 
   readonly orderId = input<number | null>(null);
   readonly draftId = input<number | null>(null);
@@ -161,6 +169,8 @@ export class OrderCreateComponent implements OnInit, OnChanges {
     isPaid: [false, [Validators.required]],
     defaultColor: [''],
     defaultCovering: this.fb.control<string | null>(null),
+    draftPrepayment: this.fb.control<number | null>(null, [Validators.min(0)]),
+    draftDiscount: this.fb.control<number | null>(null, [Validators.min(0)]),
   });
 
   constructor() {
@@ -224,8 +234,17 @@ export class OrderCreateComponent implements OnInit, OnChanges {
 
   protected onAddItemClick(entity: OrderItemEntity): void {
     if (this.aiPartial()) {
+      if ((this.aiDraft()?.order.items.length ?? 0) >= 100) {
+        this.submitError.set('В черновике может быть не более 100 товаров.');
+        return;
+      }
       const type = entity === OrderItemEntity.Frame || entity === OrderItemEntity.Platband ? 'molding' : entity;
-      this.ai.addItem(type, this.aiDraftId()!);
+      const fields: Record<string, AiValue> = {};
+      const color = this.form.controls.defaultColor.value.trim();
+      const covering = this.form.controls.defaultCovering.value;
+      if (color && AI_SCHEMA.items[type].fields['color']) fields['color'] = color;
+      if (covering && AI_SCHEMA.items[type].fields['covering']) fields['covering'] = covering;
+      this.openDraftItemDialog({ itemId: crypto.randomUUID(), type, fields }, true);
       return;
     }
     if (entity === OrderItemEntity.Platband) {
@@ -302,6 +321,72 @@ export class OrderCreateComponent implements OnInit, OnChanges {
     this.onRemoveItemClick(event.entity, event.id);
   }
 
+  protected onDraftItemEditClick(itemId: string): void {
+    const item = this.aiDraft()?.order.items.find((product) => product.itemId === itemId);
+    if (item) this.openDraftItemDialog(item, false);
+  }
+
+  private openDraftItemDialog(item: AiItem, create: boolean): void {
+    const draftId = this.aiDraftId();
+    if (!draftId) return;
+    const before = structuredClone(item);
+    this.dialog
+      .open(OrderDraftItemDialogComponent, {
+        width: ORDER_ITEM_DIALOG_WIDTH,
+        data: {
+          item: before,
+          title: `${create ? 'Добавить' : 'Редактировать'}: ${AI_SCHEMA.items[item.type].label.toLowerCase()}`,
+        },
+      })
+      .afterClosed()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((fields: Record<string, AiValue> | undefined) => {
+        if (!fields) return;
+        const changes = Object.entries(fields).filter(([key, value]) => (before.fields[key] ?? null) !== value);
+        if (!create && !changes.length) return;
+        if (
+          !create &&
+          !this.ai
+            .drafts()
+            .find((draft) => draft.id === draftId)
+            ?.order.items.some((product) => product.itemId === item.itemId)
+        ) {
+          this.submitError.set('Товар уже удалён из черновика.');
+          return;
+        }
+        this.ai.update(draftId, (draft) => {
+          if (create) draft.order.items.push({ ...before, fields: { ...before.fields } });
+          const target = draft.order.items.find((product) => product.itemId === item.itemId)!;
+          for (const [key, value] of changes) {
+            target.fields[key] = value;
+            draft.fieldSources[`items.${item.itemId}.${key}`] = { text: 'Ручное исправление', manual: true };
+          }
+          if (create)
+            for (const key of Object.keys(target.fields))
+              draft.fieldSources[`items.${item.itemId}.${key}`] = { text: 'Ручное добавление', manual: true };
+          draft.lastAppliedChange = undefined;
+        });
+      });
+  }
+
+  protected onDraftItemDuplicateClick(itemId: string): void {
+    const id = this.aiDraftId();
+    if (!id || (this.aiDraft()?.order.items.length ?? 0) >= 100) return;
+    this.ai.update(id, (draft) => {
+      const item = draft.order.items.find((product) => product.itemId === itemId);
+      if (!item) return;
+      const copy = { ...structuredClone(item), itemId: crypto.randomUUID() };
+      draft.order.items.push(copy);
+      for (const key of Object.keys(copy.fields))
+        draft.fieldSources[`items.${copy.itemId}.${key}`] = { text: 'Ручное копирование', manual: true };
+      draft.lastAppliedChange = undefined;
+    });
+  }
+
+  protected onDraftItemRemoveClick(itemId: string): void {
+    this.ai.deleteItem(itemId, this.aiDraftId()!);
+  }
+
   protected onSaveClick(): void {
     if (this.aiDraftId()) {
       if (!this.saveAiEditor()) return;
@@ -311,25 +396,16 @@ export class OrderCreateComponent implements OnInit, OnChanges {
           this.submitError.set('Для создания заказа заполните обязательные данные. Черновик сохранён.');
           return;
         }
-        const payload = aiToPayload(this.aiDraft()!.order);
-        if (
-          !this.ai.update(this.aiDraftId()!, (draft) => {
-            draft.editorState = { payload, accepted: true, defaultsConfirmed: true };
-          })
-        )
-          return;
-        this.applyOrder(payload);
-        this.aiImported.set(true);
       }
     }
-    const hasItems = this.hasOrderItems();
+    const hasItems = this.aiPartial() ? !!this.aiDraft()?.order.items.length : this.hasOrderItems();
     this.showOrdersError.set(!hasItems);
     if (this.form.invalid || !hasItems) {
       this.form.markAllAsTouched();
       return;
     }
 
-    const payload = this.buildOrderPayload();
+    const payload = this.aiPartial() ? aiToPayload(this.aiDraft()!.order) : this.buildOrderPayload();
 
     const dialogData: ConfirmDialogData = {
       title: 'Сохранение заказа',
@@ -655,6 +731,12 @@ export class OrderCreateComponent implements OnInit, OnChanges {
     );
     this.prepayment.set(Number(h['prepayment'] ?? 0));
     this.discount.set(Number(h['discount'] ?? 0));
+    this.form.controls.draftPrepayment.setValue(typeof h['prepayment'] === 'number' ? h['prepayment'] : null, {
+      emitEvent: false,
+    });
+    this.form.controls.draftDiscount.setValue(typeof h['discount'] === 'number' ? h['discount'] : null, {
+      emitEvent: false,
+    });
     this.syncDeliveryState(this.form.controls.needsDelivery.value, { clearAddressWhenDisabled: false });
   }
 
@@ -671,6 +753,8 @@ export class OrderCreateComponent implements OnInit, OnChanges {
         comment: value.comment.trim() || null,
         needsDelivery: value.needsDelivery,
         deliveryAddress: value.deliveryAddress.trim() || null,
+        prepayment: value.draftPrepayment,
+        discount: value.draftDiscount,
       };
       const changes = Object.entries(header).filter(([key, next]) => (current.order.header[key] ?? null) !== next);
       if (!changes.length) return true;
@@ -679,6 +763,7 @@ export class OrderCreateComponent implements OnInit, OnChanges {
           draft.order.header[key] = next;
           draft.fieldSources['header.' + key] = { text: 'Ручное исправление', manual: true };
         }
+        draft.lastAppliedChange = undefined;
       });
     }
     const updated = this.ai.update(id, (d) => {
