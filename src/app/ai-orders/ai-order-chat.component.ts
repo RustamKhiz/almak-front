@@ -14,12 +14,13 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { AiOrdersService } from './ai-orders.service';
-import { AiDraftCardComponent } from './ai-draft-card.component';
+import { DatePipe } from '@angular/common';
+import { AiDraft } from './ai-order.types';
 import { AuthService } from '../services/auth.service';
 
 @Component({
   selector: 'app-ai-order-chat',
-  imports: [FormsModule, MatIconModule, AiDraftCardComponent],
+  imports: [FormsModule, MatIconModule, DatePipe],
   templateUrl: './ai-order-chat.component.html',
   styleUrl: './ai-order-chat.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -30,7 +31,6 @@ export class AiOrderChatComponent implements OnDestroy {
   private readonly router = inject(Router);
   private readonly launcher = viewChild<ElementRef<HTMLButtonElement>>('launcher');
   private readonly input = viewChild<ElementRef<HTMLTextAreaElement>>('composer');
-  private readonly card = viewChild('draftCard', { read: ElementRef });
   private readonly history = viewChild<ElementRef<HTMLElement>>('history');
   protected readonly draft = computed(() => this.ai.drafts().find((d) => d.id === this.ai.activeId()));
   protected readonly width = signal(420);
@@ -38,8 +38,14 @@ export class AiOrderChatComponent implements OnDestroy {
   protected readonly text = signal('');
   protected readonly newMessages = signal(false);
   protected readonly sizeMenu = signal(false);
+  protected readonly chatListOpened = signal(false);
+  protected readonly chats = computed(() =>
+    [...this.ai.drafts()].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)),
+  );
+  protected readonly canCompose = computed(() => !this.draft()?.orderId && !this.draft()?.editorState?.accepted);
   private drag: { x: number; y: number; width: number; height: number; axis: string } | null = null;
   private previousMessageCount = 0;
+  private previousDraftId: string | null = null;
   constructor() {
     try {
       const size = JSON.parse(localStorage.getItem('ai_chat_size') ?? 'null');
@@ -61,6 +67,14 @@ export class AiOrderChatComponent implements OnDestroy {
       const opened = this.ai.opened();
       const d = this.draft();
       const count = d?.messages.length ?? 0;
+      const id = d?.id ?? null;
+      if (id !== this.previousDraftId) {
+        this.previousDraftId = id;
+        this.previousMessageCount = count;
+        this.newMessages.set(false);
+        if (opened) setTimeout(() => this.scrollBottom());
+        return;
+      }
       if (opened) {
         const el = this.history()?.nativeElement;
         const nearBottom = !el || el.scrollHeight - el.scrollTop - el.clientHeight < 100;
@@ -106,27 +120,49 @@ export class AiOrderChatComponent implements OnDestroy {
   protected startNew(): void {
     if (!this.ai.setText(this.text())) return;
     this.ai.newChat();
+    this.chatListOpened.set(false);
     this.text.set('');
     this.previousMessageCount = 0;
     setTimeout(() => this.input()?.nativeElement.focus());
   }
+  protected chatTitle(chat: AiDraft): string {
+    return (
+      chat.editorState?.payload?.name ||
+      String(chat.order.header['name'] || '') ||
+      chat.sourceText.slice(0, 64) ||
+      'Новый заказ'
+    );
+  }
+  protected chatPreview(chat: AiDraft): string {
+    return (
+      chat.pendingText ||
+      [...chat.messages].reverse().find((message) => message.role === 'user')?.text ||
+      chat.sourceText ||
+      'Новый заказ'
+    );
+  }
+  protected toggleChatList(): void {
+    if (this.canCompose() && !this.ai.setText(this.text())) return;
+    this.chatListOpened.set(!this.chatListOpened());
+    this.sizeMenu.set(false);
+    if (!this.chatListOpened()) setTimeout(() => this.scrollBottom());
+  }
+  protected switchChat(id: string): void {
+    if (this.canCompose() && !this.ai.setText(this.text())) return;
+    this.ai.open(id);
+    this.chatListOpened.set(false);
+    this.text.set(this.ai.active()?.pendingText ?? '');
+    this.newMessages.set(false);
+    setTimeout(() => this.scrollBottom());
+  }
   protected openEditor(): void {
     const d = this.draft();
     if (!d) return;
-    if (this.text().trim() && !d.editorState) {
-      this.ai.error.set('Сначала отправьте набранное уточнение или очистите поле. Текст сохранён.');
-      return;
-    }
-    if (
-      !d.editorState &&
-      !this.ai.update(d.id, (item) => {
-        item.editorState = { payload: null, accepted: false, defaultsConfirmed: false };
-      })
-    )
-      return;
+    if (this.canCompose() && !this.ai.setText(this.text())) return;
     this.ai.cancel();
     this.ai.opened.set(false);
-    this.router.navigate(['/order'], { queryParams: { aiDraft: d.id } });
+    if (d.orderId) this.router.navigate(['/order', d.orderId]);
+    else this.router.navigate(['/order'], { queryParams: { aiDraft: d.id } });
   }
   protected startResize(event: PointerEvent, axis: string): void {
     if (window.innerWidth < 600) return;
@@ -171,9 +207,6 @@ export class AiOrderChatComponent implements OnDestroy {
     if (event.defaultPrevented) return;
     event.stopPropagation();
     this.minimize();
-  }
-  protected showCard(): void {
-    this.card()?.nativeElement.scrollIntoView({ block: 'start', behavior: 'smooth' });
   }
   protected scrollBottom(): void {
     const el = this.history()?.nativeElement;

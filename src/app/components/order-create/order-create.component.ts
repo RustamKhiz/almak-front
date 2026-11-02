@@ -330,7 +330,7 @@ export class OrderCreateComponent implements OnInit, OnChanges {
           const aiId = this.aiDraftId();
           if (aiId) {
             this.aiImported.set(false);
-            this.ai.remove(aiId);
+            this.ai.complete(aiId, savedOrderId);
           }
           this.router.navigate(['/order', savedOrderId]);
         },

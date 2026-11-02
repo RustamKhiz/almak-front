@@ -47,6 +47,16 @@
       <header>
         <div class="assistant-icon"><mat-icon>auto_awesome</mat-icon></div>
         <div class="heading"><strong>Помощник по заказам</strong><span>Быстрое оформление</span></div>
+        <button
+          type="button"
+          class="icon-button"
+          aria-label="История чатов"
+          title="История чатов"
+          [attr.aria-expanded]="chatListOpened()"
+          (click)="toggleChatList()"
+        >
+          <mat-icon>{{ chatListOpened() ? 'arrow_back' : 'history' }}</mat-icon>
+        </button>
         <button type="button" class="icon-button" aria-label="Новый чат" title="Новый чат" (click)="startNew()">
           <mat-icon>add</mat-icon></button
         ><button
@@ -68,65 +78,74 @@
           ><button type="button" (click)="setSize(false)">Сбросить размер</button>
         </nav>
       }
-      @if (draft(); as d) {
-        <div class="draft-link">
-          <span>Черновик · {{ d.order.header['name'] || 'Новый заказ' }}</span
-          ><button type="button" (click)="showCard()">Открыть черновик ↓</button>
+      @if (chatListOpened()) {
+        <div class="chat-list" aria-label="История чатов">
+          <h2>История чатов</h2>
+          @for (chat of chats(); track chat.id) {
+            <button
+              type="button"
+              class="chat-entry"
+              [class.active]="chat.id === ai.activeId()"
+              [attr.aria-current]="chat.id === ai.activeId() ? 'true' : null"
+              (click)="switchChat(chat.id)"
+            >
+              <span class="chat-entry-heading"
+                ><strong>{{ chatTitle(chat) }}</strong
+                ><time>{{ chat.updatedAt | date: 'dd.MM HH:mm' }}</time></span
+              >
+              <span class="chat-entry-preview">{{ chatPreview(chat) }}</span>
+              <span class="chat-entry-status">{{ chat.orderId ? 'Заказ №' + chat.orderId : 'Черновик' }}</span>
+            </button>
+          } @empty {
+            <p class="empty-chats">Здесь появятся ваши переписки по заказам.</p>
+          }
         </div>
-      }
-      <div class="history" #history>
-        @if (!draft()?.messages?.length) {
-          <div class="welcome">
-            <span class="eyebrow">ОПИШИТЕ ЗАКАЗ СВОИМИ СЛОВАМИ</span>
-            <h2>Запишем сейчас.<br />Уточним по ходу.</h2>
-            <p>
-              Напишите клиента, товары и всё, что уже известно. Помощник соберёт черновик, а недостающее можно заполнить
-              позже.
-            </p>
-            <div class="example">
-              Например: Магомед, три белые двери Верона. Две 80 на 200, одна 70 на 200. По 12 тысяч. Предоплата 10
-              тысяч.
-            </div>
+      } @else {
+        @if (draft(); as d) {
+          <div class="draft-link">
+            <span>{{ d.orderId ? 'Заказ №' + d.orderId : 'Черновик' }} · {{ chatTitle(d) }}</span>
+            <button type="button" (click)="openEditor()">{{ d.orderId ? 'Открыть заказ' : 'Открыть черновик' }}</button>
           </div>
         }
-        @for (message of draft()?.messages || []; track $index) {
-          <article class="message" [class.user]="message.role === 'user'">
-            <span>{{ message.role === 'user' ? 'Вы' : 'Помощник' }}</span>
-            <p>{{ message.text }}</p>
-          </article>
-        }
-        @if (ai.busy()) {
-          <p class="working" role="status">Разбираю описание… Можно свернуть чат.</p>
-        }
-        @if (draft(); as d) {
-          @if (d.order.items.length || d.messages.length) {
-            <app-ai-draft-card #draftCard [draftId]="d.id" [readonly]="!!d.editorState"></app-ai-draft-card>
-            @if (!d.editorState) {
-              @for (question of d.questions.slice(0, 3); track $index) {
-                <p class="question">{{ question }}</p>
-              }
-              @if (d.changes.length) {
-                <details class="changes">
-                  <summary>Что изменилось: {{ d.changes.length }}</summary>
-                  @for (change of d.changes; track $index) {
-                    <p>{{ change.label }}: {{ change.before ?? 'не указано' }} → {{ change.after ?? 'не указано' }}</p>
-                  }
-                </details>
-              }
+        <div class="history" #history>
+          @if (!draft()?.messages?.length) {
+            <div class="welcome">
+              <span class="eyebrow">ОПИШИТЕ ЗАКАЗ СВОИМИ СЛОВАМИ</span>
+              <h2>Запишем сейчас.<br />Уточним по ходу.</h2>
+              <p>Напишите всё, что уже известно. Остальное можно добавить позже.</p>
+              <div class="example">
+                Например: Магомед, три белые двери Верона. Две 80 на 200, одна 70 на 200. По 12 тысяч. Предоплата 10
+                тысяч.
+              </div>
+            </div>
+          }
+          @for (message of draft()?.messages || []; track $index) {
+            <article class="message" [class.user]="message.role === 'user'">
+              <span>{{ message.role === 'user' ? 'Вы' : 'Помощник' }}</span>
+              <p>{{ message.text }}</p>
+            </article>
+          }
+          @if (ai.busy()) {
+            <p class="working" role="status">Разбираю описание…</p>
+          }
+          @if (draft(); as d) {
+            @if (d.messages.length) {
+              <button class="editor-button" type="button" (click)="openEditor()">
+                {{ d.orderId ? 'Открыть заказ №' + d.orderId : 'Открыть черновик' }} <mat-icon>arrow_forward</mat-icon>
+              </button>
+            }
+            @if (canCompose()) {
               @if (d.lastAppliedChange) {
                 <button class="text-button" type="button" (click)="ai.undo()" [disabled]="ai.busy()">
                   Отменить изменение
                 </button>
               }
             }
-            <button class="editor-button" type="button" (click)="openEditor()">
-              {{ d.editorState ? 'Вернуться в форму' : 'Открыть в форме' }} <mat-icon>arrow_forward</mat-icon>
-            </button>
           }
+        </div>
+        @if (newMessages()) {
+          <button class="new-messages" type="button" (click)="scrollBottom()">Новое сообщение ↓</button>
         }
-      </div>
-      @if (newMessages()) {
-        <button class="new-messages" type="button" (click)="scrollBottom()">Новое сообщение ↓</button>
       }
       @if (ai.error() || ai.storageError()) {
         <div class="error" role="alert">
@@ -136,46 +155,35 @@
           }
         </div>
       }
-      @if (draft()?.editorState) {
-        <div class="notice">
-          Черновик передан в форму. История доступна для чтения. Для другого заказа начните новый чат.
-        </div>
-      } @else {
-        <div class="composer">
-          <textarea
-            #composer
-            rows="3"
-            maxlength="10000"
-            aria-label="Описание заказа или уточнение"
-            placeholder="Напишите заказ или уточнение…"
-            [ngModel]="text()"
-            (ngModelChange)="changed($event)"
-            (keydown)="key($event)"
-          ></textarea
-          ><button
-            class="send"
-            type="button"
-            aria-label="Отправить"
-            [disabled]="!text().trim() || ai.busy()"
-            (click)="send()"
-          >
-            <mat-icon>arrow_upward</mat-icon>
-          </button>
-        </div>
+      @if (!chatListOpened()) {
+        @if (canCompose()) {
+          <div class="composer">
+            <textarea
+              #composer
+              rows="3"
+              maxlength="10000"
+              aria-label="Описание заказа или уточнение"
+              placeholder="Напишите заказ или уточнение…"
+              [ngModel]="text()"
+              (ngModelChange)="changed($event)"
+              (keydown)="key($event)"
+            ></textarea>
+            <button
+              class="send"
+              type="button"
+              aria-label="Отправить"
+              [disabled]="!text().trim() || ai.busy()"
+              (click)="send()"
+            >
+              <mat-icon>arrow_upward</mat-icon>
+            </button>
+          </div>
+        } @else {
+          <div class="notice">
+            {{ draft()?.orderId ? 'Заказ создан. Переписка сохранена.' : 'Продолжите оформление заказа в форме.' }}
+          </div>
+        }
       }
-      <footer>
-        <span role="status">{{
-          ai.storageError()
-            ? 'Не удалось сохранить'
-            : draft()
-              ? 'Сохранено на этом устройстве'
-              : 'Черновик появится после ввода'
-        }}</span
-        ><span>{{ text().length }}/10000</span>
-      </footer>
-      <p class="privacy">
-        Текст отправляется в DeepSeek. Черновики общие для аккаунтов этого браузера и не синхронизируются.
-      </p>
     </section>
   }
 }
