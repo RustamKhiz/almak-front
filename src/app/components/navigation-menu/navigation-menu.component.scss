@@ -29,6 +29,19 @@
   margin: 0 8px 16px;
 }
 
+.user-profile {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0 8px 16px;
+  overflow-wrap: anywhere;
+  font-size: 13px;
+}
+.user-profile span {
+  font-size: 11px;
+  color: #cbd5e1;
+}
+
 mat-nav-list a {
   color: #e5e7eb;
   border-radius: 8px;
@@ -78,4 +91,16 @@ button.download-app {
 .update-ready:hover {
   background: rgba(74, 222, 128, 0.1);
   color: #4ade80;
+}
+
+button.download-app:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.update-status {
+  margin: -22px 4px 24px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: #cbd5e1;
 }

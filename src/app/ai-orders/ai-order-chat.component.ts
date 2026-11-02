@@ -37,7 +37,6 @@ export class AiOrderChatComponent implements OnDestroy {
   protected readonly height = signal(600);
   protected readonly text = signal('');
   protected readonly newMessages = signal(false);
-  protected readonly sizeMenu = signal(false);
   protected readonly chatListOpened = signal(false);
   protected readonly chats = computed(() =>
     [...this.ai.drafts()].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)),
@@ -144,7 +143,6 @@ export class AiOrderChatComponent implements OnDestroy {
   protected toggleChatList(): void {
     if (this.canCompose() && !this.ai.setText(this.text())) return;
     this.chatListOpened.set(!this.chatListOpened());
-    this.sizeMenu.set(false);
     if (!this.chatListOpened()) setTimeout(() => this.scrollBottom());
   }
   protected switchChat(id: string): void {
@@ -188,12 +186,6 @@ export class AiOrderChatComponent implements OnDestroy {
   protected endResize(): void {
     if (!this.drag) return;
     this.drag = null;
-    this.persistSize();
-  }
-  protected setSize(large: boolean): void {
-    this.width.set(large ? 680 : 420);
-    this.height.set(large ? 760 : 600);
-    this.sizeMenu.set(false);
     this.persistSize();
   }
   private persistSize(): void {

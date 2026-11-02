@@ -1,6 +1,12 @@
 <div class="nav">
   <div class="brand">Almak CRM</div>
   <div class="version">v{{ appVersion }}</div>
+  @if (auth.profile(); as user) {
+    <div class="user-profile">
+      <strong>{{ user.name || user.login }}</strong>
+      <span>{{ user.role === 'admin' ? 'Администратор' : 'Менеджер' }}</span>
+    </div>
+  }
   <mat-nav-list>
     <a mat-list-item routerLink="/orders" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
       <span class="nav-item"> Все заказы </span>
@@ -19,6 +25,24 @@
   @if (isElectron) {
     @if (updateReady()) {
       <button class="download-app update-ready" (click)="installUpdate()">Установить обновление</button>
+    } @else {
+      <button
+        class="download-app"
+        type="button"
+        [disabled]="updateBusy() || updateState().status === 'unsupported'"
+        (click)="checkForUpdates()"
+      >
+        {{
+          updateState().status === 'downloading'
+            ? 'Скачивание обновления…'
+            : updateBusy()
+              ? 'Проверка обновления…'
+              : 'Проверить обновление'
+        }}
+      </button>
+    }
+    @if (updateMessage()) {
+      <div class="update-status" role="status">{{ updateMessage() }}</div>
     }
   } @else if (showDesktopDownload) {
     <a class="download-app" [href]="desktopDownloadUrl" download> Скачать приложение </a>

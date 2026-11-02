@@ -219,6 +219,14 @@ h2 {
   height: 32px;
   display: grid;
   place-items: center;
+  padding: 0;
+  box-sizing: border-box;
+}
+.send mat-icon {
+  width: 24px;
+  height: 24px;
+  font-size: 24px;
+  line-height: 24px;
 }
 .error,
 .notice {
@@ -250,20 +258,6 @@ h2 {
 .working {
   color: #6178a7;
   font-size: 12px;
-}
-.size-menu {
-  display: flex;
-  flex-wrap: wrap;
-  padding: 8px;
-  gap: 8px;
-  background: #fff;
-}
-.size-menu button {
-  border: 1px solid #dce3ef;
-  border-radius: 5px;
-  padding: 5px 8px;
-  background: #fff;
-  font-size: 11px;
 }
 .new-messages {
   background: #edf2ff;
