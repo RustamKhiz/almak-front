@@ -12,6 +12,7 @@
     "build:electron": "ng build -c electron",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
+    "test:desktop": "node --test scripts/tests/desktop-updates.test.cjs",
     "lint": "ng lint",
     "lint:fix": "ng lint --fix",
     "format": "prettier --write .",

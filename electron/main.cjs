@@ -1,6 +1,7 @@
 const { app, BrowserWindow, ipcMain, shell } = require('electron');
 const { autoUpdater } = require('electron-updater');
 const path = require('node:path');
+const { createUpdates } = require('./updates.cjs');
 
 const isDev = !app.isPackaged;
 const devServerUrl = process.env.ELECTRON_START_URL || 'http://localhost:4200';
@@ -47,35 +48,25 @@ function createWindow() {
 }
 
 function setupAutoUpdates() {
-  if (isDev) {
-    return;
-  }
-
-  autoUpdater.autoDownload = true;
-  autoUpdater.autoInstallOnAppQuit = true;
-
-  autoUpdater.on('update-downloaded', () => {
-    if (mainWindow && !mainWindow.isDestroyed()) {
-      mainWindow.webContents.send('update-downloaded');
-    }
+  const updates = createUpdates(
+    autoUpdater,
+    (state) => {
+      if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send('update-state', state);
+    },
+    !isDev,
+  );
+  const fromMainWindow = (event) => mainWindow && !mainWindow.isDestroyed() && event.sender === mainWindow.webContents;
+  ipcMain.handle('get-update-state', (event) => (fromMainWindow(event) ? updates.getState() : null));
+  ipcMain.handle('check-for-updates', (event) => (fromMainWindow(event) ? updates.check() : null));
+  ipcMain.on('install-update', (event) => {
+    if (fromMainWindow(event)) updates.install();
   });
-
-  ipcMain.on('install-update', () => {
-    autoUpdater.quitAndInstall(false, true);
-  });
-
-  autoUpdater.on('error', (error) => {
-    console.error('Auto update failed:', error);
-  });
-
-  autoUpdater.checkForUpdates().catch((error) => {
-    console.error('Failed to check for updates:', error);
-  });
+  updates.check();
 }
 
 app.whenReady().then(() => {
-  createWindow();
   setupAutoUpdates();
+  createWindow();
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {

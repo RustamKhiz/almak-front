@@ -88,3 +88,12 @@ For production Windows releases, use a code signing certificate and remove the u
 ```json
 "signAndEditExecutable": false
 ```
+
+
+## Manual update check
+
+The installed app checks for updates on startup. The sidebar also offers «Проверить обновление» until an update is ready to install. Manual checks display checking, download progress, latest-version or retryable error status. Checks cannot be duplicated during checking/downloading. Once downloaded, the action becomes «Установить обновление»; installation is also enabled on app quit.
+
+The main process retains update state, so reloading the renderer or opening the menu after a download restores the install action. IPC only accepts requests from the main window. Development builds show that updates require the installed app and never contact the update server. The web app does not show these controls.
+
+Run `npm run test:desktop` for updater state/retry tests; navigation component tests cover the desktop bridge, progress, ready state and web visibility. The desktop tests also run in PR CI. To verify a real download/install, use two packaged versions and the configured update server; development builds do not exercise installation.

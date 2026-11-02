@@ -22,5 +22,8 @@ jobs:
       - name: Lint
         run: npm run lint
 
+      - name: Test desktop updates
+        run: npm run test:desktop
+
       - name: Build
         run: npm run build
