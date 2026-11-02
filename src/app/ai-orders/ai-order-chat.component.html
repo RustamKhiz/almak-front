@@ -59,25 +59,10 @@
         </button>
         <button type="button" class="icon-button" aria-label="Новый чат" title="Новый чат" (click)="startNew()">
           <mat-icon>add</mat-icon></button
-        ><button
-          type="button"
-          class="icon-button"
-          aria-label="Размер окна"
-          title="Размер окна"
-          (click)="sizeMenu.set(!sizeMenu())"
-        >
-          <mat-icon>aspect_ratio</mat-icon></button
         ><button type="button" class="icon-button" aria-label="Свернуть чат" (click)="minimize()">
           <mat-icon>remove</mat-icon>
         </button>
       </header>
-      @if (sizeMenu()) {
-        <nav class="size-menu" aria-label="Размер окна">
-          <button type="button" (click)="setSize(false)">Обычный</button
-          ><button type="button" (click)="setSize(true)">Большой</button
-          ><button type="button" (click)="setSize(false)">Сбросить размер</button>
-        </nav>
-      }
       @if (chatListOpened()) {
         <div class="chat-list" aria-label="История чатов">
           <h2>История чатов</h2>
