@@ -3,6 +3,7 @@ import { inject, Injectable, signal } from '@angular/core';
 import { Observable, catchError, finalize, map, of, shareReplay, tap, throwError } from 'rxjs';
 import { CoreService } from './core.service';
 import { createAuthTokenStorage } from './auth-token-storage';
+import { UserProfile } from './auth.types';
 
 interface LoginRequest {
   login: string;
@@ -12,6 +13,7 @@ interface LoginRequest {
 interface TokenPairResponse {
   token: string;
   refreshToken?: string;
+  user: UserProfile;
 }
 
 @Injectable({
@@ -24,6 +26,8 @@ export class AuthService {
   private readonly isDesktop = !!window.almakDesktop;
   private readonly tokenStorage = createAuthTokenStorage(this.isDesktop);
   readonly authenticated = signal(!!this.tokenStorage.getAccessToken());
+  readonly profile = signal<UserProfile | null>(null);
+  private sessionEpoch = 0;
   private sessionCheckCompleted = false;
   private sessionCheck$: Observable<boolean> | null = null;
 
@@ -72,8 +76,7 @@ export class AuthService {
       this.sessionCheck$ = this.refreshToken().pipe(
         map(() => true),
         catchError(() => {
-          this.tokenStorage.clear();
-          this.authenticated.set(false);
+          this.clearSession();
           return of(false);
         }),
         finalize(() => {
@@ -101,11 +104,26 @@ export class AuthService {
     return this.tokenStorage.getAccessToken();
   }
 
+  loadProfile(): Observable<UserProfile> {
+    const epoch = this.sessionEpoch;
+    return this.http.get<UserProfile>(`${this.coreService.apiBaseUrl}/me`).pipe(
+      tap((user) => {
+        if (epoch === this.sessionEpoch && this.authenticated()) this.profile.set(user);
+      }),
+    );
+  }
+
+  can(permission: string): boolean {
+    return this.profile()?.permissions.includes(permission) ?? false;
+  }
+
   canRefresh(): boolean {
     return !this.isDesktop || !!this.tokenStorage.getRefreshToken();
   }
 
   clearSession(): void {
+    this.sessionEpoch++;
+    this.profile.set(null);
     this.tokenStorage.clear();
     this.authenticated.set(false);
     this.sessionCheckCompleted = true;
@@ -116,6 +134,7 @@ export class AuthService {
       throw new Error('Desktop auth response is missing refresh token');
     }
     this.tokenStorage.setTokens(response.token, response.refreshToken);
+    this.profile.set(response.user ?? null);
     this.authenticated.set(true);
   }
 }

@@ -1,8 +1,18 @@
-import { ChangeDetectionStrategy, Component, signal, computed, inject, DestroyRef, OnInit } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  signal,
+  computed,
+  effect,
+  inject,
+  DestroyRef,
+  OnInit,
+} from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { MatListModule } from '@angular/material/list';
 import { environment } from '../../../environments/environment';
 import { version } from '../../../../package.json';
+import { AuthService } from '../../services/auth.service';
 
 export interface DesktopUpdateState {
   status: 'idle' | 'checking' | 'downloading' | 'ready' | 'current' | 'error' | 'unsupported';
@@ -31,6 +41,18 @@ declare global {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class NavigationMenuComponent implements OnInit {
+  protected readonly auth = inject(AuthService);
+  constructor() {
+    effect((onCleanup) => {
+      if (!this.auth.authenticated()) return;
+      const subscription = this.auth.loadProfile().subscribe({
+        error: () => {
+          /* Auth interceptor handles expired sessions. */
+        },
+      });
+      onCleanup(() => subscription.unsubscribe());
+    });
+  }
   readonly showDesktopDownload = environment.showDesktopDownload;
   readonly desktopDownloadUrl = environment.desktopDownloadUrl;
   readonly isElectron = !!window.almakDesktop;

@@ -1,5 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
+import { signal } from '@angular/core';
+import { AuthService } from '../../services/auth.service';
 import { DesktopUpdateState, NavigationMenuComponent } from './navigation-menu.component';
 
 describe('Desktop update controls', () => {
@@ -27,7 +29,10 @@ describe('Desktop update controls', () => {
     };
     await TestBed.configureTestingModule({
       imports: [NavigationMenuComponent],
-      providers: [provideRouter([])],
+      providers: [
+        provideRouter([]),
+        { provide: AuthService, useValue: { authenticated: signal(false), profile: signal(null) } },
+      ],
     }).compileComponents();
   });
   afterEach(() => {
@@ -40,6 +45,20 @@ describe('Desktop update controls', () => {
     await fixture.whenStable();
     fixture.detectChanges();
   }
+
+  it('shows the current account and role in the sidebar', async () => {
+    const auth = TestBed.inject(AuthService);
+    await open();
+    for (const [role, label] of [
+      ['admin', 'Администратор'],
+      ['manager', 'Менеджер'],
+    ] as const) {
+      auth.profile.set({ id: 1, login: 'account', name: 'Пользователь', role, permissions: [] });
+      fixture.detectChanges();
+      expect(fixture.nativeElement.querySelector('.user-profile').textContent).toContain('Пользователь');
+      expect(fixture.nativeElement.querySelector('.user-profile').textContent).toContain(label);
+    }
+  });
 
   it('checks on demand and displays the current-version result', async () => {
     await open();
