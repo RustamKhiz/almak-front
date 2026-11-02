@@ -49,6 +49,7 @@ export interface AiIssue {
 }
 export interface AiDraft {
   schemaVersion: 1;
+  orderId?: number;
   id: string;
   revision: number;
   createdAt: string;

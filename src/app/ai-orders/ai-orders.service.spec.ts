@@ -8,6 +8,7 @@ describe('AI local drafts', () => {
   let http: HttpTestingController;
   beforeEach(() => {
     localStorage.removeItem('ai_order_drafts_v1');
+    localStorage.removeItem('ai_order_active_chat_v1');
     TestBed.configureTestingModule({ providers: [provideHttpClient(), provideHttpClientTesting()] });
     service = TestBed.inject(AiOrdersService);
     http = TestBed.inject(HttpTestingController);
@@ -15,6 +16,7 @@ describe('AI local drafts', () => {
   afterEach(() => {
     http.verify();
     localStorage.removeItem('ai_order_drafts_v1');
+    localStorage.removeItem('ai_order_active_chat_v1');
   });
   it('saves text before any request and updates one draft', () => {
     service.setText('Три двери');
@@ -73,6 +75,55 @@ describe('AI local drafts', () => {
     service.hideForLogout();
     expect(request.cancelled).toBeTrue();
     expect(service.busy()).toBeFalse();
+    expect(service.drafts().length).toBe(1);
+  });
+  it('accepts a draft with just one known field and refines it without requiring products', () => {
+    service.setText('Клиент Магомед');
+    service.send();
+    const initial = http.expectOne((r) => r.url.endsWith('/ai/order-drafts/parse'));
+    initial.flush({
+      requestId: initial.request.body.requestId,
+      draftId: initial.request.body.draftId,
+      baseRevision: initial.request.body.baseRevision,
+      schemaVersion: 1,
+      proposedDraft: { header: { name: 'Магомед' }, items: [], notes: [] },
+      questions: ['Что закажет клиент?'],
+      changes: [],
+      issues: [],
+    });
+    expect(service.active()!.order).toEqual({ header: { name: 'Магомед' }, items: [], notes: [] });
+    expect(service.active()!.messages.at(-1)!.text).toContain('Что закажет клиент?');
+    const id = service.active()!.id;
+    service.update(id, (d) => {
+      d.editorState = { payload: null, accepted: false, defaultsConfirmed: false };
+    });
+    service.setText('Нужны три двери');
+    service.send();
+    const refinement = http.expectOne((r) => r.url.endsWith('/ai/order-drafts/parse'));
+    expect(refinement.request.body.mode).toBe('refine');
+    expect(refinement.request.body.currentDraft.header.name).toBe('Магомед');
+    service.cancel();
+  });
+  it('retains conversation history after creating an order and deleting unfinished drafts', () => {
+    service.setText('Первый');
+    const id = service.active()!.id;
+    service.update(id, (d) => {
+      d.messages = [{ role: 'user', text: 'Первый', createdAt: new Date().toISOString() }];
+    });
+    expect(service.complete(id, 17)).toBeTrue();
+    service.newChat();
+    service.setText('Второй');
+    service.removeUnfinished();
+    service.reload();
+    expect(service.drafts().length).toBe(1);
+    expect(service.drafts()[0].orderId).toBe(17);
+    expect(service.drafts()[0].messages[0].text).toBe('Первый');
+  });
+  it('keeps a new empty conversation empty when minimized and reopened', () => {
+    service.setText('Существующий заказ');
+    service.newChat();
+    service.open();
+    expect(service.active()).toBeNull();
     expect(service.drafts().length).toBe(1);
   });
 });

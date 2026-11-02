@@ -5,7 +5,10 @@ import { isAiOrder } from './ai-order.types';
 import { CoreService } from '../services/core.service';
 import { AiDraft, AiOrder, AiParseResponse, AiValue, AI_SCHEMA, emptyAiOrder } from './ai-order.types';
 
+// TODO(ai-chat-backend): replace localStorage with authenticated server-side chats/drafts,
+// migrate existing local records, and keep this API as the UI persistence boundary.
 const KEY = 'ai_order_drafts_v1';
+const ACTIVE_KEY = 'ai_order_active_chat_v1';
 @Injectable({ providedIn: 'root' })
 export class AiOrdersService {
   private readonly http = inject(HttpClient);
@@ -19,6 +22,7 @@ export class AiOrdersService {
   readonly storageError = signal<string | null>(null);
   private subscription: Subscription | null = null;
   private requestId: string | null = null;
+  private selectionInitialized = false;
   constructor() {
     this.reload();
     window.addEventListener('storage', (event) => {
@@ -43,6 +47,7 @@ export class AiOrdersService {
           d.schemaVersion !== 1 ||
           typeof d.id !== 'string' ||
           !Number.isInteger(d.revision) ||
+          (d.orderId !== undefined && (!Number.isSafeInteger(d.orderId) || d.orderId <= 0)) ||
           !isAiOrder(d.order) ||
           !Array.isArray(d.order.items) ||
           !Array.isArray(d.messages) ||
@@ -104,6 +109,8 @@ export class AiOrdersService {
     try {
       if (this.write([...this.read(), draft], null)) {
         this.activeId.set(draft.id);
+        this.selectionInitialized = true;
+        this.persistSelection(draft.id);
         return draft;
       }
     } catch {
@@ -138,30 +145,50 @@ export class AiOrdersService {
       if (!text.trim()) return true;
       return !!this.create(text);
     }
+    if (draft.pendingText === text) return true;
     return !!this.update(draft.id, (d) => {
       d.pendingText = text;
       if (!d.messages.length) d.sourceText = text;
     });
   }
+  private persistSelection(id: string | null): void {
+    try {
+      if (id) localStorage.setItem(ACTIVE_KEY, id);
+      else localStorage.removeItem(ACTIVE_KEY);
+    } catch {
+      /* Selecting a chat must not prevent reading a successfully saved draft. */
+    }
+  }
   open(id?: string): void {
     if (id) {
       if (this.activeId() !== id) this.cancel();
       this.activeId.set(id);
-    } else if (!this.activeId()) {
+    } else if (!this.activeId() && !this.selectionInitialized) {
+      let saved: string | null = null;
+      try {
+        saved = localStorage.getItem(ACTIVE_KEY);
+      } catch {
+        /* Fall back to the latest chat. */
+      }
       const latest = [...this.drafts()].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))[0];
-      this.activeId.set(latest?.id ?? null);
+      this.activeId.set(this.drafts().some((draft) => draft.id === saved) ? saved : (latest?.id ?? null));
     }
+    this.selectionInitialized = true;
+    this.persistSelection(this.activeId());
     this.opened.set(true);
     this.unread.set(false);
     this.error.set(null);
   }
   newChat(): void {
     this.cancel();
+    this.selectionInitialized = true;
     this.activeId.set(null);
+    this.persistSelection(null);
     this.error.set(null);
     this.opened.set(true);
   }
   hideForLogout(): void {
+    this.selectionInitialized = false;
     this.cancel();
     this.opened.set(false);
     this.activeId.set(null);
@@ -190,6 +217,7 @@ export class AiOrdersService {
     if (this.activeId() === id) {
       this.cancel();
       this.activeId.set(null);
+      this.persistSelection(null);
     }
     return true;
   }
@@ -200,6 +228,26 @@ export class AiOrdersService {
       this.cancel();
       this.activeId.set(null);
       this.storageError.set(null);
+      return true;
+    } catch {
+      this.storageError.set('Не удалось удалить черновики.');
+      return false;
+    }
+  }
+  complete(id: string, orderId: number): boolean {
+    return !!this.update(id, (draft) => {
+      draft.orderId = orderId;
+      draft.pendingText = '';
+    });
+  }
+  removeUnfinished(): boolean {
+    try {
+      const completed = this.read().filter((draft) => !!draft.orderId);
+      if (!this.write(completed, null)) return false;
+      if (!completed.some((draft) => draft.id === this.activeId())) {
+        this.cancel();
+        this.activeId.set(null);
+      }
       return true;
     } catch {
       this.storageError.set('Не удалось удалить черновики.');
@@ -239,7 +287,7 @@ export class AiOrdersService {
   }
   undo(): void {
     const draft = this.active();
-    if (!draft?.lastAppliedChange || draft.editorState) return;
+    if (!draft?.lastAppliedChange || draft.editorState?.accepted || draft.orderId) return;
     this.update(draft.id, (d) => {
       d.order = d.lastAppliedChange!.order;
       d.fieldSources = d.lastAppliedChange!.fieldSources;
@@ -255,7 +303,7 @@ export class AiOrdersService {
   }
   send(): void {
     const draft = this.active();
-    if (!draft || draft.editorState || this.busy()) return;
+    if (!draft || draft.editorState?.accepted || draft.orderId || this.busy()) return;
     const text = draft.pendingText.trim();
     if (!text || text.length > 10000) return;
     this.error.set(null);
@@ -279,7 +327,7 @@ export class AiOrdersService {
         draftId: saved.id,
         baseRevision: saved.revision,
         schemaVersion: 1,
-        mode: saved.order.items.length ? 'refine' : 'initial',
+        mode: saved.messages.some((message) => message.role === 'assistant') ? 'refine' : 'initial',
         text,
         currentDraft: saved.order,
         fieldSources: saved.fieldSources,
@@ -312,10 +360,12 @@ export class AiOrdersService {
             for (const c of response.changes) d.fieldSources[c.path] = { text: text.slice(0, 300), manual: false };
             d.messages.push({
               role: 'assistant',
-              text:
-                (d.messages.filter((m) => m.role === 'assistant').length
+              text: [
+                d.messages.some((message) => message.role === 'assistant')
                   ? 'Черновик обновлён.'
-                  : 'Черновик подготовлен.') + ' Проверьте данные в карточке.',
+                  : 'Черновик подготовлен.',
+                ...response.questions.slice(0, 3),
+              ].join('\n\n'),
               createdAt: new Date().toISOString(),
             });
           });

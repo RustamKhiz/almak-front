@@ -20,9 +20,12 @@ export class OrderDraftsComponent {
   private readonly router = inject(Router);
 
   protected readonly drafts = signal<readonly OrderDraft[]>(this.draftsService.getDrafts());
-  protected readonly hasDrafts = computed(() => this.drafts().length > 0 || this.ai.drafts().length > 0);
+  protected readonly hasDrafts = computed(() => this.drafts().length > 0 || this.aiDrafts().length > 0);
   protected readonly aiDrafts = computed(() =>
-    [...this.ai.drafts()].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)),
+    this.ai
+      .drafts()
+      .filter((draft) => !draft.orderId)
+      .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)),
   );
 
   protected openAiDraft(draft: AiDraft): void {
@@ -38,7 +41,7 @@ export class OrderDraftsComponent {
   }
 
   protected onDeleteAllClick(): void {
-    if (!this.ai.removeAll()) return;
+    if (!this.ai.removeUnfinished()) return;
     this.draftsService.deleteAllDrafts();
     this.drafts.set([]);
   }
