@@ -86,6 +86,17 @@
         }
       </mat-form-field>
 
+      @if (aiPartial()) {
+        <mat-form-field appearance="outline">
+          <mat-label>Предоплата, ₽</mat-label>
+          <input matInput type="number" min="0" formControlName="draftPrepayment" />
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Скидка, ₽</mat-label>
+          <input matInput type="number" min="0" formControlName="draftDiscount" />
+        </mat-form-field>
+      }
+
       <div class="order-create__details-row">
         <div class="order-create__details-card">
           <div class="order-create__subcard">
@@ -134,33 +145,51 @@
     </div>
   </form>
 
-  @if (aiPartial()) {
-    @if (aiDraft(); as draft) {
-      <app-ai-draft-card [draftId]="draft.id" [showHeader]="false"></app-ai-draft-card>
-    }
-  } @else {
-    <app-order-items-list
-      [interiorDoors]="interiorDoors()"
-      [entranceDoors]="entranceDoors()"
-      [moldings]="moldings()"
-      [extensions]="extensions()"
-      [capitals]="capitals()"
-      [hardwares]="hardwares()"
-      [panelings]="panelings()"
-      [skirtings]="skirtings()"
-      [showOrdersError]="showOrdersError()"
-      (editClick)="onItemEditClick($event)"
-      (duplicateClick)="onItemDuplicateClick($event)"
-      (removeClick)="onItemRemoveClick($event)"
-    />
+  <app-order-items-list
+    [draftItems]="aiPartial() ? (aiDraft()?.order?.items ?? []) : null"
+    [interiorDoors]="interiorDoors()"
+    [entranceDoors]="entranceDoors()"
+    [moldings]="moldings()"
+    [extensions]="extensions()"
+    [capitals]="capitals()"
+    [hardwares]="hardwares()"
+    [panelings]="panelings()"
+    [skirtings]="skirtings()"
+    [showOrdersError]="showOrdersError()"
+    (draftEditClick)="onDraftItemEditClick($event)"
+    (draftDuplicateClick)="onDraftItemDuplicateClick($event)"
+    (draftRemoveClick)="onDraftItemRemoveClick($event)"
+    (editClick)="onItemEditClick($event)"
+    (duplicateClick)="onItemDuplicateClick($event)"
+    (removeClick)="onItemRemoveClick($event)"
+  />
+  @if (aiPartial() && aiDraft()?.order?.notes?.length) {
+    <div class="order-create__notice">{{ aiDraft()!.order.notes.join(' · ') }}</div>
+  }
+  @if (submitError() && aiPartial() && aiRemaining().length) {
+    <div class="order-create__error">
+      @for (issue of aiRemaining(); track issue.path + issue.message) {
+        <div>{{ issue.message }}</div>
+      }
+    </div>
   }
   <div class="order-create__actions">
     <div class="order-create__summary">
       <div class="order-create__summary-row">
         <div class="order-create__summary-label">
-          {{ aiPartial() ? 'Стоимость будет рассчитана после заполнения позиций' : 'Общая стоимость заказа' }}
+          {{ aiPartial() && !draftAmount()?.complete ? 'Стоимость известных позиций' : 'Общая стоимость заказа' }}
         </div>
-        <div class="order-create__summary-value" [hidden]="aiPartial()">{{ orderTotal() | number: '1.0-0' }} ₽</div>
+        <div class="order-create__summary-value">
+          @if (aiPartial()) {
+            @if (draftAmount()?.hasKnown) {
+              {{ draftAmount()!.amount | number: '1.0-0' }} ₽
+            } @else {
+              Пока не указана
+            }
+          } @else {
+            {{ orderTotal() | number: '1.0-0' }} ₽
+          }
+        </div>
       </div>
     </div>
 
