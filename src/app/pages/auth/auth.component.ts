@@ -23,7 +23,7 @@ export class AuthComponent implements OnInit {
   protected readonly authError = signal<string | null>(null);
   protected readonly isSubmitting = signal<boolean>(false);
 
-  protected readonly form = this.fb.group({
+  protected readonly form = this.fb.nonNullable.group({
     login: ['', [Validators.required]],
     password: ['', [Validators.required]],
   });
@@ -50,8 +50,8 @@ export class AuthComponent implements OnInit {
     const value = this.form.getRawValue();
     this.authService
       .login({
-        login: value.login ?? '',
-        password: value.password ?? '',
+        login: value.login,
+        password: value.password,
       })
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({

@@ -6,10 +6,12 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { NavigationMenuComponent } from './components/navigation-menu/navigation-menu.component';
 import { AuthService } from './services/auth.service';
+import { AiOrderChatComponent } from './ai-orders/ai-order-chat.component';
+import { AiOrdersService } from './ai-orders/ai-orders.service';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, NavigationMenuComponent, MatButtonModule, MatIconModule],
+  imports: [RouterOutlet, NavigationMenuComponent, MatButtonModule, MatIconModule, AiOrderChatComponent],
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -18,8 +20,8 @@ export class AppComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
   private readonly authService = inject(AuthService);
+  private readonly aiOrders = inject(AiOrdersService);
 
-  protected readonly title = signal<string>('Almak');
   protected readonly isAuthPage = signal<boolean>(false);
 
   ngOnInit(): void {
@@ -36,7 +38,14 @@ export class AppComponent implements OnInit {
   }
 
   protected onLogoutClick(): void {
-    this.authService.logout().pipe(takeUntilDestroyed(this.destroyRef)).subscribe();
-    this.router.navigate(['/auth']);
+    this.aiOrders.hideForLogout();
+    this.authService
+      .logout()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => {
+          this.router.navigate(['/auth']);
+        },
+      });
   }
 }

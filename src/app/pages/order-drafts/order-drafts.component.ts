@@ -1,7 +1,9 @@
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
-import { RouterModule } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
+import { AiOrdersService } from '../../ai-orders/ai-orders.service';
+import { AiDraft } from '../../ai-orders/ai-order.types';
 import { getOrderTotal } from '../../common/utils/order-calculations';
 import { OrderDraft, OrderDraftsService } from '../../services/order-drafts.service';
 
@@ -14,9 +16,19 @@ import { OrderDraft, OrderDraftsService } from '../../services/order-drafts.serv
 })
 export class OrderDraftsComponent {
   private readonly draftsService = inject(OrderDraftsService);
+  protected readonly ai = inject(AiOrdersService);
+  private readonly router = inject(Router);
 
   protected readonly drafts = signal<readonly OrderDraft[]>(this.draftsService.getDrafts());
-  protected readonly hasDrafts = computed(() => this.drafts().length > 0);
+  protected readonly hasDrafts = computed(() => this.drafts().length > 0 || this.ai.drafts().length > 0);
+  protected readonly aiDrafts = computed(() =>
+    [...this.ai.drafts()].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)),
+  );
+
+  protected openAiDraft(draft: AiDraft): void {
+    if (draft.editorState) this.router.navigate(['/order'], { queryParams: { aiDraft: draft.id } });
+    else this.ai.open(draft.id);
+  }
 
   protected onDeleteClick(event: MouseEvent, temporaryId: number): void {
     event.preventDefault();
@@ -26,6 +38,7 @@ export class OrderDraftsComponent {
   }
 
   protected onDeleteAllClick(): void {
+    if (!this.ai.removeAll()) return;
     this.draftsService.deleteAllDrafts();
     this.drafts.set([]);
   }
@@ -43,7 +56,8 @@ export class OrderDraftsComponent {
       payload.extensions.length +
       payload.capitals.length +
       payload.hardwares.length +
-      payload.panelings.length
+      payload.panelings.length +
+      payload.skirtings.length
     );
   }
 
