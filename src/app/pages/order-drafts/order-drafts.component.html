@@ -9,6 +9,18 @@
       <button mat-stroked-button color="warn" type="button" (click)="onDeleteAllClick()">Удалить все</button>
     }
   </header>
+  @if (ai.storageError()) {
+    <p role="alert">{{ ai.storageError() }}</p>
+  }
+  @for (draft of aiDrafts(); track draft.id) {
+    <div class="drafts-page__row">
+      <button mat-stroked-button type="button" (click)="openAiDraft(draft)">
+        {{ draft.order.header['name'] || 'Новый заказ' }} · Быстрый заказ
+      </button>
+      <span>{{ draft.updatedAt | date: 'dd.MM.yyyy HH:mm' }} · позиций: {{ draft.order.items.length }}</span>
+      <button mat-stroked-button color="warn" type="button" (click)="ai.remove(draft.id)">Удалить</button>
+    </div>
+  }
 
   @if (hasDrafts()) {
     <div class="drafts-page__table">

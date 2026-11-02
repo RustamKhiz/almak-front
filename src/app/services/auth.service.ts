@@ -1,5 +1,5 @@
 import { HttpClient } from '@angular/common/http';
-import { inject, Injectable } from '@angular/core';
+import { inject, Injectable, signal } from '@angular/core';
 import { Observable, catchError, finalize, map, of, shareReplay, tap, throwError } from 'rxjs';
 import { CoreService } from './core.service';
 import { createAuthTokenStorage } from './auth-token-storage';
@@ -23,6 +23,7 @@ export class AuthService {
 
   private readonly isDesktop = !!window.almakDesktop;
   private readonly tokenStorage = createAuthTokenStorage(this.isDesktop);
+  readonly authenticated = signal(!!this.tokenStorage.getAccessToken());
   private sessionCheckCompleted = false;
   private sessionCheck$: Observable<boolean> | null = null;
 
@@ -72,6 +73,7 @@ export class AuthService {
         map(() => true),
         catchError(() => {
           this.tokenStorage.clear();
+          this.authenticated.set(false);
           return of(false);
         }),
         finalize(() => {
@@ -105,6 +107,7 @@ export class AuthService {
 
   clearSession(): void {
     this.tokenStorage.clear();
+    this.authenticated.set(false);
     this.sessionCheckCompleted = true;
   }
 
@@ -113,5 +116,6 @@ export class AuthService {
       throw new Error('Desktop auth response is missing refresh token');
     }
     this.tokenStorage.setTokens(response.token, response.refreshToken);
+    this.authenticated.set(true);
   }
 }

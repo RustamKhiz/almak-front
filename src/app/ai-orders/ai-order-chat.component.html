@@ -1,0 +1,181 @@
+@if (auth.authenticated()) {
+  <button
+    #launcher
+    class="chat-launcher"
+    type="button"
+    aria-label="Помощник по заказам"
+    [attr.aria-expanded]="ai.opened()"
+    aria-controls="ai-order-chat"
+    (click)="toggle()"
+  >
+    <mat-icon>{{ ai.opened() ? 'close' : 'chat_bubble_outline' }}</mat-icon>
+    @if (ai.unread()) {
+      <span class="unread"></span>
+    }
+  </button>
+  @if (ai.opened()) {
+    <section
+      id="ai-order-chat"
+      class="chat-window"
+      role="dialog"
+      aria-label="Помощник по заказам"
+      [style.width.px]="width()"
+      [style.height.px]="height()"
+      (keydown.escape)="escape($event)"
+    >
+      <button
+        class="resize resize-x"
+        type="button"
+        aria-label="Изменить ширину чата"
+        (pointerdown)="startResize($event, 'x')"
+        tabindex="-1"
+      ></button>
+      <button
+        class="resize resize-y"
+        type="button"
+        aria-label="Изменить высоту чата"
+        (pointerdown)="startResize($event, 'y')"
+        tabindex="-1"
+      ></button>
+      <button
+        class="resize resize-corner"
+        type="button"
+        aria-label="Изменить размер чата"
+        (pointerdown)="startResize($event, 'xy')"
+        tabindex="-1"
+      ></button>
+      <header>
+        <div class="assistant-icon"><mat-icon>auto_awesome</mat-icon></div>
+        <div class="heading"><strong>Помощник по заказам</strong><span>Быстрое оформление</span></div>
+        <button type="button" class="icon-button" aria-label="Новый чат" title="Новый чат" (click)="startNew()">
+          <mat-icon>add</mat-icon></button
+        ><button
+          type="button"
+          class="icon-button"
+          aria-label="Размер окна"
+          title="Размер окна"
+          (click)="sizeMenu.set(!sizeMenu())"
+        >
+          <mat-icon>aspect_ratio</mat-icon></button
+        ><button type="button" class="icon-button" aria-label="Свернуть чат" (click)="minimize()">
+          <mat-icon>remove</mat-icon>
+        </button>
+      </header>
+      @if (sizeMenu()) {
+        <nav class="size-menu" aria-label="Размер окна">
+          <button type="button" (click)="setSize(false)">Обычный</button
+          ><button type="button" (click)="setSize(true)">Большой</button
+          ><button type="button" (click)="setSize(false)">Сбросить размер</button>
+        </nav>
+      }
+      @if (draft(); as d) {
+        <div class="draft-link">
+          <span>Черновик · {{ d.order.header['name'] || 'Новый заказ' }}</span
+          ><button type="button" (click)="showCard()">Открыть черновик ↓</button>
+        </div>
+      }
+      <div class="history" #history>
+        @if (!draft()?.messages?.length) {
+          <div class="welcome">
+            <span class="eyebrow">ОПИШИТЕ ЗАКАЗ СВОИМИ СЛОВАМИ</span>
+            <h2>Запишем сейчас.<br />Уточним по ходу.</h2>
+            <p>
+              Напишите клиента, товары и всё, что уже известно. Помощник соберёт черновик, а недостающее можно заполнить
+              позже.
+            </p>
+            <div class="example">
+              Например: Магомед, три белые двери Верона. Две 80 на 200, одна 70 на 200. По 12 тысяч. Предоплата 10
+              тысяч.
+            </div>
+          </div>
+        }
+        @for (message of draft()?.messages || []; track $index) {
+          <article class="message" [class.user]="message.role === 'user'">
+            <span>{{ message.role === 'user' ? 'Вы' : 'Помощник' }}</span>
+            <p>{{ message.text }}</p>
+          </article>
+        }
+        @if (ai.busy()) {
+          <p class="working" role="status">Разбираю описание… Можно свернуть чат.</p>
+        }
+        @if (draft(); as d) {
+          @if (d.order.items.length || d.messages.length) {
+            <app-ai-draft-card #draftCard [draftId]="d.id" [readonly]="!!d.editorState"></app-ai-draft-card>
+            @if (!d.editorState) {
+              @for (question of d.questions.slice(0, 3); track $index) {
+                <p class="question">{{ question }}</p>
+              }
+              @if (d.changes.length) {
+                <details class="changes">
+                  <summary>Что изменилось: {{ d.changes.length }}</summary>
+                  @for (change of d.changes; track $index) {
+                    <p>{{ change.label }}: {{ change.before ?? 'не указано' }} → {{ change.after ?? 'не указано' }}</p>
+                  }
+                </details>
+              }
+              @if (d.lastAppliedChange) {
+                <button class="text-button" type="button" (click)="ai.undo()" [disabled]="ai.busy()">
+                  Отменить изменение
+                </button>
+              }
+            }
+            <button class="editor-button" type="button" (click)="openEditor()">
+              {{ d.editorState ? 'Вернуться в форму' : 'Открыть в форме' }} <mat-icon>arrow_forward</mat-icon>
+            </button>
+          }
+        }
+      </div>
+      @if (newMessages()) {
+        <button class="new-messages" type="button" (click)="scrollBottom()">Новое сообщение ↓</button>
+      }
+      @if (ai.error() || ai.storageError()) {
+        <div class="error" role="alert">
+          {{ ai.storageError() || ai.error() }}
+          @if (ai.storageError()) {
+            <button type="button" (click)="ai.reload()">Обновить черновики</button>
+          }
+        </div>
+      }
+      @if (draft()?.editorState) {
+        <div class="notice">
+          Черновик передан в форму. История доступна для чтения. Для другого заказа начните новый чат.
+        </div>
+      } @else {
+        <div class="composer">
+          <textarea
+            #composer
+            rows="3"
+            maxlength="10000"
+            aria-label="Описание заказа или уточнение"
+            placeholder="Напишите заказ или уточнение…"
+            [ngModel]="text()"
+            (ngModelChange)="changed($event)"
+            (keydown)="key($event)"
+          ></textarea
+          ><button
+            class="send"
+            type="button"
+            aria-label="Отправить"
+            [disabled]="!text().trim() || ai.busy()"
+            (click)="send()"
+          >
+            <mat-icon>arrow_upward</mat-icon>
+          </button>
+        </div>
+      }
+      <footer>
+        <span role="status">{{
+          ai.storageError()
+            ? 'Не удалось сохранить'
+            : draft()
+              ? 'Сохранено на этом устройстве'
+              : 'Черновик появится после ввода'
+        }}</span
+        ><span>{{ text().length }}/10000</span>
+      </footer>
+      <p class="privacy">
+        Текст отправляется в DeepSeek. Черновики общие для аккаунтов этого браузера и не синхронизируются.
+      </p>
+    </section>
+  }
+}

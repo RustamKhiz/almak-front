@@ -1,201 +1,180 @@
 # Almak Frontend
 
-Angular-приложение для работы с заказами: авторизация, список заказов, создание и редактирование, просмотр, печать и выгрузка `.doc`.
+Angular-приложение для учёта заказов на двери и комплектующие. Тот же интерфейс используется в браузере и Windows-приложении на Electron.
 
-## Что умеет фронт
+Документация сверена с исходным кодом 2 ноября 2026 года.
 
-- логин по JWT и защита внутренних маршрутов: веб хранит access token в памяти и refresh token в `HttpOnly` cookie, Electron использует локальное хранилище;
-- список заказов и экран просмотра заказа;
-- создание и редактирование заказа;
-- смена статуса заказа;
-- удаление заказа;
-- печать и скачивание документа;
-- работа с несколькими типами товарных позиций в одном заказе.
+## Стек и возможности
 
-## Поддерживаемые позиции заказа
+Angular 20, TypeScript, Angular Material/CDK, Reactive Forms, signals, RxJS и Chart.js. Electron используется для desktop-оболочки, electron-builder — для установщика, electron-updater — для обновлений.
 
-Сейчас фронт поддерживает:
+- Авторизация и обновление JWT-сессии.
+- Таблица заказов: фильтры по номеру, клиенту, телефону, дате и статусу; сортировка и пагинация на клиенте.
+- Создание и редактирование заказа, добавление, изменение, дублирование и удаление товарных позиций.
+- Просмотр, смена статуса и удаление заказа.
+- Учёт платежей, история оплат, изменение скидки и расчёт долга.
+- Указание поставщика и закупочной цены позиции.
+- Локальные черновики и редактируемые справочники.
+- Печать и скачивание `.doc` через конструктор документа.
+- Аналитика: суммы и количество заказов по месяцам, оплаты, долг, средний чек, статусы и поставщики.
 
-- межкомнатные двери;
-- входные двери;
-- погонаж;
-- доборы;
-- капитель;
-- обшивку.
+## Маршруты
 
-Для каждого типа есть своя модель, своя модалка и свой mapping в API.
+| Путь | Экран | `authGuard` |
+| --- | --- | --- |
+| `/auth` | Вход | Нет |
+| `/orders` | Все заказы | Да |
+| `/order` | Создание заказа | Да |
+| `/order/:id` | Просмотр заказа | Да |
+| `/order/:id/edit` | Редактирование | Да |
+| `/drafts` | Локальные черновики | Нет |
+| `/drafts/:draftId` | Открытие черновика | Нет |
+| `/catalogs` | Справочники | Да |
+| `/catalogs/:id` | Значения справочника | Да |
+| `/orders-charts` | Аналитика | Да |
 
-## Основные маршруты
+Корневой и неизвестные пути перенаправляются на `/orders`. Определения — в [app.routes.ts](src/app/app.routes.ts). Отправка черновика на сервер требует действующей сессии.
 
-- `/auth` — авторизация;
-- `/orders` — список заказов;
-- `/order` — создание заказа;
-- `/order/:id` — просмотр заказа;
-- `/order/:id/edit` — редактирование заказа;
-- `/orders-charts` — графики по заказам.
+## Данные заказа
 
-Статистика поставщиков на странице графиков загружается агрегированным запросом `/orders/analytics/suppliers`; полные заказы по одному не запрашиваются.
+Основная UI-модель — `OrderCreatePayload` в [order.types.ts](src/app/types/order.types.ts).
 
-Маршруты описаны в [src/app/app.routes.ts](/c:/main/projects/diplom/almak-front/src/app/app.routes.ts).
+Шапка содержит `name`, `phone`, `date`, `prepayment`, `discount`, `needsDelivery`, `deliveryAddress`, `comment`, `status`, `isPaid`. История оплат находится в `payments`.
 
-## Ключевые части приложения
+| Массив | Тип позиций |
+| --- | --- |
+| `interiorDoors` | Межкомнатные двери |
+| `entranceDoors` | Входные двери |
+| `moldings` | Погонаж: коробки и наличники |
+| `extensions` | Доборы |
+| `capitals` | Капители |
+| `hardwares` | Фурнитура |
+| `panelings` | Обшивка |
+| `skirtings` | Плинтусы |
 
-- [src/app/components/order-create](/c:/main/projects/diplom/almak-front/src/app/components/order-create) — главный экран создания и редактирования заказа.
-- [src/app/pages/order-view](/c:/main/projects/diplom/almak-front/src/app/pages/order-view) — просмотр заказа, смена статуса, печать, скачивание, удаление.
-- [src/app/services/orders.service.ts](/c:/main/projects/diplom/almak-front/src/app/services/orders.service.ts) — публичный фасад заказов.
-- [src/app/services/orders-api.service.ts](/c:/main/projects/diplom/almak-front/src/app/services/orders-api.service.ts) — HTTP-запросы заказов.
-- [src/app/services/order.mapper.ts](/c:/main/projects/diplom/almak-front/src/app/services/order.mapper.ts) — mapping между UI и backend API.
-- [src/app/services/order-api.types.ts](/c:/main/projects/diplom/almak-front/src/app/services/order-api.types.ts) — DTO backend API.
-- [src/app/services/order-normalizers.ts](/c:/main/projects/diplom/almak-front/src/app/services/order-normalizers.ts) — числовая и legacy-нормализация.
-- [src/app/services/order-document.service.ts](/c:/main/projects/diplom/almak-front/src/app/services/order-document.service.ts) — генерация HTML и `.doc`.
-- [src/app/types/order.types.ts](/c:/main/projects/diplom/almak-front/src/app/types/order.types.ts) — основные типы заказа.
-- [src/app/common/dialogs](/c:/main/projects/diplom/almak-front/src/app/common/dialogs) — модалки товарных позиций.
-- [src/app/common/constants](/c:/main/projects/diplom/almak-front/src/app/common/constants) — словари и подписи.
+Параметры позиций зависят от типа: размеры, количество, покрытие, цвет, модель, поставщик, `costPrice` и продажные цены. Доборы и обшивка поддерживают наборы размеров и площадь.
 
-## Структура данных на фронте
+### Статусы
 
-Главный формат формы — `OrderCreatePayload`.
+| UI-код | API-значение | Подпись |
+| --- | --- | --- |
+| 1 | `accepted` | Принят |
+| 2 | `ordered` | Заказан |
+| 3 | `received` | Получен |
+| 4 | `customer_notified` | Клиент оповещен |
+| 5 | `issued` | Выдан |
+| 6 | `completed` | Завершен |
 
-В нём есть:
+Последовательность переходов не принудительная. Статус оповещения не отправляет сообщение клиенту.
 
-- шапка заказа: `name`, `phone`, `date`, `prepayment`, `discount`, `needsDelivery`, `deliveryAddress`, `comment`, `status`;
-- массивы позиций:
-  - `interiorDoors`
-  - `entranceDoors`
-  - `moldings`
-  - `extensions`
-  - `capitals`
-  - `panelings`
+### Расчёты
 
-На фронте сумма заказа считается локально:
+Формулы находятся в [order-calculations.ts](src/app/common/utils/order-calculations.ts):
 
-- `orderTotal` — сумма всех товарных позиций;
-- `totalToPay` — `orderTotal - discount`;
-- `customerDebt` — `totalToPay - prepayment`.
+- Межкомнатные двери: цена × количество; у двупольных дополнительно второе полотно и притворная планка.
+- Входные двери и капители: цена × количество.
+- Погонаж: `framePrice × frameBoxCount + platbandPrice × max(platbandCount − platbandSetCount, 0)`.
+- Доборы и обшивка: `totalArea × price`.
+- Фурнитура: сумма произведений количества и цены компонентов.
+- Плинтусы: `price × length × count`.
 
-Важно: в текущей логике в итог входят:
+Все восемь типов входят в стоимость. Закупочная цена `costPrice` в продажную сумму не включается.
 
-- межкомнатные двери;
-- входные двери;
-- погонаж;
-- доборы;
-- обшивка.
-
-Капитель цены не имеет и в итог не входит.
-
-## Как работает создание и редактирование
-
-Экран [order-create.component.ts](/c:/main/projects/diplom/almak-front/src/app/components/order-create/order-create.component.ts):
-
-- работает и в create, и в edit режиме;
-- в edit режиме загружает заказ через `ordersService.getOrder(id)`;
-- хранит шапку заказа в `Reactive Form`;
-- хранит товарные позиции в `signal`;
-- для каждой позиции умеет `add/edit/duplicate/remove`;
-- перед сохранением проверяет:
-  - валидность формы;
-  - что в заказе есть хотя бы одна позиция;
-  - что при `needsDelivery = true` заполнен `deliveryAddress`.
-
-Сохранение идёт через confirm-диалог, затем:
-
-- create: `ordersService.createOrder(payload)`
-- edit: `ordersService.updateOrder(id, payload)`
-
-## Как работает просмотр заказа
-
-Экран [order-view.component.ts](/c:/main/projects/diplom/almak-front/src/app/pages/order-view/order-view.component.ts):
-
-- загружает заказ по `id`;
-- показывает все типы товарных позиций;
-- позволяет сменить статус;
-- умеет удалить заказ;
-- умеет распечатать и скачать документ.
-
-Документ строится в [order-document.service.ts](/c:/main/projects/diplom/almak-front/src/app/services/order-document.service.ts).
-
-## Mapping в API
-
-[orders.service.ts](/c:/main/projects/diplom/almak-front/src/app/services/orders.service.ts) сохраняет публичный API для компонентов и делегирует работу:
-
-- загрузку списка заказов;
-- загрузку одного заказа;
-- создание;
-- обновление;
-- удаление;
-- смену статуса;
-- HTTP-вызовы — `OrdersApiService`;
-- преобразование backend JSON в `OrderCreatePayload` и обратно — `OrderMapper`.
-
-Здесь важно помнить:
-
-- на фронте поле клиента называется `name`, на бэке — `customer`;
-- статус на фронте — число (`1 | 2 | 3`), на бэке — строка (`accepted | progress | completed`);
-- фронт передаёт все массивы позиций целиком;
-- бэк при `PUT /orders/:id` пересоздаёт дочерние записи заново.
-
-## Локальный запуск
-
-### Обычный dev-режим
-
-```bash
-npm install
-npm start
+```text
+orderTotal = сумма товарных позиций
+totalToPay = max(orderTotal − discount, 0)
+paidAmount = сумма payments.amount, если история непустая; иначе prepayment
+customerDebt = max(totalToPay − paidAmount, 0)
 ```
 
-### Локальный фронт против локального бэка
+Сервер самостоятельно пересчитывает стоимость и синхронизирует `prepayment`/`isPaid` с платежами. В списке и аналитике `prepayment` используется как суммарно внесённая сумма.
+
+## Создание, редактирование и черновики
+
+[OrderCreateComponent](src/app/components/order-create/order-create.component.ts) используется для создания, редактирования и открытия черновика. Перед отправкой проверяются форма, наличие позиций и адрес при включённой доставке. Сохранение подтверждается диалогом.
+
+Создание отправляет `POST /orders`, редактирование — `PUT /orders/:id`. PUT передаёт полный состав; сервер удаляет прежние товарные позиции и создаёт новые, поэтому их ID могут измениться. Изменение внесённой суммы при редактировании создаёт отдельную корректирующую запись платежа на сервере.
+
+[OrderDraftsService](src/app/services/order-drafts.service.ts) хранит черновики в `localStorage` под ключами `order_drafts` и `order_drafts_next_id`. Есть ручное сохранение и автоматическое сохранение нового заказа; при ошибке истёкшей сессии форма также сохраняется как черновик. После успешной отправки связанный черновик удаляется. Открытый черновик сохраняется как новый серверный заказ.
+
+Черновики привязаны к локальному профилю, не разделены по пользователям и не синхронизируются с API. Очистка хранилища браузера удаляет их.
+
+## Платежи и справочники
+
+Платёж добавляется через `POST /orders/:id/payments`, скидка меняется через `PATCH /orders/:id/discounts`. Это учёт внесённых сумм, без эквайринга.
+
+Метод `reverseOrderPayment` вызывает `DELETE /orders/:id/payments/:paymentId`. Сейчас это физическое удаление платежа с пересчётом оплаты, а не сторнирование с сохранением записи. Поля связей сторнирования в модели есть, но соответствующая функция бэкенда не подключена к маршрутам.
+
+[CatalogsService](src/app/services/catalogs.service.ts) управляет справочниками и значениями. Формы получают списки по стабильным ключам из [catalog-keys.ts](src/app/common/constants/catalog-keys.ts). Если справочник отсутствует, пуст или запрос завершился ошибкой, используются встроенные значения. Списки по ключам кешируются в сервисе.
+
+## Документы и аналитика
+
+HTML документа строится на фронте. `.doc` — HTML в Blob с MIME `application/msword`, а не OOXML `.docx`. Конструктор позволяет выбрать товары, цены, итоги, скидку, оплаты, данные клиента и доставки, комментарии, подписи и поставщика. Доступны шаблоны «Полный документ», «Для производства» и «Для доставки»; цены можно отключить вручную. Подробнее — [PRINT_CONSTRUCTOR_README.md](PRINT_CONSTRUCTOR_README.md).
+
+[OrderChartComponent](src/app/components/order-chart/order-chart.component.ts) строит графики по списку заказов с фильтрами периода, статуса и оплаты. Статистика поставщиков приходит отдельным агрегированным запросом `/orders/analytics/suppliers`, без загрузки каждого полного заказа.
+
+## Авторизация
+
+- Веб: access token хранится в памяти, refresh token — в `HttpOnly` cookie. Вход отправляет `useCookie: true`; запросы авторизации используют credentials.
+- Electron: `/desktop/login` и `/desktop/refresh` возвращают оба токена в JSON; клиент хранит их в `localStorage`.
+- Guard проверяет сессию, interceptor добавляет Bearer-токен и обрабатывает обновление авторизации.
+- Разделения прав по ролям нет.
+
+## Карта кода
+
+| Файл / каталог | Ответственность |
+| --- | --- |
+| [components/order-create](src/app/components/order-create) | Форма заказа и управление позициями |
+| [pages/order-view](src/app/pages/order-view) | Просмотр, платежи, скидка, поставщики и документы |
+| [components/orders-table](src/app/components/orders-table) | Таблица и фильтры |
+| [common/dialogs](src/app/common/dialogs) | Диалоги товаров, оплаты, справочников и печати |
+| [orders.service.ts](src/app/services/orders.service.ts) | Фасад заказов для компонентов |
+| [orders-api.service.ts](src/app/services/orders-api.service.ts) | HTTP-запросы |
+| [order.mapper.ts](src/app/services/order.mapper.ts) | UI ↔ API, включая `name` ↔ `customer` и статусы |
+| [order-api.types.ts](src/app/services/order-api.types.ts) | API DTO |
+| [order-normalizers.ts](src/app/services/order-normalizers.ts) | Нормализация чисел и совместимость данных |
+| [order-document-html-builder.service.ts](src/app/services/order-document-html-builder.service.ts) | HTML печатного документа |
+| [order-document.service.ts](src/app/services/order-document.service.ts) | Формирование Blob `.doc` |
+| [order-print.service.ts](src/app/services/order-print.service.ts) | Открытие окна документа и печать |
+
+## Локальный запуск и проверки
 
 ```bash
-npm install
+npm ci
 npm run start:local
 ```
 
-Локальный API берётся из [src/environments/environment.local.ts](/c:/main/projects/diplom/almak-front/src/environments/environment.local.ts).
+Локальный режим использует `http://localhost:8081/api`; бэкенд нужно запустить с `PORT=8081`. Фронт открывается на `http://localhost:4200`.
 
-## Полезные команды
+| Команда | Назначение |
+| --- | --- |
+| `npm start` | Dev-сервер с относительным `/api`; встроенный proxy в `angular.json` не настроен |
+| `npm run start:local` | Dev-сервер с API на localhost:8081 |
+| `npm run build` | Production web-сборка, API `/api` |
+| `npm run build:local` | Сборка с локальным API |
+| `npm run check` | ESLint и TypeScript без генерации файлов |
+| `npm test` | Запуск настроенного Karma runner |
+| `npm run electron:dev` | Angular local + Electron |
+| `npm run electron:release:win` | Windows-установщик и файлы обновления |
 
-```bash
-npm start
-npm run start:local
-npm run build
-npx tsc -p tsconfig.json --noEmit
-```
+Electron-сборка использует `https://almakk.ru/api`, hash routing и скрывает кнопку скачивания desktop-клиента. Подробности — [ELECTRON.md](ELECTRON.md).
 
 ## Релизы
 
-Версия хранится в `package.json` и автоматически отображается в UI (навигационная панель). Используется [SemVer](https://semver.org/lang/ru/): `MAJOR.MINOR.PATCH`.
+Версия берётся из `package.json` и отображается в интерфейсе. Используется SemVer. `npm version patch|minor|major` меняет версию, создаёт коммит и тег; выполнять на подготовленной чистой ветке.
 
-| Тип изменения          | Команда             |
-| ---------------------- | ------------------- |
-| Баг-фикс               | `npm version patch` |
-| Новая функциональность | `npm version minor` |
-| Ломающие изменения     | `npm version major` |
+- Push в `main` запускает web workflow [deploy.yml](.github/workflows/deploy.yml).
+- Push тега `v*` или ручной запуск запускает [deploy-desktop.yml](.github/workflows/deploy-desktop.yml).
+- Desktop workflow создаёт установщик, blockmap, `latest.yml` и `Almak-Setup-latest.exe`.
+- Electron проверяет обновления при запуске, скачивает автоматически и позволяет установить после скачивания; также настроена установка при выходе.
+- Обычный web-деплой не пересобирает desktop-установщик.
 
-### Процесс
+## Кодировка
 
-1. Убедиться что ветка `dev` стабильна и все изменения закоммичены.
-2. Поднять версию — npm сам обновит `package.json`, создаст коммит и git-тег:
-   ```bash
-   npm version patch -m "chore: release v%s"
-   ```
-3. Запушить ветку вместе с тегом:
-   ```bash
-   git push origin dev --tags
-   ```
-4. Открыть PR `dev → main` и смержить — фронт задеплоится автоматически.
-5. Electron-приложение соберётся и задеплоится автоматически по тегу (workflow `deploy-desktop.yml`).
+Текстовые исходники и документация должны храниться в UTF-8 без BOM. После массовых правок проверять кириллицу и отсутствие символа замены `�`.
 
-### Что происходит автоматически
+## ИИ-помощник по заказам
 
-- **Push в `main`** → CI собирает фронт и деплоит на сервер ([`.github/workflows/deploy.yml`](.github/workflows/deploy.yml)).
-- **Push тега `v*`** → CI собирает Electron `.exe`, загружает на сервер, обновляет `Almak-Setup-latest.exe` ([`.github/workflows/deploy-desktop.yml`](.github/workflows/deploy-desktop.yml)).
-- **Запущенные Electron-клиенты** получат уведомление об обновлении и установят его при следующем запуске.
+Плавающая кнопка справа снизу открывает чат поверх страницы. Размер меняется за верхний/левый край или угол и запоминается. Один чат связан с одним локальным черновиком. Можно дополнять заказ сообщениями, исправлять карточку вручную и передавать её в обычную форму. Неполные позиции проверяются до переноса без скрытой подстановки размеров и цен.
 
-Дополнительную информацию по Electron-сборке см. в [ELECTRON.md](ELECTRON.md).
-
-## Правило по кодировке
-
-- Все текстовые исходники фронта (`src/**/*.ts`, `src/**/*.html`, `src/**/*.scss`, `README.md`) должны храниться в `UTF-8` без BOM.
-- Нельзя сохранять файлы в `ANSI`, `Windows-1251`, `CP1251` или другой локальной кодировке.
-- После массовых правок нужно проверять, что в проект не попали `�`, `Ð`, `Ñ`, `Р`/`С`-кракозябры или сломанная кириллица.
-- Если файл уже повреждён по кодировке, его нужно сначала перекодировать в `UTF-8`, и только потом продолжать правки.
+Код — `src/app/ai-orders/`. Хранилище — `ai_order_drafts_v1`, обычные черновики совместимы с прежним форматом. После передачи в форму переписка доступна для чтения; черновик удаляется только после успешного создания заказа. Подробности — [инструкция подключения](docs/ai-order-assistant-setup.md) и [ТЗ](docs/ai-order-assistant-spec.md).

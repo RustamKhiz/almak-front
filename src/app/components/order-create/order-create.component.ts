@@ -1,6 +1,20 @@
+import { AiOrdersService } from '../../ai-orders/ai-orders.service';
+import { AiDraftCardComponent } from '../../ai-orders/ai-draft-card.component';
+import { aiIssues, aiToPayload } from '../../ai-orders/ai-order.types';
 import { DecimalPipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, computed, inject, input, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  DestroyRef,
+  OnInit,
+  OnChanges,
+  SimpleChanges,
+  computed,
+  inject,
+  input,
+  signal,
+} from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -58,6 +72,7 @@ const MOLDING_SET_COUNT_PER_DOOR = 2.5;
   selector: 'app-order-create',
   imports: [
     DecimalPipe,
+    AiDraftCardComponent,
     ReactiveFormsModule,
     MatButtonModule,
     MatCheckboxModule,
@@ -74,7 +89,7 @@ const MOLDING_SET_COUNT_PER_DOOR = 2.5;
   styleUrl: './order-create.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class OrderCreateComponent implements OnInit {
+export class OrderCreateComponent implements OnInit, OnChanges {
   private readonly fb = inject(FormBuilder);
   private readonly dialog = inject(MatDialog);
   private readonly router = inject(Router);
@@ -83,6 +98,13 @@ export class OrderCreateComponent implements OnInit {
   private readonly ordersService = inject(OrdersService);
   private readonly draftsService = inject(OrderDraftsService);
   private readonly catalogsService = inject(CatalogsService);
+
+  protected readonly ai = inject(AiOrdersService);
+  readonly aiDraftId = input<string | null>(null);
+  protected readonly aiImported = signal(false);
+  protected readonly aiDefaultsConfirmed = signal(false);
+  protected readonly aiDraft = computed(() => this.ai.drafts().find((d) => d.id === this.aiDraftId()));
+  protected readonly aiRemaining = computed(() => (this.aiDraft() ? aiIssues(this.aiDraft()!.order) : []));
 
   readonly orderId = input<number | null>(null);
   readonly draftId = input<number | null>(null);
@@ -143,9 +165,43 @@ export class OrderCreateComponent implements OnInit {
     this.bindFormTextNormalization();
     this.watchDeliveryChanges();
     this.watchDraftChanges();
+    this.destroyRef.onDestroy(() => {
+      if (this.aiDraftId() && this.aiImported()) this.saveAiEditor();
+    });
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['aiDraftId'] && !changes['aiDraftId'].firstChange) {
+      if (changes['aiDraftId'].previousValue && this.aiImported())
+        this.saveAiEditor(changes['aiDraftId'].previousValue);
+      if (this.aiDraftId()) this.loadAiDraft();
+      else {
+        this.aiImported.set(false);
+        this.activeDraftId.set(null);
+        for (const collection of Object.values(this.itemCollections)) collection.set([]);
+        this.form.reset({
+          name: '',
+          phone: '',
+          date: this.todayIso(),
+          needsDelivery: false,
+          deliveryAddress: '',
+          comment: '',
+          status: OrderStatus.Accepted,
+          isPaid: false,
+          defaultColor: '',
+          defaultCovering: null,
+        });
+        this.prepayment.set(0);
+        this.discount.set(0);
+      }
+    }
   }
 
   ngOnInit(): void {
+    if (this.aiDraftId()) {
+      this.loadAiDraft();
+      return;
+    }
     const draftId = this.draftId();
     if (draftId) {
       this.applyDraft(draftId);
@@ -236,6 +292,7 @@ export class OrderCreateComponent implements OnInit {
   }
 
   protected onSaveClick(): void {
+    if (this.aiDraftId() && (!this.aiImported() || !this.saveAiEditor())) return;
     const hasItems = this.hasOrderItems();
     this.showOrdersError.set(!hasItems);
     if (this.form.invalid || !hasItems) {
@@ -270,10 +327,20 @@ export class OrderCreateComponent implements OnInit {
           if (activeDraftId) {
             this.draftsService.deleteDraft(activeDraftId);
           }
+          const aiId = this.aiDraftId();
+          if (aiId) {
+            this.aiImported.set(false);
+            this.ai.remove(aiId);
+          }
           this.router.navigate(['/order', savedOrderId]);
         },
         error: (error: unknown) => {
           if (error instanceof HttpErrorResponse && error.status === 401) {
+            if (this.aiDraftId()) {
+              this.saveAiEditor();
+              this.submitError.set('Сессия истекла. Черновик сохранён на этом устройстве.');
+              return;
+            }
             const draft = this.saveDraft();
             this.submitError.set(`Сессия истекла. Заказ сохранен как черновик #${draft.temporaryId}.`);
             return;
@@ -284,6 +351,10 @@ export class OrderCreateComponent implements OnInit {
   }
 
   protected onSaveDraftClick(): void {
+    if (this.aiDraftId()) {
+      if (this.saveAiEditor()) this.draftMessage.set('Черновик сохранён на этом устройстве.');
+      return;
+    }
     const draft = this.saveDraft();
     this.draftMessage.set(`Черновик #${draft.temporaryId} сохранен.`);
     this.submitError.set(null);
@@ -514,6 +585,51 @@ export class OrderCreateComponent implements OnInit {
     }));
   }
 
+  private loadAiDraft(): void {
+    const d = this.aiDraft();
+    this.aiImported.set(false);
+    this.activeDraftId.set(null);
+    this.isEditMode.set(false);
+    if (!d) {
+      this.submitError.set('Черновик не найден.');
+      return;
+    }
+    if (!d.editorState) {
+      this.ai.update(d.id, (value) => {
+        value.editorState = { payload: null, accepted: false, defaultsConfirmed: false };
+      });
+    }
+    const payload = this.aiDraft()?.editorState?.payload;
+    if (payload) {
+      this.applyOrder(payload);
+      this.aiImported.set(true);
+    }
+  }
+
+  protected applyAiDraft(): void {
+    const d = this.aiDraft();
+    if (!d || this.aiRemaining().length || !this.aiDefaultsConfirmed()) return;
+    const payload = aiToPayload(d.order);
+    if (
+      !this.ai.update(d.id, (value) => {
+        value.editorState = { payload, accepted: true, defaultsConfirmed: true };
+      })
+    )
+      return;
+    this.applyOrder(payload);
+    this.aiImported.set(true);
+    this.draftMessage.set('Данные перенесены. Проверьте заказ перед сохранением.');
+  }
+
+  private saveAiEditor(id = this.aiDraftId()): boolean {
+    if (!id || !this.aiImported()) return false;
+    const updated = this.ai.update(id, (d) => {
+      d.editorState = { payload: this.buildOrderPayload(), accepted: true, defaultsConfirmed: true };
+    });
+    if (!updated) this.submitError.set(this.ai.storageError() || 'Не удалось сохранить черновик.');
+    return !!updated;
+  }
+
   private applyDraft(draftId: number): void {
     const draft = this.draftsService.getDraft(draftId);
     if (!draft) {
@@ -534,6 +650,10 @@ export class OrderCreateComponent implements OnInit {
   }
 
   private autoSaveDraft(): void {
+    if (this.aiDraftId()) {
+      if (this.aiImported()) this.saveAiEditor();
+      return;
+    }
     if (this.isEditMode()) {
       return;
     }
