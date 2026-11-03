@@ -9,11 +9,13 @@
         </button>
       </header>
       <section class="page">
+        <app-server-draft-status />
         <router-outlet></router-outlet>
       </section>
     </main>
   </div>
   <app-ai-order-chat></app-ai-order-chat>
 } @else {
+  <app-server-draft-status />
   <router-outlet></router-outlet>
 }

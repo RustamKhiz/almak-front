@@ -2,6 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { signal } from '@angular/core';
 import { AuthService } from '../../services/auth.service';
+import { ServerDraftsService } from '../../services/server-drafts.service';
 import { DesktopUpdateState, NavigationMenuComponent } from './navigation-menu.component';
 
 describe('Desktop update controls', () => {
@@ -31,6 +32,7 @@ describe('Desktop update controls', () => {
       imports: [NavigationMenuComponent],
       providers: [
         provideRouter([]),
+        { provide: ServerDraftsService, useValue: { flushAll: jasmine.createSpy('flush').and.resolveTo() } },
         { provide: AuthService, useValue: { authenticated: signal(false), profile: signal(null) } },
       ],
     }).compileComponents();
@@ -82,6 +84,7 @@ describe('Desktop update controls', () => {
     const button: HTMLButtonElement = fixture.nativeElement.querySelector('button');
     expect(button.textContent).toContain('Установить обновление');
     button.click();
+    await fixture.whenStable();
     expect(install).toHaveBeenCalledTimes(1);
     fixture.destroy();
     expect(unsubscribe).toHaveBeenCalledTimes(1);
@@ -90,6 +93,13 @@ describe('Desktop update controls', () => {
     window.almakDesktop!.getUpdateState = () => Promise.resolve({ status: 'ready', revision: 5 });
     await open();
     expect(fixture.nativeElement.querySelector('button').textContent).toContain('Установить обновление');
+  });
+  it('keeps the application open if draft saving fails before installation', async () => {
+    await open();
+    const drafts = TestBed.inject(ServerDraftsService);
+    (drafts.flushAll as jasmine.Spy).and.rejectWith(new Error('Not saved'));
+    await fixture.componentInstance.installUpdate();
+    expect(install).not.toHaveBeenCalled();
   });
   it('allows retry after IPC failure and keeps desktop controls out of the web app', async () => {
     check.and.rejectWith(new Error('IPC unavailable'));

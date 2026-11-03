@@ -15,18 +15,24 @@ import { Router } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { AiOrdersService } from './ai-orders.service';
 import { DatePipe } from '@angular/common';
+import { ServerDraftStatusComponent } from '../components/server-draft-status/server-draft-status.component';
 import { AiDraft } from './ai-order.types';
 import { AuthService } from '../services/auth.service';
+import { ServerDraftsService } from '../services/server-drafts.service';
 
 @Component({
   selector: 'app-ai-order-chat',
-  imports: [FormsModule, MatIconModule, DatePipe],
+  imports: [FormsModule, MatIconModule, DatePipe, ServerDraftStatusComponent],
   templateUrl: './ai-order-chat.component.html',
   styleUrl: './ai-order-chat.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AiOrderChatComponent implements OnDestroy {
   protected readonly ai = inject(AiOrdersService);
+  protected readonly server = inject(ServerDraftsService);
+  protected loadMoreChats(): void {
+    void this.server.loadMore().catch(() => undefined);
+  }
   protected readonly auth = inject(AuthService);
   private readonly router = inject(Router);
   private readonly launcher = viewChild<ElementRef<HTMLButtonElement>>('launcher');
@@ -153,10 +159,16 @@ export class AiOrderChatComponent implements OnDestroy {
     this.newMessages.set(false);
     setTimeout(() => this.scrollBottom());
   }
-  protected openEditor(): void {
+  protected async openEditor(): Promise<void> {
     const d = this.draft();
     if (!d) return;
     if (this.canCompose() && !this.ai.setText(this.text())) return;
+    try {
+      await this.ai.server.flush(d.id);
+    } catch {
+      this.ai.error.set('Сначала сохраните черновик или разрешите конфликт правок.');
+      return;
+    }
     this.ai.cancel();
     this.ai.opened.set(false);
     if (d.orderId) this.router.navigate(['/order', d.orderId]);

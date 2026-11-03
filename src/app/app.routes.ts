@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './guard/auth.guard';
+import { draftsResolver } from './guard/drafts.resolver';
 
 export const routes: Routes = [
   { path: '', pathMatch: 'full', redirectTo: 'orders' },
@@ -11,17 +12,23 @@ export const routes: Routes = [
   },
   {
     path: 'order',
+    runGuardsAndResolvers: 'paramsOrQueryParamsChange',
+    resolve: { drafts: draftsResolver },
     loadComponent: () => import('./pages/order/order.component').then((m) => m.OrderComponent),
     title: 'Заказ',
     canActivate: [authGuard],
   },
   {
     path: 'drafts',
+    canActivate: [authGuard],
+    resolve: { drafts: draftsResolver },
     loadComponent: () => import('./pages/order-drafts/order-drafts.component').then((m) => m.OrderDraftsComponent),
     title: 'Черновики',
   },
   {
     path: 'drafts/:draftId',
+    canActivate: [authGuard],
+    resolve: { drafts: draftsResolver },
     loadComponent: () => import('./pages/order/order.component').then((m) => m.OrderComponent),
     title: 'Черновик заказа',
   },

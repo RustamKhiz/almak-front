@@ -2,47 +2,71 @@
   <header class="drafts-page__header">
     <div>
       <h1>Черновики</h1>
-      <p>Локально сохраненные заказы, которые можно продолжить оформлять без авторизации.</p>
+      <p>Общая очередь заказов. Продолжить работу можно с любого устройства.</p>
     </div>
-
-    @if (hasDrafts()) {
-      <button mat-stroked-button color="warn" type="button" (click)="onDeleteAllClick()">Удалить все</button>
-    }
+    <button mat-stroked-button type="button" (click)="refresh()" [disabled]="server.loading()">Обновить</button>
   </header>
-  @if (ai.storageError()) {
-    <p role="alert">{{ ai.storageError() }}</p>
-  }
-  @for (draft of aiDrafts(); track draft.id) {
+  @if (server.legacyCount()) {
     <div class="drafts-page__row">
-      <button mat-stroked-button type="button" (click)="openAiDraft(draft)">
-        {{ draft.order.header['name'] || 'Новый заказ' }} · Быстрый заказ
+      <span
+        >На этом устройстве найдены прежние черновики и переписки: {{ server.legacyCount() }}. Их можно перенести в
+        общую очередь. Исходные записи сохранятся.</span
+      >
+      <button mat-stroked-button type="button" [disabled]="server.importing()" (click)="server.importLegacy()">
+        {{ server.importing() ? 'Переносим…' : 'Перенести черновики' }}
       </button>
-      <span>{{ draft.updatedAt | date: 'dd.MM.yyyy HH:mm' }} · позиций: {{ draft.order.items.length }}</span>
-      <button mat-stroked-button color="warn" type="button" (click)="ai.remove(draft.id)">Удалить</button>
     </div>
   }
-
-  @if (hasDrafts()) {
-    <div class="drafts-page__table">
-      @for (draft of drafts(); track draft.temporaryId) {
-        <a class="drafts-page__row" [routerLink]="['/drafts', draft.temporaryId]">
-          <div>
-            <div class="drafts-page__title">{{ getDraftTitle(draft) }}</div>
-            <div class="drafts-page__meta">
-              {{ draft.payload.phone || 'Телефон не указан' }} · позиций: {{ getDraftItemsCount(draft) }}
-            </div>
-          </div>
-
-          <div class="drafts-page__date">{{ draft.updatedAt | date: 'dd.MM.yyyy HH:mm' }}</div>
-          <div class="drafts-page__total">{{ getDraftTotal(draft) | number: '1.0-0' }} ₽</div>
-
-          <button mat-stroked-button color="warn" type="button" (click)="onDeleteClick($event, draft.temporaryId)">
-            Удалить
-          </button>
-        </a>
+  @if (server.importMessage()) {
+    <p role="status">{{ server.importMessage() }}</p>
+  }
+  <div class="drafts-page__row">
+    <button mat-stroked-button type="button" (click)="toggleArchive()">
+      {{ archived() ? 'Активные черновики' : 'Архив' }}
+    </button>
+    <label
+      >Показывать
+      <select [ngModel]="scope()" (ngModelChange)="scope.set($event)">
+        <option value="all">Все</option>
+        <option value="mine">Мои</option>
+      </select></label
+    >
+    <label
+      >Поиск
+      <input type="search" placeholder="Клиент или телефон" [ngModel]="search()" (ngModelChange)="search.set($event)"
+    /></label>
+  </div>
+  @if (actionError()) {
+    <p role="alert">{{ actionError() }}</p>
+  }
+  @for (draft of drafts(); track draft.id) {
+    <div class="drafts-page__row">
+      <button mat-stroked-button type="button" (click)="open(draft)">{{ title(draft) }}</button>
+      <span
+        >{{ phone(draft) || 'Телефон не указан' }} · позиций: {{ count(draft) }}<br />
+        Автор: {{ draft.creator?.name || draft.creator?.login || 'Не указан при переносе' }}<br />
+        Изменил: {{ draft.editor?.name || draft.editor?.login || '—' }} ·
+        {{ draft.updatedAt | date: 'dd.MM.yyyy HH:mm' }}</span
+      >
+      <span>{{ server.status(draft.id) }}</span>
+      @let total = amount(draft);
+      <span>
+        @if (total !== null) {
+          {{ total | number: '1.0-0' }} ₽
+        } @else {
+          Стоимость уточняется
+        }
+      </span>
+      @if (archived()) {
+        <button mat-stroked-button type="button" (click)="restore(draft)">Восстановить</button>
+      } @else {
+        <button mat-stroked-button type="button" (click)="archive(draft)">В архив</button>
       }
     </div>
-  } @else {
-    <div class="drafts-page__empty">Черновиков пока нет.</div>
+  } @empty {
+    <div class="drafts-page__empty">{{ server.loading() ? 'Загружаем черновики…' : 'Черновики не найдены.' }}</div>
+  }
+  @if (archived() ? server.archivedIds().length < server.archivedTotal() : server.listedIds().length < server.total()) {
+    <button mat-stroked-button type="button" [disabled]="server.loading()" (click)="loadMore()">Загрузить ещё</button>
   }
 </section>

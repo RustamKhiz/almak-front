@@ -1,4 +1,4 @@
-<section class="order-create">
+<section class="order-create" [inert]="isSaving()">
   <header class="order-create__header">
     <div class="order-create__header-content">
       <div class="order-create__title-row">
@@ -34,7 +34,9 @@
         </mat-select>
       </mat-form-field>
 
-      <button mat-flat-button color="primary" [matMenuTriggerFor]="addItemMenu">Добавить</button>
+      <button mat-flat-button color="primary" [matMenuTriggerFor]="addItemMenu" [disabled]="draftClosed() || ai.busy()">
+        Добавить
+      </button>
       <mat-menu #addItemMenu="matMenu">
         <button mat-menu-item type="button" (click)="onAddItemClick(orderItemEntity.EntranceDoor)">
           Входная дверь
@@ -53,7 +55,15 @@
     </div>
   </header>
 
-  <form class="order-create__form" [formGroup]="form">
+  @if (draftClosed()) {
+    <p>
+      Черновик уже закрыт.
+      @if (currentDraft().orderId) {
+        <a [routerLink]="['/order', currentDraft().orderId]">Открыть заказ №{{ currentDraft().orderId }}</a>
+      }
+    </p>
+  }
+  <form [inert]="draftClosed() || isSaving()" class="order-create__form" [formGroup]="form">
     <div class="order-create__section-header">
       <div>
         <h2>Общая информация</h2>
@@ -146,6 +156,7 @@
   </form>
 
   <app-order-items-list
+    [disabled]="draftClosed() || ai.busy()"
     [draftItems]="aiPartial() ? (aiDraft()?.order?.items ?? []) : null"
     [interiorDoors]="interiorDoors()"
     [entranceDoors]="entranceDoors()"
@@ -173,6 +184,9 @@
       }
     </div>
   }
+  @if (aiDraftId() || activeDraftId()) {
+    <app-server-draft-status [draftId]="aiDraftId() || activeDraftId()" />
+  }
   <div class="order-create__actions">
     <div class="order-create__summary">
       <div class="order-create__summary-row">
@@ -194,8 +208,18 @@
     </div>
 
     <div class="order-create__save-actions">
-      <button mat-stroked-button type="button" (click)="onSaveDraftClick()">Сохранить черновик</button>
-      <button mat-flat-button color="primary" type="button" (click)="onSaveClick()">Сохранить</button>
+      <button mat-stroked-button type="button" (click)="onSaveDraftClick()" [disabled]="draftClosed() || isSaving()">
+        Сохранить черновик
+      </button>
+      <button
+        mat-flat-button
+        color="primary"
+        type="button"
+        (click)="onSaveClick()"
+        [disabled]="draftClosed() || isSaving() || ai.busy()"
+      >
+        Сохранить
+      </button>
     </div>
   </div>
 </section>

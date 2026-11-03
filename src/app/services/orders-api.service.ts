@@ -36,8 +36,11 @@ export class OrdersApiService {
     return this.http.get<SupplierStat[]>(`${this.baseUrl}/analytics/suppliers`, { params });
   }
 
-  createOrder(payload: BackendOrderPayload): Observable<BackendOrder> {
-    return this.http.post<BackendOrder>(this.baseUrl, payload);
+  createOrder(
+    payload: BackendOrderPayload,
+    draft?: { draftId: string; draftRevision: number },
+  ): Observable<BackendOrder> {
+    return this.http.post<BackendOrder>(this.baseUrl, { ...payload, ...draft });
   }
 
   updateOrder(id: number, payload: BackendOrderPayload): Observable<BackendOrder> {

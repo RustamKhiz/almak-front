@@ -13,6 +13,7 @@ import { MatListModule } from '@angular/material/list';
 import { environment } from '../../../environments/environment';
 import { version } from '../../../../package.json';
 import { AuthService } from '../../services/auth.service';
+import { ServerDraftsService } from '../../services/server-drafts.service';
 
 export interface DesktopUpdateState {
   status: 'idle' | 'checking' | 'downloading' | 'ready' | 'current' | 'error' | 'unsupported';
@@ -116,7 +117,13 @@ export class NavigationMenuComponent implements OnInit {
     }
   }
 
-  installUpdate(): void {
-    window.almakDesktop?.installUpdate();
+  private readonly drafts = inject(ServerDraftsService);
+  async installUpdate(): Promise<void> {
+    try {
+      await this.drafts.flushAll();
+      window.almakDesktop?.installUpdate();
+    } catch {
+      // Saving errors are displayed by the global draft status component.
+    }
   }
 }

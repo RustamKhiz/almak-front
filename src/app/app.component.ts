@@ -7,11 +7,19 @@ import { MatIconModule } from '@angular/material/icon';
 import { NavigationMenuComponent } from './components/navigation-menu/navigation-menu.component';
 import { AuthService } from './services/auth.service';
 import { AiOrderChatComponent } from './ai-orders/ai-order-chat.component';
+import { ServerDraftStatusComponent } from './components/server-draft-status/server-draft-status.component';
 import { AiOrdersService } from './ai-orders/ai-orders.service';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, NavigationMenuComponent, MatButtonModule, MatIconModule, AiOrderChatComponent],
+  imports: [
+    RouterOutlet,
+    NavigationMenuComponent,
+    MatButtonModule,
+    MatIconModule,
+    AiOrderChatComponent,
+    ServerDraftStatusComponent,
+  ],
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -37,7 +45,12 @@ export class AppComponent implements OnInit {
       });
   }
 
-  protected onLogoutClick(): void {
+  protected async onLogoutClick(): Promise<void> {
+    try {
+      await this.aiOrders.server.flushAll();
+    } catch {
+      return;
+    }
     this.aiOrders.hideForLogout();
     this.authService
       .logout()
