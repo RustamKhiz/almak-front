@@ -25,6 +25,7 @@ export interface ServerDraft {
   creator?: { id: number; login: string; name: string };
   editor?: { id: number; login: string; name: string };
   orderId?: number;
+  sourceOrderId?: number;
   createdAt: string;
   updatedAt: string;
   localVersion?: number;

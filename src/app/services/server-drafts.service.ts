@@ -20,6 +20,7 @@ export class ServerDraftsService {
   private readonly destroyRef = inject(DestroyRef);
   private readonly zone = inject(NgZone);
   private readonly url = `${inject(CoreService).apiBaseUrl}/order-drafts`;
+  private readonly ordersUrl = `${inject(CoreService).apiBaseUrl}/orders`;
   readonly records = signal<Record<string, ServerDraft>>({});
   readonly rows = computed(() => Object.values(this.records()));
   readonly listedIds = signal<string[]>([]);
@@ -287,6 +288,17 @@ export class ServerDraftsService {
       if (epoch === this.epoch) this.archiveLoading.set(false);
     }
   }
+  async repeatOrder(
+    orderId: number,
+    request: { requestId: string; copyComment: boolean; copyDiscount: boolean },
+  ): Promise<string> {
+    const epoch = this.epoch;
+    const row = await this.request(this.http.post<ServerDraft>(`${this.ordersUrl}/${orderId}/repeat`, request));
+    if (epoch !== this.epoch) throw new Error('Account changed');
+    this.adopt(row);
+    return row.id;
+  }
+
   async loadOne(id: string, convertedOrderId?: number): Promise<void> {
     await this.initialize();
     const epoch = this.epoch;

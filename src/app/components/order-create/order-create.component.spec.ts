@@ -13,6 +13,9 @@ import { OrdersService } from '../../services/orders.service';
 import { CatalogsService } from '../../services/catalogs.service';
 import { OrderDraftItemDialogComponent } from './order-draft-item-dialog/order-draft-item-dialog.component';
 import { AI_SCHEMA, AiValue } from '../../ai-orders/ai-order.types';
+import { ServerDraftsService } from '../../services/server-drafts.service';
+import { emptyDraftDocument } from '../../services/server-drafts.types';
+import { OrderStatus } from '../../types/order.types';
 
 describe('Opening incomplete AI drafts in the order editor', () => {
   let fixture: ComponentFixture<OrderCreateComponent>;
@@ -76,6 +79,48 @@ describe('Opening incomplete AI drafts in the order editor', () => {
     expect(b).toBeTruthy();
     b.click();
   }
+  it('opens a repeated order with a blank date and saves edits to its copied discount', async () => {
+    const server = TestBed.inject(ServerDraftsService);
+    const row = server.create('manual', {
+      ...emptyDraftDocument(),
+      payload: {
+        name: 'Тестовый клиент',
+        phone: '79000000000',
+        date: '',
+        prepayment: 0,
+        discount: 300,
+        needsDelivery: false,
+        deliveryAddress: '',
+        comment: '',
+        status: OrderStatus.Accepted,
+        isPaid: false,
+        payments: [],
+        interiorDoors: [],
+        entranceDoors: [],
+        moldings: [],
+        extensions: [],
+        capitals: [],
+        hardwares: [],
+        panelings: [],
+        skirtings: [],
+      },
+    });
+    server.records.update((rows) => ({ ...rows, [row.id]: { ...rows[row.id], sourceOrderId: 42 } }));
+    fixture = TestBed.createComponent(OrderCreateComponent);
+    fixture.componentRef.setInput('draftId', row.id);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+    const el: HTMLElement = fixture.nativeElement;
+    expect(el.querySelector('a[href="/order/42"]')?.textContent).toContain('заказа №42');
+    expect(el.querySelector<HTMLInputElement>('[formControlName="date"]')?.value).toBe('');
+    const discount = el.querySelector<HTMLInputElement>('[formControlName="draftDiscount"]')!;
+    expect(discount.value).toBe('300');
+    discount.value = '125';
+    discount.dispatchEvent(new Event('input', { bubbles: true }));
+    fixture.detectChanges();
+    expect(server.records()[row.id].document.payload?.discount).toBe(125);
+  });
   it('opens the normal editor with missing fields and without an approval gate', async () => {
     await open();
     const el: HTMLElement = fixture.nativeElement;

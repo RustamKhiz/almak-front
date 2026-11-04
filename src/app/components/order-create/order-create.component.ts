@@ -163,6 +163,7 @@ export class OrderCreateComponent implements OnInit, OnChanges {
 
   protected readonly prepayment = signal(0);
   protected readonly discount = signal(0);
+  protected readonly repeatAmountDue = computed(() => Math.max(0, this.orderTotal() - this.discount()));
 
   protected readonly orderItemEntity = OrderItemEntity;
   protected readonly orderTotal = computed(() => getOrderTotal(this.buildOrderPayload()));
@@ -522,7 +523,12 @@ export class OrderCreateComponent implements OnInit, OnChanges {
   }
 
   private watchDraftChanges(): void {
-    this.form.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => this.autoSaveDraft());
+    this.form.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
+      if (this.currentDraft()?.sourceOrderId) {
+        this.discount.set(Math.max(this.form.controls.draftDiscount.value ?? 0, 0));
+      }
+      this.autoSaveDraft();
+    });
   }
 
   private loadOrder(id: number): void {
@@ -725,6 +731,7 @@ export class OrderCreateComponent implements OnInit, OnChanges {
 
     this.prepayment.set(order.prepayment);
     this.discount.set(order.discount);
+    this.form.controls.draftDiscount.setValue(order.discount, { emitEvent: false });
 
     this.syncDeliveryState(order.needsDelivery, { clearAddressWhenDisabled: false });
     this.updateItemsValidationState();

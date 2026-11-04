@@ -7,9 +7,15 @@
             <mat-icon>arrow_back</mat-icon>
           </button>
         }
-        <h1>{{ isEditMode() ? 'Редактировать заказ' : aiDraftId() ? 'Черновик заказа' : 'Создать заказ' }}</h1>
+        <h1>{{ isEditMode() ? 'Редактировать заказ' : currentDraft() ? 'Черновик заказа' : 'Создать заказ' }}</h1>
       </div>
       <p>Заполните данные клиента, добавьте товары и проверьте итог перед сохранением.</p>
+      @if (currentDraft()?.sourceOrderId; as sourceId) {
+        <p class="order-create__notice">
+          На основе <a [routerLink]="['/order', sourceId]">заказа №{{ sourceId }}</a
+          >. Укажите дату, проверьте продажные и заполните закупочные цены.
+        </p>
+      }
       @if (draftMessage()) {
         <div class="order-create__notice">{{ draftMessage() }}</div>
       }
@@ -101,6 +107,8 @@
           <mat-label>Предоплата, ₽</mat-label>
           <input matInput type="number" min="0" formControlName="draftPrepayment" />
         </mat-form-field>
+      }
+      @if (aiPartial() || currentDraft()?.sourceOrderId) {
         <mat-form-field appearance="outline">
           <mat-label>Скидка, ₽</mat-label>
           <input matInput type="number" min="0" formControlName="draftDiscount" />
@@ -205,6 +213,12 @@
           }
         </div>
       </div>
+      @if (currentDraft()?.sourceOrderId && discount() > 0) {
+        <div class="order-create__summary-row">
+          <div class="order-create__summary-label">К оплате с учётом скидки</div>
+          <div class="order-create__summary-value">{{ repeatAmountDue() | number: '1.0-0' }} ₽</div>
+        </div>
+      }
     </div>
 
     <div class="order-create__save-actions">
