@@ -111,6 +111,7 @@ export class OrderCreateComponent implements OnInit, OnChanges {
   private readonly ordersService = inject(OrdersService);
   private readonly draftsService = inject(OrderDraftsService);
   private readonly catalogsService = inject(CatalogsService);
+  private editRevision?: number;
 
   protected readonly ai = inject(AiOrdersService);
   protected readonly server = inject(ServerDraftsService);
@@ -534,6 +535,7 @@ export class OrderCreateComponent implements OnInit, OnChanges {
   private loadOrder(id: number): void {
     this.isEditMode.set(true);
     this.isLoadingOrder.set(true);
+    this.editRevision = undefined;
 
     this.ordersService
       .getOrder(id)
@@ -543,6 +545,7 @@ export class OrderCreateComponent implements OnInit, OnChanges {
       )
       .subscribe({
         next: (order) => {
+          this.editRevision = order.revision;
           this.applyOrder(order);
           this.submitError.set(null);
         },
@@ -662,7 +665,9 @@ export class OrderCreateComponent implements OnInit, OnChanges {
 
   private async saveOrder(payload: OrderCreatePayload): Promise<number> {
     const id = this.orderId();
-    if (this.isEditMode() && id) return firstValueFrom(this.ordersService.updateOrder(id, payload));
+    if (this.isEditMode() && id) {
+      return firstValueFrom(this.ordersService.updateOrder(id, { ...payload, revision: this.editRevision }));
+    }
     let source = this.aiDraftId();
     if (source) {
       if (!this.saveAiEditor()) throw new Error('Черновик не найден');

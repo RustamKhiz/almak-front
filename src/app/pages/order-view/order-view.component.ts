@@ -7,7 +7,7 @@ import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
-import { filter, map, switchMap } from 'rxjs';
+import { filter, switchMap } from 'rxjs';
 import { getOrderPaymentLabel, getOrderStatusLabel, ORDER_STATUS_OPTIONS } from '../../common/constants/order-status';
 import { ConfirmDialogComponent, ConfirmDialogData } from '../../common/confirm-dialog/confirm-dialog.component';
 import { OrderItemDetailsDialogComponent } from '../../common/dialogs/order-item-details-dialog/order-item-details-dialog.component';
@@ -210,16 +210,16 @@ export class OrderViewComponent {
     }
 
     this.ordersService
-      .updateOrderStatus(current.id, status)
+      .updateOrderStatusDetails(current.id, status)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-        next: (nextStatus) => {
+        next: (data) => {
           const state = this.state();
-          if (!state) {
+          if (state?.id !== current.id || (state.data.revision ?? 0) > (data.revision ?? 0)) {
             return;
           }
           this.errorMessage.set(null);
-          this.state.set({ ...state, data: { ...state.data, status: nextStatus } });
+          this.state.set({ ...state, data });
         },
         error: () => {
           this.errorMessage.set('Не удалось обновить статус заказа.');
@@ -252,7 +252,7 @@ export class OrderViewComponent {
         filter((result): result is SupplierDialogResult => !!result),
         switchMap((result) => {
           const nextData = this.updateSupplierInOrder(current.data, card.entity, card.itemId, result.supplier);
-          return this.ordersService.updateOrder(current.id, nextData).pipe(map(() => nextData));
+          return this.ordersService.updateOrderDetails(current.id, nextData);
         }),
         takeUntilDestroyed(this.destroyRef),
       )
@@ -261,8 +261,8 @@ export class OrderViewComponent {
           this.errorMessage.set(null);
           this.state.set({ id: current.id, data });
         },
-        error: () => {
-          this.errorMessage.set('Не удалось изменить поставщика.');
+        error: (error) => {
+          this.errorMessage.set(error.error?.message ?? 'Не удалось изменить поставщика.');
         },
       });
   }
@@ -289,7 +289,7 @@ export class OrderViewComponent {
         filter((result): result is OrderPaymentDialogResult => !!result),
         switchMap((result) => {
           const nextData = this.updateCostPriceInOrder(current.data, card.entity, card.itemId, result.amount);
-          return this.ordersService.updateOrder(current.id, nextData).pipe(map(() => nextData));
+          return this.ordersService.updateOrderDetails(current.id, nextData);
         }),
         takeUntilDestroyed(this.destroyRef),
       )
@@ -298,8 +298,8 @@ export class OrderViewComponent {
           this.errorMessage.set(null);
           this.state.set({ id: current.id, data });
         },
-        error: () => {
-          this.errorMessage.set('Не удалось изменить закупочную цену.');
+        error: (error) => {
+          this.errorMessage.set(error.error?.message ?? 'Не удалось изменить закупочную цену.');
         },
       });
   }

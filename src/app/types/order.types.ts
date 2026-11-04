@@ -293,6 +293,7 @@ export interface OrderCustomerForm {
 }
 
 export interface OrderCreatePayload extends OrderCustomerForm {
+  revision?: number;
   payments: readonly OrderPayment[];
   interiorDoors: readonly InteriorDoorItem[];
   entranceDoors: readonly EntranceDoorItem[];

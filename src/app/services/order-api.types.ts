@@ -1,6 +1,7 @@
 import { BackendOrderStatus, ExtensionSize, PanelingSize } from '../types/order.types';
 
 export interface BackendOrder {
+  revision?: number;
   id: number;
   customer: string;
   phone: string;
@@ -215,6 +216,7 @@ export interface BackendSkirting {
 }
 
 export interface BackendOrderPayload {
+  baseRevision?: number;
   customer: string;
   phone: string;
   date: string;
