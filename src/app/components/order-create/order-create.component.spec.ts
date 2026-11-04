@@ -1,3 +1,6 @@
+import { signal } from '@angular/core';
+import { AuthService } from '../../services/auth.service';
+import { stubDraftTransport } from '../../testing/server-drafts.stub.spec';
 import { TestBed, ComponentFixture } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting, HttpTestingController } from '@angular/common/http/testing';
@@ -31,6 +34,7 @@ describe('Opening incomplete AI drafts in the order editor', () => {
         provideHttpClient(),
         provideHttpClientTesting(),
         provideRouter([]),
+        { provide: AuthService, useValue: { authenticated: signal(false), profile: signal(null) } },
         { provide: OrdersService, useValue: orders },
         { provide: CatalogsService, useValue: { getItemsByKey: () => of([]) } },
       ],
@@ -38,6 +42,7 @@ describe('Opening incomplete AI drafts in the order editor', () => {
       .overrideProvider(MatDialog, { useValue: dialog })
       .compileComponents();
     spyOn(TestBed.inject(Router), 'navigate').and.resolveTo(true);
+    stubDraftTransport(orders.createOrder);
     ai = TestBed.inject(AiOrdersService);
     id = ai.create('Рустам, две двери')!.id;
     ai.update(id, (d) => {
@@ -112,6 +117,7 @@ describe('Opening incomplete AI drafts in the order editor', () => {
     click('Сохранить черновик');
     expect(ai.active()!.order.header['name']).toBe('Рустам');
     click('Сохранить');
+    await fixture.whenStable();
     fixture.detectChanges();
     expect(orders.createOrder).not.toHaveBeenCalled();
     expect(fixture.nativeElement.textContent).toContain('Для создания заказа заполните обязательные данные');
@@ -142,6 +148,7 @@ describe('Opening incomplete AI drafts in the order editor', () => {
     });
     await open();
     click('Сохранить');
+    await fixture.whenStable();
     fixture.detectChanges();
     expect(orders.createOrder).toHaveBeenCalledTimes(1);
     const payload = orders.createOrder.calls.mostRecent().args[0];
@@ -252,6 +259,7 @@ describe('Opening incomplete AI drafts in the order editor', () => {
     await open();
     dialog.open.and.returnValue({ afterClosed: () => of(false) });
     click('Сохранить');
+    await fixture.whenStable();
     fixture.detectChanges();
     expect(orders.createOrder).not.toHaveBeenCalled();
     expect(ai.active()!.editorState!.accepted).toBeFalse();
@@ -281,6 +289,7 @@ describe('Opening incomplete AI drafts in the order editor', () => {
     });
     await open();
     click('Сохранить');
+    await fixture.whenStable();
     expect(orders.createOrder).toHaveBeenCalledTimes(1);
     const payload = orders.createOrder.calls.mostRecent().args[0];
     for (const definition of Object.values(AI_SCHEMA.items)) expect(payload[definition.collection].length).toBe(1);

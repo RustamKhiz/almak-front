@@ -45,6 +45,7 @@ import { DRAFT_ITEM_GROUPS, draftItemAmount, draftItemDetails, draftItemTitle } 
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class OrderItemsListComponent {
+  readonly disabled = input(false);
   readonly draftItems = input<readonly AiItem[] | null>(null);
   readonly draftEditClick = output<string>();
   readonly draftDuplicateClick = output<string>();

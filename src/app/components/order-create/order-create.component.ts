@@ -35,8 +35,8 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatSelectModule } from '@angular/material/select';
-import { Router } from '@angular/router';
-import { Observable, debounceTime, filter, finalize, switchMap } from 'rxjs';
+import { Router, RouterLink } from '@angular/router';
+import { firstValueFrom, from, filter, finalize, switchMap } from 'rxjs';
 import { CATALOG_KEYS } from '../../common/constants/catalog-keys';
 import { INTERIOR_DOOR_COVERING_OPTIONS } from '../../common/constants/interior-door-covering';
 import { MOLDING_COVERING_OPTIONS } from '../../common/constants/molding-catalog';
@@ -50,6 +50,8 @@ import { PhoneMaskDirective } from '../../common/directives/phone-mask.directive
 import { bindEachWordCapitalization, bindLeadingCapitalization } from '../../common/utils/form-text';
 import { getOrderTotal } from '../../common/utils/order-calculations';
 import { CatalogsService } from '../../services/catalogs.service';
+import { ServerDraftsService } from '../../services/server-drafts.service';
+import { ServerDraftStatusComponent } from '../server-draft-status/server-draft-status.component';
 import { OrderDraftsService } from '../../services/order-drafts.service';
 import { OrdersService } from '../../services/orders.service';
 import {
@@ -82,6 +84,8 @@ const MOLDING_SET_COUNT_PER_DOOR = 2.5;
   selector: 'app-order-create',
   imports: [
     DecimalPipe,
+    RouterLink,
+    ServerDraftStatusComponent,
     ReactiveFormsModule,
     MatButtonModule,
     MatCheckboxModule,
@@ -109,6 +113,11 @@ export class OrderCreateComponent implements OnInit, OnChanges {
   private readonly catalogsService = inject(CatalogsService);
 
   protected readonly ai = inject(AiOrdersService);
+  protected readonly server = inject(ServerDraftsService);
+  protected readonly currentDraft = computed(
+    () => this.server.records()[this.aiDraftId() || this.activeDraftId() || this.draftId() || ''],
+  );
+  protected readonly draftClosed = computed(() => !!this.currentDraft() && this.currentDraft().state !== 'active');
   readonly aiDraftId = input<string | null>(null);
   protected readonly aiImported = signal(false);
   protected readonly aiPartial = computed(() => !!this.aiDraftId() && !this.aiImported());
@@ -117,7 +126,7 @@ export class OrderCreateComponent implements OnInit, OnChanges {
   protected readonly draftAmount = computed(() => (this.aiDraft() ? aiKnownAmount(this.aiDraft()!.order) : null));
 
   readonly orderId = input<number | null>(null);
-  readonly draftId = input<number | null>(null);
+  readonly draftId = input<string | null>(null);
 
   protected readonly interiorDoors = signal<readonly InteriorDoorItem[]>([]);
   protected readonly entranceDoors = signal<readonly EntranceDoorItem[]>([]);
@@ -145,7 +154,7 @@ export class OrderCreateComponent implements OnInit, OnChanges {
   protected readonly isSaving = signal(false);
   protected readonly submitError = signal<string | null>(null);
   protected readonly draftMessage = signal<string | null>(null);
-  protected readonly activeDraftId = signal<number | null>(null);
+  protected readonly activeDraftId = signal<string | null>(null);
 
   protected readonly defaultCoveringOptions = toSignal(
     this.catalogsService.getItemsByKey(CATALOG_KEYS.interiorDoorCoverings, [...INTERIOR_DOOR_COVERING_OPTIONS]),
@@ -179,34 +188,46 @@ export class OrderCreateComponent implements OnInit, OnChanges {
     this.watchDraftChanges();
     effect(() => {
       const draft = this.aiDraft();
-      if (draft && !this.aiImported()) untracked(() => this.applyAiHeader(draft.order));
+      if (draft)
+        untracked(() => {
+          if (this.aiImported() && draft.editorState?.payload) this.applyOrder(draft.editorState.payload);
+          else this.applyAiHeader(draft.order);
+        });
     });
-    this.destroyRef.onDestroy(() => {
-      if (this.aiDraftId()) this.saveAiEditor();
+    effect(() => {
+      const id = this.activeDraftId() || this.draftId();
+      const row = id ? this.server.records()[id] : null;
+      if (row?.kind === 'manual' && row.document.payload) untracked(() => this.applyOrder(row.document.payload!));
+    });
+    effect((onCleanup) => {
+      const id = this.aiDraftId() || this.activeDraftId() || this.draftId();
+      if (id) onCleanup(untracked(() => this.server.hold(id)));
     });
   }
 
   ngOnChanges(changes: SimpleChanges): void {
+    if (changes['draftId'] && !changes['draftId'].firstChange && this.draftId()) this.applyDraft(this.draftId()!);
     if (changes['aiDraftId'] && !changes['aiDraftId'].firstChange) {
-      if (changes['aiDraftId'].previousValue && this.aiImported())
-        this.saveAiEditor(changes['aiDraftId'].previousValue);
       if (this.aiDraftId()) this.loadAiDraft();
       else {
         this.aiImported.set(false);
         this.activeDraftId.set(null);
         for (const collection of Object.values(this.itemCollections)) collection.set([]);
-        this.form.reset({
-          name: '',
-          phone: '',
-          date: this.todayIso(),
-          needsDelivery: false,
-          deliveryAddress: '',
-          comment: '',
-          status: OrderStatus.Accepted,
-          isPaid: false,
-          defaultColor: '',
-          defaultCovering: null,
-        });
+        this.form.reset(
+          {
+            name: '',
+            phone: '',
+            date: this.todayIso(),
+            needsDelivery: false,
+            deliveryAddress: '',
+            comment: '',
+            status: OrderStatus.Accepted,
+            isPaid: false,
+            defaultColor: '',
+            defaultCovering: null,
+          },
+          { emitEvent: false },
+        );
         this.prepayment.set(0);
         this.discount.set(0);
       }
@@ -230,6 +251,11 @@ export class OrderCreateComponent implements OnInit, OnChanges {
     }
 
     this.loadOrder(id);
+  }
+
+  private holdDraftDialog(): () => void {
+    const id = this.aiDraftId() || this.activeDraftId() || this.draftId();
+    return id ? this.server.hold(id, true) : () => undefined;
   }
 
   protected onAddItemClick(entity: OrderItemEntity): void {
@@ -257,6 +283,7 @@ export class OrderCreateComponent implements OnInit, OnChanges {
     this.dialog
       .open(config.dialogComponent as never, { width: ORDER_ITEM_DIALOG_WIDTH, data: config.createData })
       .afterClosed()
+      .pipe(finalize(this.holdDraftDialog()))
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((result: Omit<OrderEntityItem, 'id'> | undefined) => {
         if (!result) {
@@ -286,6 +313,7 @@ export class OrderCreateComponent implements OnInit, OnChanges {
         data: config.getEditData(item),
       })
       .afterClosed()
+      .pipe(finalize(this.holdDraftDialog()))
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((result: Omit<OrderEntityItem, 'id'> | undefined) => {
         if (!result) {
@@ -339,6 +367,7 @@ export class OrderCreateComponent implements OnInit, OnChanges {
         },
       })
       .afterClosed()
+      .pipe(finalize(this.holdDraftDialog()))
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((fields: Record<string, AiValue> | undefined) => {
         if (!fields) return;
@@ -417,21 +446,20 @@ export class OrderCreateComponent implements OnInit, OnChanges {
     this.dialog
       .open(ConfirmDialogComponent, { data: dialogData })
       .afterClosed()
+      .pipe(finalize(this.holdDraftDialog()))
       .pipe(
         filter((isConfirmed) => isConfirmed === true),
         switchMap(() => {
           this.isSaving.set(true);
           this.submitError.set(null);
-          return this.saveOrder(payload).pipe(finalize(() => this.isSaving.set(false)));
+          return from(this.saveOrder(payload)).pipe(finalize(() => this.isSaving.set(false)));
         }),
         takeUntilDestroyed(this.destroyRef),
       )
       .subscribe({
         next: (savedOrderId) => {
           const activeDraftId = this.activeDraftId();
-          if (activeDraftId) {
-            this.draftsService.deleteDraft(activeDraftId);
-          }
+          if (activeDraftId) void this.server.loadOne(activeDraftId, savedOrderId).catch(() => undefined);
           const aiId = this.aiDraftId();
           if (aiId) {
             this.aiImported.set(false);
@@ -440,29 +468,37 @@ export class OrderCreateComponent implements OnInit, OnChanges {
           this.router.navigate(['/order', savedOrderId]);
         },
         error: (error: unknown) => {
-          if (error instanceof HttpErrorResponse && error.status === 401) {
-            if (this.aiDraftId()) {
-              this.saveAiEditor();
-              this.submitError.set('Сессия истекла. Черновик сохранён на этом устройстве.');
-              return;
-            }
-            const draft = this.saveDraft();
-            this.submitError.set(`Сессия истекла. Заказ сохранен как черновик #${draft.temporaryId}.`);
+          const source = this.aiDraftId() || this.activeDraftId();
+          if (source && error instanceof HttpErrorResponse && error.status === 409 && error.error?.current?.id) {
+            this.server.conflict(source, error.error.current);
+            this.submitError.set('Заказ не создан: черновик изменился. Проверьте варианты правок.');
             return;
           }
-          this.submitError.set('Не удалось сохранить заказ.');
+          if (error instanceof HttpErrorResponse && error.status === 401) {
+            this.submitError.set('Сессия истекла. Войдите прежним аккаунтом и проверьте сохранение черновика.');
+            return;
+          }
+          this.submitError.set(
+            error instanceof HttpErrorResponse
+              ? error.error?.message || 'Не удалось сохранить заказ.'
+              : 'Сначала проверьте сохранение черновика и возможный конфликт правок.',
+          );
         },
       });
   }
 
-  protected onSaveDraftClick(): void {
-    if (this.aiDraftId()) {
-      if (this.saveAiEditor()) this.draftMessage.set('Черновик сохранён на этом устройстве.');
-      return;
-    }
-    const draft = this.saveDraft();
-    this.draftMessage.set(`Черновик #${draft.temporaryId} сохранен.`);
+  protected async onSaveDraftClick(): Promise<void> {
     this.submitError.set(null);
+    try {
+      let id = this.aiDraftId();
+      if (id) {
+        if (!this.saveAiEditor()) return;
+      } else id = this.saveDraft().temporaryId;
+      await this.server.flush(id);
+      this.draftMessage.set('Черновик сохранён на сервере.');
+    } catch {
+      this.submitError.set('Не удалось сохранить черновик. Введённые данные остаются в открытом окне.');
+    }
   }
 
   protected onBackToOrderClick(): void {
@@ -486,12 +522,7 @@ export class OrderCreateComponent implements OnInit, OnChanges {
   }
 
   private watchDraftChanges(): void {
-    this.form.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
-      if (this.aiPartial()) this.saveAiEditor();
-    });
-    this.form.valueChanges.pipe(debounceTime(800), takeUntilDestroyed(this.destroyRef)).subscribe(() => {
-      this.autoSaveDraft();
-    });
+    this.form.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => this.autoSaveDraft());
   }
 
   private loadOrder(id: number): void {
@@ -525,6 +556,7 @@ export class OrderCreateComponent implements OnInit, OnChanges {
     this.dialog
       .open(PlatbandDialogComponent, { width: ORDER_ITEM_DIALOG_WIDTH, data })
       .afterClosed()
+      .pipe(finalize(this.holdDraftDialog()))
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((result: PlatbandDialogResult | undefined) => {
         if (!result?.length) {
@@ -552,6 +584,7 @@ export class OrderCreateComponent implements OnInit, OnChanges {
     this.dialog
       .open(PlatbandDialogComponent, { width: ORDER_ITEM_DIALOG_WIDTH, data })
       .afterClosed()
+      .pipe(finalize(this.holdDraftDialog()))
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((result: PlatbandDialogResult | undefined) => {
         if (!result?.length) {
@@ -621,11 +654,22 @@ export class OrderCreateComponent implements OnInit, OnChanges {
     this.autoSaveDraft();
   }
 
-  private saveOrder(payload: OrderCreatePayload): Observable<number> {
+  private async saveOrder(payload: OrderCreatePayload): Promise<number> {
     const id = this.orderId();
-    return this.isEditMode() && id
-      ? this.ordersService.updateOrder(id, payload)
-      : this.ordersService.createOrder(payload);
+    if (this.isEditMode() && id) return firstValueFrom(this.ordersService.updateOrder(id, payload));
+    let source = this.aiDraftId();
+    if (source) {
+      if (!this.saveAiEditor()) throw new Error('Черновик не найден');
+    } else source = this.saveDraft().temporaryId;
+    await this.server.flush(source);
+    const row = this.server.records()[source];
+    const current =
+      row.kind === 'manual'
+        ? row.document.payload!
+        : row.document.editorState?.accepted && row.document.editorState.payload
+          ? row.document.editorState.payload
+          : aiToPayload(row.document.order!);
+    return firstValueFrom(this.ordersService.createOrder(current, this.server.reference(source)));
   }
 
   private buildOrderPayload(): OrderCreatePayload {
@@ -702,11 +746,6 @@ export class OrderCreateComponent implements OnInit, OnChanges {
       this.submitError.set('Черновик не найден.');
       return;
     }
-    if (!d.editorState) {
-      this.ai.update(d.id, (value) => {
-        value.editorState = { payload: null, accepted: false, defaultsConfirmed: false };
-      });
-    }
     const payload = this.aiDraft()?.editorState?.payload;
     if (payload) {
       this.applyOrder(payload);
@@ -773,7 +812,7 @@ export class OrderCreateComponent implements OnInit, OnChanges {
     return !!updated;
   }
 
-  private applyDraft(draftId: number): void {
+  private applyDraft(draftId: string): void {
     const draft = this.draftsService.getDraft(draftId);
     if (!draft) {
       this.submitError.set('Черновик не найден.');
@@ -783,7 +822,7 @@ export class OrderCreateComponent implements OnInit, OnChanges {
     this.activeDraftId.set(draft.temporaryId);
     this.applyOrder(draft.payload);
     this.isEditMode.set(false);
-    this.draftMessage.set(`Открыт черновик #${draft.temporaryId}.`);
+    this.draftMessage.set('Черновик загружен с сервера.');
   }
 
   private saveDraft() {

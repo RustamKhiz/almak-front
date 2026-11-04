@@ -31,8 +31,8 @@ export class OrdersService {
     return this.api.getSupplierStats(filters);
   }
 
-  createOrder(payload: OrderCreatePayload): Observable<number> {
-    return this.api.createOrder(this.mapper.toBackendPayload(payload)).pipe(map((order) => order.id));
+  createOrder(payload: OrderCreatePayload, draft?: { draftId: string; draftRevision: number }): Observable<number> {
+    return this.api.createOrder(this.mapper.toBackendPayload(payload), draft).pipe(map((order) => order.id));
   }
 
   updateOrder(id: number, payload: OrderCreatePayload): Observable<number> {

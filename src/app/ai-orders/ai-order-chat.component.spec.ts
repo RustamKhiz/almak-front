@@ -2,6 +2,8 @@ import { TestBed, ComponentFixture } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideRouter, Router } from '@angular/router';
+import { ServerDraftsService } from '../services/server-drafts.service';
+import { stubDraftTransport } from '../testing/server-drafts.stub.spec';
 import { signal } from '@angular/core';
 import { AuthService } from '../services/auth.service';
 import { AiOrderChatComponent } from './ai-order-chat.component';
@@ -23,9 +25,10 @@ describe('Floating AI chat', () => {
         provideHttpClient(),
         provideHttpClientTesting(),
         provideRouter([]),
-        { provide: AuthService, useValue: { authenticated: signal(true) } },
+        { provide: AuthService, useValue: { authenticated: signal(true), profile: signal(null) } },
       ],
     }).compileComponents();
+    stubDraftTransport();
     ai = TestBed.inject(AiOrdersService);
     http = TestBed.inject(HttpTestingController);
   });
@@ -38,9 +41,12 @@ describe('Floating AI chat', () => {
     const d = ai.create(name)!;
     ai.update(d.id, (value) => {
       value.order.header['name'] = name;
-      value.messages = [{ role: 'user', text: name, createdAt: new Date().toISOString() }];
       value.pendingText = pending;
     });
+    TestBed.inject(ServerDraftsService).records.update((all) => ({
+      ...all,
+      [d.id]: { ...all[d.id], messages: [{ role: 'user', text: name, createdAt: new Date().toISOString() }] },
+    }));
     return d.id;
   }
   async function render() {
@@ -71,6 +77,7 @@ describe('Floating AI chat', () => {
     expect(panel.textContent).not.toContain('не синхронизируются');
     const navigate = spyOn(TestBed.inject(Router), 'navigate').and.resolveTo(true);
     button('Открыть черновик').click();
+    await settle();
     expect(navigate).toHaveBeenCalledWith(['/order'], { queryParams: { aiDraft: id } });
     expect(ai.drafts()[0].editorState).toBeUndefined();
   });
@@ -104,31 +111,40 @@ describe('Floating AI chat', () => {
     expect(ai.drafts().find((d) => d.id === first)!.pendingText).toBe('Новое уточнение первого');
     expect(ai.drafts().find((d) => d.id === first)!.messages[0].text).toBe('Первый');
   });
-  it('cancels a pending request when another chat is selected', async () => {
+  it('keeps an in-flight operation bound to its original conversation when switching', async () => {
     const first = add('Первый', 'Описание первого');
     const second = add('Второй', '');
+    const server = TestBed.inject(ServerDraftsService);
+    let finish!: () => void;
+    spyOn(server, 'send').and.callFake(
+      () =>
+        new Promise<void>((resolve) => {
+          finish = resolve;
+        }),
+    );
     ai.open(first);
     await render();
     ai.send();
-    const request = http.expectOne((r) => r.url.endsWith('/ai/order-drafts/parse'));
-    button('История чатов').click();
+    ai.open(second);
+    expect(ai.activeId()).toBe(second);
+    expect(ai.busy()).toBeFalse();
+    finish();
     await settle();
-    Array.from(fixture.nativeElement.querySelectorAll('.chat-entry') as NodeListOf<HTMLButtonElement>)
-      .find((el) => el.textContent!.includes('Второй'))!
-      .click();
-    await settle();
-    expect(request.cancelled).toBeTrue();
     expect(ai.activeId()).toBe(second);
     expect(ai.drafts().find((d) => d.id === first)!.pendingText).toBe('Описание первого');
   });
   it('shows saved order conversations in history with a link to that order', async () => {
     const id = add('Клиент', '');
-    ai.complete(id, 42);
+    TestBed.inject(ServerDraftsService).records.update((all) => ({
+      ...all,
+      [id]: { ...all[id], state: 'converted', orderId: 42 },
+    }));
     ai.open(id);
     await render();
     expect(fixture.nativeElement.querySelector('textarea')).toBeNull();
     const navigate = spyOn(TestBed.inject(Router), 'navigate').and.resolveTo(true);
     button('Открыть заказ').click();
+    await settle();
     expect(navigate).toHaveBeenCalledWith(['/order', 42]);
     ai.open(id);
     await settle();

@@ -84,6 +84,9 @@
           } @empty {
             <p class="empty-chats">Здесь появятся ваши переписки по заказам.</p>
           }
+          @if (server.listedIds().length < server.total()) {
+            <button type="button" [disabled]="server.loading()" (click)="loadMoreChats()">Загрузить ещё</button>
+          }
         </div>
       } @else {
         @if (draft(); as d) {
@@ -139,6 +142,9 @@
             <button type="button" (click)="ai.reload()">Обновить черновики</button>
           }
         </div>
+      }
+      @if (ai.activeId()) {
+        <app-server-draft-status [draftId]="ai.activeId()" />
       }
       @if (!chatListOpened()) {
         @if (canCompose()) {

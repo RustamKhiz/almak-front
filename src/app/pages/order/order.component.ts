@@ -14,14 +14,15 @@ export class OrderComponent {
   private readonly route = inject(ActivatedRoute);
 
   protected readonly orderId = signal<number | null>(null);
-  protected readonly draftId = signal<number | null>(null);
+  protected readonly draftId = signal<string | null>(null);
   protected readonly aiDraftId = signal<string | null>(null);
 
   constructor() {
-    const id = this.route.snapshot.paramMap.get('id');
-    this.orderId.set(id ? Number(id) : null);
-    const draftId = this.route.snapshot.paramMap.get('draftId');
-    this.draftId.set(draftId ? Number(draftId) : null);
+    this.route.paramMap.pipe(takeUntilDestroyed(inject(DestroyRef))).subscribe((params) => {
+      const id = params.get('id');
+      this.orderId.set(id ? Number(id) : null);
+      this.draftId.set(params.get('draftId'));
+    });
     this.route.queryParamMap
       .pipe(takeUntilDestroyed(inject(DestroyRef)))
       .subscribe((params) => this.aiDraftId.set(params.get('aiDraft')));
