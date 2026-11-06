@@ -73,4 +73,8 @@ export class OrdersService {
   deleteOrder(id: number): Observable<void> {
     return this.api.deleteOrder(id);
   }
+
+  deleteOrders(ids: readonly number[]): Observable<void> {
+    return this.api.deleteOrders(ids);
+  }
 }

@@ -1,8 +1,39 @@
 <div class="orders-table">
   <app-orders-table-filters (applyClick)="onFiltersApply($event)" (clearClick)="onFiltersClear()" />
+  @if (canDelete() && selected().size) {
+    <div class="orders-table__selection">
+      <span aria-live="polite">Выбрано заказов: {{ selected().size }}</span>
+      <button mat-stroked-button type="button" [disabled]="deleting()" (click)="clearSelection()">Снять выбор</button>
+      <button mat-flat-button type="button" [disabled]="deleting()" (click)="deleteSelected()">
+        Удалить выбранные
+      </button>
+    </div>
+  }
+  @if (deleteError()) {
+    <p role="alert">{{ deleteError() }}</p>
+  }
 
   <div class="orders-table__scroll">
     <table mat-table [dataSource]="dataSource" matSort matSortDisableClear class="mat-elevation-z1">
+      <ng-container matColumnDef="select">
+        <th mat-header-cell *matHeaderCellDef>
+          <mat-checkbox
+            aria-label="Выбрать все заказы на этой странице"
+            [checked]="allOnPageSelected()"
+            [indeterminate]="selectedOnPage() > 0 && !allOnPageSelected()"
+            [disabled]="!canTogglePage()"
+            (change)="togglePage($event.checked)"
+          />
+        </th>
+        <td mat-cell *matCellDef="let row" (click)="$event.stopPropagation()">
+          <mat-checkbox
+            [aria-label]="'Выбрать заказ №' + row.id"
+            [checked]="selected().has(row.id)"
+            [disabled]="deleting() || (selected().size >= selectionLimit && !selected().has(row.id))"
+            (change)="toggleSelection(row.id, $event.checked)"
+          />
+        </td>
+      </ng-container>
       <ng-container matColumnDef="id">
         <th mat-header-cell *matHeaderCellDef mat-sort-header>Заказ №</th>
         <td mat-cell *matCellDef="let row">#{{ row.id }}</td>
@@ -76,8 +107,8 @@
         </td>
       </ng-container>
 
-      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-      <tr mat-row *matRowDef="let row; columns: displayedColumns" (click)="onRowClick(row)" tabindex="0"></tr>
+      <tr mat-header-row *matHeaderRowDef="displayedColumns()"></tr>
+      <tr mat-row *matRowDef="let row; columns: displayedColumns()" (click)="onRowClick(row)" tabindex="0"></tr>
     </table>
   </div>
 

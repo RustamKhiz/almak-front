@@ -66,4 +66,8 @@ export class OrdersApiService {
   deleteOrder(id: number): Observable<void> {
     return this.http.delete<void>(`${this.baseUrl}/${id}`);
   }
+
+  deleteOrders(ids: readonly number[]): Observable<void> {
+    return this.http.post<void>(`${this.baseUrl}/bulk-delete`, { ids });
+  }
 }

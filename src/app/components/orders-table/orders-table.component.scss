@@ -139,3 +139,10 @@ th {
     max-height: calc(100vh - 260px);
   }
 }
+.orders-table__selection {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 12px 0;
+}
