@@ -111,6 +111,25 @@ describe('Floating AI chat', () => {
     expect(ai.drafts().find((d) => d.id === first)!.pendingText).toBe('Новое уточнение первого');
     expect(ai.drafts().find((d) => d.id === first)!.messages[0].text).toBe('Первый');
   });
+  it('shows the working copy diff and applies it only to its target order after confirmation', async () => {
+    const id = add('Тестовый заказ', '');
+    const server = TestBed.inject(ServerDraftsService);
+    const changes = [{ path: 'items.door.width', label: 'Позиция 1 · Ширина', before: 80, after: 70 }];
+    server.records.update((rows) => ({
+      ...rows,
+      [id]: { ...rows[id], targetOrderId: 42, document: { ...rows[id].document, changes } },
+    }));
+    const apply = spyOn(server, 'applyOrderEdit').and.resolveTo();
+    ai.open(id);
+    await render();
+    const panel: HTMLElement = fixture.nativeElement.querySelector('.chat-window');
+    expect(panel.textContent).toContain('Редактирование заказа №42');
+    expect(panel.textContent).toContain('80 → 70');
+    expect(apply).not.toHaveBeenCalled();
+    button('Применить к заказу №42').click();
+    await settle();
+    expect(apply).toHaveBeenCalledOnceWith(id, changes);
+  });
   it('keeps an in-flight operation bound to its original conversation when switching', async () => {
     const first = add('Первый', 'Описание первого');
     const second = add('Второй', '');

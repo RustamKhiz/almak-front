@@ -376,3 +376,20 @@ h2 {
   color: #718098;
   line-height: 1.5;
 }
+.edit-preview {
+  padding: 12px;
+  border: 1px solid #dbe4f4;
+  border-radius: 10px;
+  background: #fff;
+  overflow-wrap: anywhere;
+
+  dt {
+    margin-top: 8px;
+    font-weight: 600;
+  }
+
+  dd {
+    margin: 2px 0 0;
+    white-space: pre-wrap;
+  }
+}

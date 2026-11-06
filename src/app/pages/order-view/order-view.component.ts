@@ -29,6 +29,8 @@ import { OrderDocumentService } from '../../services/order-document.service';
 import { OrderPrintService } from '../../services/order-print.service';
 import { OrdersService } from '../../services/orders.service';
 import { ServerDraftsService } from '../../services/server-drafts.service';
+import { AiOrdersService } from '../../ai-orders/ai-orders.service';
+import { HttpErrorResponse } from '@angular/common/http';
 import { RepeatOrderDialogComponent, RepeatOrderOptions } from './repeat-order-dialog.component';
 import { OrderCreatePayload, OrderPayment, OrderStatus } from '../../types/order.types';
 import {
@@ -71,6 +73,9 @@ export class OrderViewComponent {
   private readonly productCardsService = inject(OrderViewProductCardsService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly drafts = inject(ServerDraftsService);
+  private readonly ai = inject(AiOrdersService);
+  protected readonly startingAiEdit = signal(false);
+  protected readonly aiEditError = signal('');
   protected readonly repeating = signal(false);
   protected readonly repeatError = signal('');
   private repeatRequest?: RepeatOrderOptions & { requestId: string; orderId: number };
@@ -93,6 +98,28 @@ export class OrderViewComponent {
 
   constructor() {
     this.fetchOrder(Number(this.route.snapshot.paramMap.get('id') ?? 0));
+    this.drafts.orderEditApplied.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((id) => {
+      if (this.state()?.id === id) this.fetchOrder(id);
+    });
+  }
+
+  protected async onAiEditClick(): Promise<void> {
+    const id = this.state()?.id;
+    if (!id || this.startingAiEdit()) return;
+    this.startingAiEdit.set(true);
+    this.aiEditError.set('');
+    try {
+      const draftId = await this.drafts.startOrderEdit(id);
+      if (!this.destroyRef.destroyed) this.ai.open(draftId);
+    } catch (error) {
+      this.aiEditError.set(
+        error instanceof HttpErrorResponse && error.error?.message
+          ? error.error.message
+          : 'Не удалось открыть рабочую копию заказа.',
+      );
+    } finally {
+      this.startingAiEdit.set(false);
+    }
   }
 
   protected togglePrivateInfo(): void {

@@ -45,6 +45,9 @@
         <button mat-stroked-button type="button" (click)="onRepeatClick()" [disabled]="repeating()">
           Повторить заказ
         </button>
+        <button mat-stroked-button type="button" (click)="onAiEditClick()" [disabled]="startingAiEdit()">
+          Изменить с ИИ
+        </button>
         <button mat-flat-button color="primary" type="button" [routerLink]="['/order', $state.id, 'edit']">
           Редактировать
         </button>
@@ -53,6 +56,9 @@
   </header>
   @if (repeatError()) {
     <p role="alert">{{ repeatError() }}</p>
+  }
+  @if (aiEditError()) {
+    <p role="alert">{{ aiEditError() }}</p>
   }
 
   @if (isLoading()) {

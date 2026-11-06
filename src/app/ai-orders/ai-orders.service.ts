@@ -16,6 +16,7 @@ export class AiOrdersService {
         id: row.id,
         revision: row.localVersion ?? row.revision,
         orderId: row.orderId,
+        targetOrderId: row.targetOrderId,
         createdAt: row.createdAt,
         updatedAt: row.updatedAt,
         sourceText: row.document.sourceText,
@@ -30,6 +31,7 @@ export class AiOrdersService {
       })),
   );
   readonly activeId = signal<string | null>(null);
+  readonly openSelection = signal(0);
   readonly opened = signal(false);
   readonly busy = signal(false);
   readonly unread = signal(false);
@@ -88,6 +90,7 @@ export class AiOrdersService {
     if (id) {
       if (this.activeId() !== id) this.cancel();
       this.activeId.set(id);
+      this.openSelection.update((value) => value + 1);
     } else if (!this.activeId() && !this.selectionInitialized)
       this.activeId.set([...this.drafts()].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))[0]?.id ?? null);
     this.selectionInitialized = true;

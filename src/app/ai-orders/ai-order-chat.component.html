@@ -79,7 +79,15 @@
                 ><time>{{ chat.updatedAt | date: 'dd.MM HH:mm' }}</time></span
               >
               <span class="chat-entry-preview">{{ chatPreview(chat) }}</span>
-              <span class="chat-entry-status">{{ chat.orderId ? 'Заказ №' + chat.orderId : 'Черновик' }}</span>
+              <span class="chat-entry-status">
+                {{
+                  chat.targetOrderId
+                    ? 'Правки заказа №' + chat.targetOrderId
+                    : chat.orderId
+                      ? 'Заказ №' + chat.orderId
+                      : 'Черновик'
+                }}
+              </span>
             </button>
           } @empty {
             <p class="empty-chats">Здесь появятся ваши переписки по заказам.</p>
@@ -91,12 +99,28 @@
       } @else {
         @if (draft(); as d) {
           <div class="draft-link">
-            <span>{{ d.orderId ? 'Заказ №' + d.orderId : 'Черновик' }} · {{ chatTitle(d) }}</span>
-            <button type="button" (click)="openEditor()">{{ d.orderId ? 'Открыть заказ' : 'Открыть черновик' }}</button>
+            <span
+              >{{
+                d.targetOrderId
+                  ? 'Редактирование заказа №' + d.targetOrderId
+                  : d.orderId
+                    ? 'Заказ №' + d.orderId
+                    : 'Черновик'
+              }}
+              · {{ chatTitle(d) }}</span
+            >
+            <button type="button" (click)="openEditor()">
+              {{ d.orderId || d.targetOrderId ? 'Открыть заказ' : 'Открыть черновик' }}
+            </button>
           </div>
         }
         <div class="history" #history>
-          @if (!draft()?.messages?.length) {
+          @if (draft()?.targetOrderId && !draft()?.messages?.length) {
+            <div class="welcome">
+              <h2>Что изменить в заказе?</h2>
+              <p>Например: «У первой двери поменяй ширину на 70 см». Проверьте список правок перед применением.</p>
+            </div>
+          } @else if (!draft()?.messages?.length) {
             <div class="welcome">
               <span class="eyebrow">ОПИШИТЕ ЗАКАЗ СВОИМИ СЛОВАМИ</span>
               <h2>Запишем сейчас.<br />Уточним по ходу.</h2>
@@ -117,14 +141,37 @@
             <p class="working" role="status">Разбираю описание…</p>
           }
           @if (draft(); as d) {
-            @if (d.messages.length) {
+            @if (d.targetOrderId && d.changes.length) {
+              <section class="edit-preview" aria-label="Предпросмотр изменений заказа">
+                <strong>{{ d.orderId ? 'Применённые изменения' : 'Проверьте изменения' }}</strong>
+                <dl>
+                  @for (change of d.changes; track change.path) {
+                    <dt>{{ change.label }}</dt>
+                    <dd>{{ changeValue(change.before) }} → {{ changeValue(change.after) }}</dd>
+                  }
+                </dl>
+                @if (!d.orderId) {
+                  <button
+                    class="editor-button"
+                    type="button"
+                    [disabled]="ai.busy() || applying() || !!text().trim()"
+                    (click)="applyEdit(d)"
+                  >
+                    Применить к заказу №{{ d.targetOrderId }}
+                  </button>
+                  @if (text().trim()) {
+                    <p>Отправьте или очистите новое уточнение перед применением.</p>
+                  }
+                }
+              </section>
+            } @else if (!d.targetOrderId && d.messages.length) {
               <button class="editor-button" type="button" (click)="openEditor()">
                 {{ d.orderId ? 'Открыть заказ №' + d.orderId : 'Открыть черновик' }} <mat-icon>arrow_forward</mat-icon>
               </button>
             }
             @if (canCompose()) {
               @if (d.lastAppliedChange) {
-                <button class="text-button" type="button" (click)="ai.undo()" [disabled]="ai.busy()">
+                <button class="text-button" type="button" (click)="ai.undo()" [disabled]="ai.busy() || applying()">
                   Отменить изменение
                 </button>
               }
@@ -153,6 +200,7 @@
               #composer
               rows="3"
               maxlength="10000"
+              [disabled]="applying()"
               aria-label="Описание заказа или уточнение"
               placeholder="Напишите заказ или уточнение…"
               [ngModel]="text()"
@@ -163,7 +211,7 @@
               class="send"
               type="button"
               aria-label="Отправить"
-              [disabled]="!text().trim() || ai.busy()"
+              [disabled]="!text().trim() || ai.busy() || applying()"
               (click)="send()"
             >
               <mat-icon>arrow_upward</mat-icon>
@@ -171,7 +219,13 @@
           </div>
         } @else {
           <div class="notice">
-            {{ draft()?.orderId ? 'Заказ создан. Переписка сохранена.' : 'Продолжите оформление заказа в форме.' }}
+            {{
+              draft()?.targetOrderId
+                ? 'Изменения применены. Переписка сохранена.'
+                : draft()?.orderId
+                  ? 'Заказ создан. Переписка сохранена.'
+                  : 'Продолжите оформление заказа в форме.'
+            }}
           </div>
         }
       }

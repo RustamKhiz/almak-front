@@ -26,6 +26,7 @@ export interface ServerDraft {
   editor?: { id: number; login: string; name: string };
   orderId?: number;
   sourceOrderId?: number;
+  targetOrderId?: number;
   createdAt: string;
   updatedAt: string;
   localVersion?: number;
