@@ -75,11 +75,22 @@ describe('Floating AI chat', () => {
     expect(panel.textContent).not.toContain('DeepSeek');
     expect(panel.textContent).not.toContain('Черновик появится после ввода');
     expect(panel.textContent).not.toContain('не синхронизируются');
+    expect(panel.textContent).not.toContain('Сохранено на сервере');
     const navigate = spyOn(TestBed.inject(Router), 'navigate').and.resolveTo(true);
     button('Открыть черновик').click();
     await settle();
     expect(navigate).toHaveBeenCalledWith(['/order'], { queryParams: { aiDraft: id } });
     expect(ai.drafts()[0].editorState).toBeUndefined();
+  });
+  it('shows save failures with retry while routine save status stays hidden', async () => {
+    const id = add('Тестовый заказ', '');
+    ai.open(id);
+    await render();
+    expect(fixture.nativeElement.textContent).not.toContain('Сохранено на сервере');
+    TestBed.inject(ServerDraftsService).errors.set({ [id]: 'Не удалось сохранить изменения.' });
+    await settle();
+    expect(fixture.nativeElement.textContent).toContain('Не удалось сохранить изменения.');
+    expect(button('Повторить сохранение')).toBeTruthy();
   });
   it('switches conversations without losing either pending text or history', async () => {
     const first = add('Первый', 'Уточнение первого');

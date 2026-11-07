@@ -46,7 +46,7 @@
       ></button>
       <header>
         <div class="assistant-icon"><mat-icon>auto_awesome</mat-icon></div>
-        <div class="heading"><strong>Помощник по заказам</strong><span>Быстрое оформление</span></div>
+        <div class="heading"><strong>Помощник</strong></div>
         <button
           type="button"
           class="icon-button"
@@ -65,7 +65,7 @@
       </header>
       @if (chatListOpened()) {
         <div class="chat-list" aria-label="История чатов">
-          <h2>История чатов</h2>
+          <h2>Чаты</h2>
           @for (chat of chats(); track chat.id) {
             <button
               type="button"
@@ -90,7 +90,7 @@
               </span>
             </button>
           } @empty {
-            <p class="empty-chats">Здесь появятся ваши переписки по заказам.</p>
+            <p class="empty-chats">Пока нет чатов.</p>
           }
           @if (server.listedIds().length < server.total()) {
             <button type="button" [disabled]="server.loading()" (click)="loadMoreChats()">Загрузить ещё</button>
@@ -98,47 +98,50 @@
         </div>
       } @else {
         @if (draft(); as d) {
-          <div class="draft-link">
-            <span
-              >{{
-                d.targetOrderId
-                  ? 'Редактирование заказа №' + d.targetOrderId
-                  : d.orderId
-                    ? 'Заказ №' + d.orderId
-                    : 'Черновик'
-              }}
-              · {{ chatTitle(d) }}</span
-            >
-            <button type="button" (click)="openEditor()">
-              {{ d.orderId || d.targetOrderId ? 'Открыть заказ' : 'Открыть черновик' }}
-            </button>
-          </div>
+          @if (d.messages.length || d.targetOrderId || d.orderId) {
+            <div class="draft-link">
+              <span
+                >{{
+                  d.targetOrderId
+                    ? 'Редактирование заказа №' + d.targetOrderId
+                    : d.orderId
+                      ? 'Заказ №' + d.orderId
+                      : 'Черновик'
+                }}
+                · {{ chatTitle(d) }}</span
+              >
+              <button type="button" (click)="openEditor()">
+                {{ d.orderId || d.targetOrderId ? 'Открыть заказ' : 'Открыть черновик' }}
+              </button>
+            </div>
+          }
         }
         <div class="history" #history>
           @if (draft()?.targetOrderId && !draft()?.messages?.length) {
             <div class="welcome">
-              <h2>Что изменить в заказе?</h2>
-              <p>Например: «У первой двери поменяй ширину на 70 см». Проверьте список правок перед применением.</p>
+              <div class="welcome-icon"><mat-icon>edit_note</mat-icon></div>
+              <h2>Что изменить?</h2>
+              <p>Например: «У первой двери ширину на 70 см».</p>
             </div>
           } @else if (!draft()?.messages?.length) {
             <div class="welcome">
-              <span class="eyebrow">ОПИШИТЕ ЗАКАЗ СВОИМИ СЛОВАМИ</span>
-              <h2>Запишем сейчас.<br />Уточним по ходу.</h2>
-              <p>Напишите всё, что уже известно. Остальное можно добавить позже.</p>
-              <div class="example">
-                Например: Магомед, три белые двери Верона. Две 80 на 200, одна 70 на 200. По 12 тысяч. Предоплата 10
-                тысяч.
-              </div>
+              <div class="welcome-icon"><mat-icon>auto_awesome</mat-icon></div>
+              <h2>Запишите заказ</h2>
+              <p>Клиент, товары, размеры — своими словами.</p>
+              <div class="example">Магомед, две двери Верона 80 × 200, по 12 тысяч.</div>
             </div>
           }
           @for (message of draft()?.messages || []; track $index) {
-            <article class="message" [class.user]="message.role === 'user'">
-              <span>{{ message.role === 'user' ? 'Вы' : 'Помощник' }}</span>
+            <article
+              class="message"
+              [class.user]="message.role === 'user'"
+              [attr.aria-label]="message.role === 'user' ? 'Ваше сообщение' : 'Ответ помощника'"
+            >
               <p>{{ message.role === 'assistant' ? displayText(message.text) : message.text }}</p>
             </article>
           }
           @if (ai.busy()) {
-            <p class="working" role="status">Разбираю описание…</p>
+            <p class="working" role="status">Готовлю…</p>
           }
           @if (draft(); as d) {
             @if (d.targetOrderId && d.changes.length) {
@@ -166,10 +169,6 @@
                   }
                 }
               </section>
-            } @else if (!d.targetOrderId && d.messages.length) {
-              <button class="editor-button" type="button" (click)="openEditor()">
-                {{ d.orderId ? 'Открыть заказ №' + d.orderId : 'Открыть черновик' }} <mat-icon>arrow_forward</mat-icon>
-              </button>
             }
             @if (canCompose()) {
               @if (d.lastAppliedChange) {
@@ -184,27 +183,27 @@
           <button class="new-messages" type="button" (click)="scrollBottom()">Новое сообщение ↓</button>
         }
       }
-      @if (ai.error() || ai.storageError()) {
+      @if (ai.error() || server.loadError()) {
         <div class="error" role="alert">
-          {{ ai.storageError() || ai.error() }}
-          @if (ai.storageError()) {
+          {{ ai.error() || server.loadError() }}
+          @if (server.loadError()) {
             <button type="button" (click)="ai.reload()">Обновить черновики</button>
           }
         </div>
       }
       @if (ai.activeId()) {
-        <app-server-draft-status [draftId]="ai.activeId()" />
+        <app-server-draft-status [draftId]="ai.activeId()" [errorsOnly]="true" />
       }
       @if (!chatListOpened()) {
         @if (canCompose()) {
           <div class="composer">
             <textarea
               #composer
-              rows="3"
+              rows="2"
               maxlength="10000"
               [disabled]="applying()"
               aria-label="Описание заказа или уточнение"
-              placeholder="Напишите заказ или уточнение…"
+              placeholder="Напишите сообщение…"
               [ngModel]="text()"
               (ngModelChange)="changed($event)"
               (keydown)="key($event)"
@@ -223,10 +222,10 @@
           <div class="notice">
             {{
               draft()?.targetOrderId
-                ? 'Изменения применены. Переписка сохранена.'
+                ? 'Изменения применены'
                 : draft()?.orderId
-                  ? 'Заказ создан. Переписка сохранена.'
-                  : 'Продолжите оформление заказа в форме.'
+                  ? 'Заказ оформлен'
+                  : 'Продолжить можно в форме заказа'
             }}
           </div>
         }

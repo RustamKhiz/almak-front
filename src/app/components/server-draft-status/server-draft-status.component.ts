@@ -60,7 +60,11 @@ export class ServerDraftStatusComponent {
   protected readonly server = inject(ServerDraftsService);
   private readonly router = inject(Router);
   readonly draftId = input<string | null>(null);
-  protected readonly ids = computed(() => (this.draftId() ? [this.draftId()!] : Object.keys(this.server.errors())));
+  readonly errorsOnly = input(false);
+  protected readonly ids = computed(() => {
+    const ids = this.draftId() ? [this.draftId()!] : Object.keys(this.server.errors());
+    return this.errorsOnly() ? ids.filter((id) => this.server.errors()[id] || this.server.conflicts()[id]) : ids;
+  });
   protected readonly busy = signal(false);
   protected readonly actionError = signal('');
   private async run(action: () => Promise<unknown>): Promise<void> {
