@@ -41,6 +41,13 @@ export class AiOrderChatComponent implements OnDestroy {
   private readonly input = viewChild<ElementRef<HTMLTextAreaElement>>('composer');
   private readonly history = viewChild<ElementRef<HTMLElement>>('history');
   protected readonly draft = computed(() => this.ai.drafts().find((d) => d.id === this.ai.activeId()));
+  protected readonly lastAssistantIndex = computed(() => {
+    const messages = this.draft()?.messages ?? [];
+    for (let i = messages.length - 1; i >= 0; i--) {
+      if (messages[i].role === 'assistant') return i;
+    }
+    return -1;
+  });
   protected readonly width = signal(420);
   protected readonly height = signal(600);
   protected readonly text = signal('');

@@ -138,6 +138,12 @@
               [attr.aria-label]="message.role === 'user' ? 'Ваше сообщение' : 'Ответ помощника'"
             >
               <p>{{ message.role === 'assistant' ? displayText(message.text) : message.text }}</p>
+              @if (message.role === 'assistant' && $index === lastAssistantIndex() && !draft()?.targetOrderId) {
+                <button class="message-link" type="button" (click)="openEditor()">
+                  {{ draft()?.orderId ? 'Открыть заказ' : 'Открыть черновик' }}
+                  <mat-icon>arrow_forward</mat-icon>
+                </button>
+              }
             </article>
           }
           @if (ai.busy()) {

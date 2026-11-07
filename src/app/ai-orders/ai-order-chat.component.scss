@@ -173,6 +173,23 @@ h2 {
   border-color: transparent;
   border-radius: 16px 16px 5px 16px;
 }
+.message-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 12px;
+  padding: 7px 10px;
+  border: 0;
+  border-radius: 9px;
+  background: #edf2ff;
+  color: #315dc5;
+  font-size: 12px;
+}
+.message-link mat-icon {
+  width: 16px;
+  height: 16px;
+  font-size: 16px;
+}
 .draft-link {
   display: flex;
   align-items: center;

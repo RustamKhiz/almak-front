@@ -92,6 +92,32 @@ describe('Floating AI chat', () => {
     expect(fixture.nativeElement.textContent).toContain('Не удалось сохранить изменения.');
     expect(button('Повторить сохранение')).toBeTruthy();
   });
+  it('opens the current draft from the latest assistant reply only', async () => {
+    const id = add('Клиент', '');
+    const server = TestBed.inject(ServerDraftsService);
+    server.records.update((rows) => ({
+      ...rows,
+      [id]: {
+        ...rows[id],
+        messages: [
+          ...rows[id].messages,
+          { role: 'assistant', text: 'Черновик создан.', createdAt: new Date().toISOString() },
+          { role: 'user', text: 'Две двери', createdAt: new Date().toISOString() },
+          { role: 'assistant', text: 'Добавлено две двери.', createdAt: new Date().toISOString() },
+        ],
+      },
+    }));
+    ai.open(id);
+    await render();
+    const messages = fixture.nativeElement.querySelectorAll('.message');
+    expect(messages[1].querySelector('button')).toBeNull();
+    const link: HTMLButtonElement = messages[3].querySelector('button');
+    expect(link.textContent).toContain('Открыть черновик');
+    const navigate = spyOn(TestBed.inject(Router), 'navigate').and.resolveTo(true);
+    link.click();
+    await settle();
+    expect(navigate).toHaveBeenCalledWith(['/order'], { queryParams: { aiDraft: id } });
+  });
   it('switches conversations without losing either pending text or history', async () => {
     const first = add('Первый', 'Уточнение первого');
     const second = add('Второй', 'Уточнение второго');
