@@ -189,6 +189,27 @@ describe('Floating AI chat', () => {
     expect(ai.activeId()).toBe(second);
     expect(ai.drafts().find((d) => d.id === first)!.pendingText).toBe('Описание первого');
   });
+  it('preserves multiline input when minimizing and reopening without sending it', async () => {
+    const id = add('Клиент', '');
+    ai.open(id);
+    await render();
+    const send = spyOn(TestBed.inject(ServerDraftsService), 'send').and.resolveTo();
+    const input: HTMLTextAreaElement = fixture.nativeElement.querySelector('textarea');
+    input.value = 'Первая дверь\nВторая дверь\nПредоплата 10000';
+    input.dispatchEvent(new Event('input'));
+    input.dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'Enter', shiftKey: true, bubbles: true, cancelable: true }),
+    );
+    await settle();
+    expect(send).not.toHaveBeenCalled();
+    button('Свернуть чат').click();
+    await settle();
+    button('Помощник по заказам').click();
+    await settle();
+    expect(fixture.nativeElement.querySelector('textarea').value).toBe(input.value);
+    expect(ai.active()!.pendingText).toBe(input.value);
+    expect(button('Отправить').disabled).toBeFalse();
+  });
   it('shows saved order conversations in history with a link to that order', async () => {
     const id = add('Клиент', '');
     TestBed.inject(ServerDraftsService).records.update((all) => ({

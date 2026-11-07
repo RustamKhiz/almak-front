@@ -78,6 +78,12 @@ export class AiOrderChatComponent implements OnDestroy {
       const d = this.draft();
       if (!this.ai.storageError()) this.text.set(d?.pendingText ?? '');
     });
+    effect((onCleanup) => {
+      this.text();
+      this.input();
+      const timer = setTimeout(() => this.fitComposer());
+      onCleanup(() => clearTimeout(timer));
+    });
     effect(() => {
       if (this.ai.openSelection()) this.chatListOpened.set(false);
     });
@@ -134,6 +140,17 @@ export class AiOrderChatComponent implements OnDestroy {
       event.preventDefault();
       if (!this.ai.busy()) this.send();
     }
+  }
+  @HostListener('window:resize')
+  protected fitComposer(): void {
+    const el = this.input()?.nativeElement;
+    if (!el) return;
+    el.style.height = 'auto';
+    el.style.height = `${Math.min(el.scrollHeight, Math.max(68, Math.min(160, window.innerHeight / 4)))}px`;
+  }
+  protected historyScrolled(): void {
+    const el = this.history()?.nativeElement;
+    if (el && el.scrollHeight - el.scrollTop - el.clientHeight < 40) this.newMessages.set(false);
   }
   protected startNew(): void {
     if (!this.ai.setText(this.text())) return;

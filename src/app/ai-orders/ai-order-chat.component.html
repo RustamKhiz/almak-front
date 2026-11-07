@@ -116,7 +116,7 @@
             </div>
           }
         }
-        <div class="history" #history>
+        <div class="history" #history (scroll)="historyScrolled()">
           @if (draft()?.targetOrderId && !draft()?.messages?.length) {
             <div class="welcome">
               <div class="welcome-icon"><mat-icon>edit_note</mat-icon></div>

@@ -66,6 +66,15 @@ export class ServerDraftsService {
   >();
 
   constructor() {
+    const stopCloseListener = window.almakDesktop?.onSaveBeforeClose?.(async () => {
+      try {
+        await this.flushAll();
+        return this.dirty().size === 0 && this.recoveries.size === 0;
+      } catch {
+        return false;
+      }
+    });
+    this.destroyRef.onDestroy(() => stopCloseListener?.());
     effect(() => {
       const id = this.auth.profile()?.id ?? null;
       untracked(() => {

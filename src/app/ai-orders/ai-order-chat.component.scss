@@ -88,6 +88,7 @@ header {
   font-size: 14px;
 }
 .icon-button {
+  flex-shrink: 0;
   display: grid;
   place-items: center;
   width: 30px;
@@ -191,6 +192,7 @@ h2 {
   font-size: 16px;
 }
 .draft-link {
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -230,10 +232,10 @@ h2 {
 .composer textarea {
   display: block;
   width: 100%;
-  min-height: 76px;
-  max-height: 160px;
+  min-height: 68px;
+  max-height: min(160px, 25dvh);
   box-sizing: border-box;
-  resize: vertical;
+  resize: none;
   border: 1px solid #dfe6f1;
   border-radius: 16px;
   background: #fff;
@@ -302,6 +304,7 @@ h2 {
   font-size: 12px;
 }
 .new-messages {
+  flex-shrink: 0;
   align-self: center;
   margin: 0 0 8px;
   padding: 7px 12px;

@@ -1,11 +1,13 @@
-const { app, BrowserWindow, ipcMain, shell } = require('electron');
+const { app, BrowserWindow, ipcMain, shell, dialog } = require('electron');
 const { autoUpdater } = require('electron-updater');
 const path = require('node:path');
 const { createUpdates } = require('./updates.cjs');
+const { protectWindowClose } = require('./window-close.cjs');
 
 const isDev = !app.isPackaged;
 const devServerUrl = process.env.ELECTRON_START_URL || 'http://localhost:4200';
 let mainWindow;
+let closeGuard;
 
 function createWindow() {
   mainWindow = new BrowserWindow({
@@ -24,6 +26,16 @@ function createWindow() {
   });
 
   mainWindow.setMenuBarVisibility(false);
+  const window = mainWindow;
+  closeGuard = protectWindowClose(window, ipcMain, () => {
+    void dialog.showMessageBox(window, {
+      type: 'warning',
+      title: 'Изменения не сохранены',
+      message: 'Приложение осталось открытым, чтобы сохранить ваши изменения.',
+      detail: 'Проверьте соединение и предупреждения в черновиках. После сохранения закройте приложение ещё раз.',
+      buttons: ['Вернуться'],
+    });
+  });
 
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
     if (url === 'about:blank') {
@@ -42,6 +54,7 @@ function createWindow() {
 
   mainWindow.on('closed', () => {
     mainWindow = undefined;
+    closeGuard = undefined;
   });
 
   return mainWindow;
@@ -59,7 +72,7 @@ function setupAutoUpdates() {
   ipcMain.handle('get-update-state', (event) => (fromMainWindow(event) ? updates.getState() : null));
   ipcMain.handle('check-for-updates', (event) => (fromMainWindow(event) ? updates.check() : null));
   ipcMain.on('install-update', (event) => {
-    if (fromMainWindow(event)) updates.install();
+    if (fromMainWindow(event) && updates.getState().status === 'ready') closeGuard.request(() => updates.install());
   });
   updates.check();
 }

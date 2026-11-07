@@ -54,4 +54,45 @@ describe('Server-backed AI conversations', () => {
     service.open();
     expect(service.drafts().length).toBe(0);
   });
+  it('restores pending text when the first open precedes loading server drafts', async () => {
+    let finish!: () => void;
+    (server.initialize as jasmine.Spy).and.returnValue(
+      new Promise<void>((resolve) => {
+        finish = resolve;
+      }),
+    );
+    service.open();
+    const row = server.create('ai', {
+      sourceText: 'Заказ',
+      pendingText: 'Неотправленное сообщение',
+      fieldSources: {},
+      questions: [],
+      changes: [],
+    });
+    expect(service.activeId()).toBeNull();
+    finish();
+    await Promise.resolve();
+    expect(service.activeId()).toBe(row.id);
+    expect(service.active()!.pendingText).toBe('Неотправленное сообщение');
+  });
+  it('does not replace an explicitly selected new chat after delayed loading', async () => {
+    let finish!: () => void;
+    (server.initialize as jasmine.Spy).and.returnValue(
+      new Promise<void>((resolve) => {
+        finish = resolve;
+      }),
+    );
+    service.open();
+    server.create('ai', {
+      sourceText: 'Старый',
+      pendingText: 'Старый текст',
+      fieldSources: {},
+      questions: [],
+      changes: [],
+    });
+    service.newChat();
+    finish();
+    await Promise.resolve();
+    expect(service.activeId()).toBeNull();
+  });
 });
