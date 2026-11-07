@@ -25,11 +25,11 @@
                 <mat-option [value]="null">Не указано</mat-option>
                 @if (form.controls[key].value; as current) {
                   @if (!field.options.includes('' + current)) {
-                    <mat-option [value]="current">{{ valueLabel(current) }}</mat-option>
+                    <mat-option [value]="current">{{ valueLabel(current, key) }}</mat-option>
                   }
                 }
                 @for (option of field.options; track option) {
-                  <mat-option [value]="option">{{ valueLabel(option) }}</mat-option>
+                  <mat-option [value]="option">{{ valueLabel(option, key) }}</mat-option>
                 }
               </mat-select>
             } @else if (field.type === 'number') {

@@ -75,11 +75,48 @@ describe('Floating AI chat', () => {
     expect(panel.textContent).not.toContain('DeepSeek');
     expect(panel.textContent).not.toContain('Черновик появится после ввода');
     expect(panel.textContent).not.toContain('не синхронизируются');
+    expect(panel.textContent).not.toContain('Сохранено на сервере');
     const navigate = spyOn(TestBed.inject(Router), 'navigate').and.resolveTo(true);
     button('Открыть черновик').click();
     await settle();
     expect(navigate).toHaveBeenCalledWith(['/order'], { queryParams: { aiDraft: id } });
     expect(ai.drafts()[0].editorState).toBeUndefined();
+  });
+  it('shows save failures with retry while routine save status stays hidden', async () => {
+    const id = add('Тестовый заказ', '');
+    ai.open(id);
+    await render();
+    expect(fixture.nativeElement.textContent).not.toContain('Сохранено на сервере');
+    TestBed.inject(ServerDraftsService).errors.set({ [id]: 'Не удалось сохранить изменения.' });
+    await settle();
+    expect(fixture.nativeElement.textContent).toContain('Не удалось сохранить изменения.');
+    expect(button('Повторить сохранение')).toBeTruthy();
+  });
+  it('opens the current draft from the latest assistant reply only', async () => {
+    const id = add('Клиент', '');
+    const server = TestBed.inject(ServerDraftsService);
+    server.records.update((rows) => ({
+      ...rows,
+      [id]: {
+        ...rows[id],
+        messages: [
+          ...rows[id].messages,
+          { role: 'assistant', text: 'Черновик создан.', createdAt: new Date().toISOString() },
+          { role: 'user', text: 'Две двери', createdAt: new Date().toISOString() },
+          { role: 'assistant', text: 'Добавлено две двери.', createdAt: new Date().toISOString() },
+        ],
+      },
+    }));
+    ai.open(id);
+    await render();
+    const messages = fixture.nativeElement.querySelectorAll('.message');
+    expect(messages[1].querySelector('button')).toBeNull();
+    const link: HTMLButtonElement = messages[3].querySelector('button');
+    expect(link.textContent).toContain('Открыть черновик');
+    const navigate = spyOn(TestBed.inject(Router), 'navigate').and.resolveTo(true);
+    link.click();
+    await settle();
+    expect(navigate).toHaveBeenCalledWith(['/order'], { queryParams: { aiDraft: id } });
   });
   it('switches conversations without losing either pending text or history', async () => {
     const first = add('Первый', 'Уточнение первого');
@@ -151,6 +188,27 @@ describe('Floating AI chat', () => {
     await settle();
     expect(ai.activeId()).toBe(second);
     expect(ai.drafts().find((d) => d.id === first)!.pendingText).toBe('Описание первого');
+  });
+  it('preserves multiline input when minimizing and reopening without sending it', async () => {
+    const id = add('Клиент', '');
+    ai.open(id);
+    await render();
+    const send = spyOn(TestBed.inject(ServerDraftsService), 'send').and.resolveTo();
+    const input: HTMLTextAreaElement = fixture.nativeElement.querySelector('textarea');
+    input.value = 'Первая дверь\nВторая дверь\nПредоплата 10000';
+    input.dispatchEvent(new Event('input'));
+    input.dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'Enter', shiftKey: true, bubbles: true, cancelable: true }),
+    );
+    await settle();
+    expect(send).not.toHaveBeenCalled();
+    button('Свернуть чат').click();
+    await settle();
+    button('Помощник по заказам').click();
+    await settle();
+    expect(fixture.nativeElement.querySelector('textarea').value).toBe(input.value);
+    expect(ai.active()!.pendingText).toBe(input.value);
+    expect(button('Отправить').disabled).toBeFalse();
   });
   it('shows saved order conversations in history with a link to that order', async () => {
     const id = add('Клиент', '');

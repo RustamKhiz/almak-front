@@ -17,7 +17,8 @@ import { MatIconModule } from '@angular/material/icon';
 import { AiOrdersService } from './ai-orders.service';
 import { DatePipe } from '@angular/common';
 import { ServerDraftStatusComponent } from '../components/server-draft-status/server-draft-status.component';
-import { AI_SCHEMA, AiDraft, AiValue } from './ai-order.types';
+import { AiDraft } from './ai-order.types';
+import { aiDisplayText, aiDisplayValue } from './ai-presentation';
 import { AuthService } from '../services/auth.service';
 import { ServerDraftsService } from '../services/server-drafts.service';
 
@@ -40,6 +41,13 @@ export class AiOrderChatComponent implements OnDestroy {
   private readonly input = viewChild<ElementRef<HTMLTextAreaElement>>('composer');
   private readonly history = viewChild<ElementRef<HTMLElement>>('history');
   protected readonly draft = computed(() => this.ai.drafts().find((d) => d.id === this.ai.activeId()));
+  protected readonly lastAssistantIndex = computed(() => {
+    const messages = this.draft()?.messages ?? [];
+    for (let i = messages.length - 1; i >= 0; i--) {
+      if (messages[i].role === 'assistant') return i;
+    }
+    return -1;
+  });
   protected readonly width = signal(420);
   protected readonly height = signal(600);
   protected readonly text = signal('');
@@ -69,6 +77,12 @@ export class AiOrderChatComponent implements OnDestroy {
     effect(() => {
       const d = this.draft();
       if (!this.ai.storageError()) this.text.set(d?.pendingText ?? '');
+    });
+    effect((onCleanup) => {
+      this.text();
+      this.input();
+      const timer = setTimeout(() => this.fitComposer());
+      onCleanup(() => clearTimeout(timer));
     });
     effect(() => {
       if (this.ai.openSelection()) this.chatListOpened.set(false);
@@ -127,6 +141,17 @@ export class AiOrderChatComponent implements OnDestroy {
       if (!this.ai.busy()) this.send();
     }
   }
+  @HostListener('window:resize')
+  protected fitComposer(): void {
+    const el = this.input()?.nativeElement;
+    if (!el) return;
+    el.style.height = 'auto';
+    el.style.height = `${Math.min(el.scrollHeight, Math.max(68, Math.min(160, window.innerHeight / 4)))}px`;
+  }
+  protected historyScrolled(): void {
+    const el = this.history()?.nativeElement;
+    if (el && el.scrollHeight - el.scrollTop - el.clientHeight < 40) this.newMessages.set(false);
+  }
   protected startNew(): void {
     if (!this.ai.setText(this.text())) return;
     this.ai.newChat();
@@ -180,11 +205,8 @@ export class AiOrderChatComponent implements OnDestroy {
     else this.router.navigate(['/order'], { queryParams: { aiDraft: d.id } });
   }
 
-  protected changeValue(value: AiValue): string {
-    if (value === null || value === undefined || value === '') return '—';
-    if (typeof value === 'boolean') return value ? 'Да' : 'Нет';
-    return typeof value === 'string' ? (AI_SCHEMA.items[value]?.label ?? value) : String(value);
-  }
+  protected readonly changeValue = aiDisplayValue;
+  protected readonly displayText = aiDisplayText;
 
   protected async applyEdit(draft: AiDraft): Promise<void> {
     if (this.applying() || this.ai.busy() || !draft.changes.length) return;

@@ -3,6 +3,7 @@ import { OrderCreatePayload, OrderItemType, OrderStatus } from '../types/order.t
 
 export type AiValue = string | number | boolean | null;
 export interface AiField {
+  valueLabels?: Record<string, string>;
   label: string;
   type: string;
   required: boolean;

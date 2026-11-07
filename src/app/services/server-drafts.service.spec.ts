@@ -13,6 +13,8 @@ describe('Server draft persistence', () => {
   let http: HttpTestingController;
   const user: UserProfile = { id: 1, login: 'one', name: '', role: 'manager', permissions: [] };
   let profile: ReturnType<typeof signal<UserProfile | null>>;
+  let saveBeforeClose: (() => Promise<boolean>) | undefined;
+  const originalDesktop = window.almakDesktop;
   const key = 'ai_order_drafts_v1';
   const doc = (name = 'Client'): DraftDocument => ({
     ...emptyDraftDocument(),
@@ -32,6 +34,18 @@ describe('Server draft persistence', () => {
   });
   const url = (request: HttpRequest<unknown>) => request.url.includes('/order-drafts');
   beforeEach(async () => {
+    window.almakDesktop = {
+      platform: 'win32',
+      version: 'test',
+      getUpdateState: async () => ({ status: 'idle', revision: 0 }),
+      checkForUpdates: async () => ({ status: 'idle', revision: 0 }),
+      onUpdateState: () => () => undefined,
+      installUpdate: () => undefined,
+      onSaveBeforeClose: (callback) => {
+        saveBeforeClose = callback;
+        return () => undefined;
+      },
+    };
     localStorage.removeItem(key);
     localStorage.removeItem('order_drafts');
     localStorage.removeItem('draft_import_source_v1');
@@ -50,6 +64,7 @@ describe('Server draft persistence', () => {
     await server.initialize();
   });
   afterEach(() => {
+    window.almakDesktop = originalDesktop;
     http.verify();
     localStorage.removeItem(key);
     localStorage.removeItem('order_drafts');
@@ -105,6 +120,42 @@ describe('Server draft persistence', () => {
     await promise;
     expect(server.records()[id].document.order!.header['phone']).toBe('79000000000');
     expect(server.dirty().size).toBe(0);
+  });
+  it('flushes an unsent multiline message before desktop close and restores it from the server', async () => {
+    const id = await create();
+    const text = 'Две двери 80 × 200\nПредоплата 10000';
+    server.update(id, (d) => {
+      d.pendingText = text;
+    });
+    let finished = false;
+    const closing = saveBeforeClose!().then((result) => {
+      finished = true;
+      return result;
+    });
+    const request = http.expectOne((r) => url(r) && r.method === 'PUT');
+    expect(finished).toBeFalse();
+    expect(request.request.body.document.pendingText).toBe(text);
+    const remote = saved(id, request.request.body.document, 2);
+    request.flush(remote);
+    expect(await closing).toBeTrue();
+    profile.set(null);
+    TestBed.flushEffects();
+    profile.set(user);
+    TestBed.flushEffects();
+    http.expectOne((r) => url(r) && r.method === 'GET').flush({ items: [remote], total: 1 });
+    await server.initialize();
+    expect(server.records()[id].document.pendingText).toBe(text);
+  });
+  it('refuses desktop close if the latest text cannot be saved', async () => {
+    const id = await create();
+    server.update(id, (d) => {
+      d.pendingText = 'Новое уточнение';
+    });
+    const closing = saveBeforeClose!();
+    http.expectOne((r) => url(r) && r.method === 'PUT').flush({}, { status: 503, statusText: 'Offline' });
+    expect(await closing).toBeFalse();
+    expect(server.records()[id].document.pendingText).toBe('Новое уточнение');
+    expect(server.dirty().has(id)).toBeTrue();
   });
   it('retries the same operation after an uncertain response before saving newer edits', async () => {
     const id = await create();

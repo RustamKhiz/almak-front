@@ -16,6 +16,7 @@ import { AI_SCHEMA, AiValue } from '../../ai-orders/ai-order.types';
 import { ServerDraftsService } from '../../services/server-drafts.service';
 import { emptyDraftDocument } from '../../services/server-drafts.types';
 import { OrderStatus } from '../../types/order.types';
+import { OrderDocumentService } from '../../services/order-document.service';
 
 describe('Opening incomplete AI drafts in the order editor', () => {
   let fixture: ComponentFixture<OrderCreateComponent>;
@@ -200,6 +201,11 @@ describe('Opening incomplete AI drafts in the order editor', () => {
     expect(payload.interiorDoors.length).toBe(2);
     expect(payload.interiorDoors[0].price).toBe(12000);
     expect(ai.active()!.orderId).toBe(777);
+    const html = TestBed.inject(OrderDocumentService).buildOrderHtml(777, payload);
+    const printed = new DOMParser().parseFromString(html, 'text/html').body.textContent!;
+    expect(printed).toContain('Рустам');
+    expect(printed).toContain('Верона');
+    expect(printed).not.toMatch(/NaN|undefined|\[object Object\]/);
   });
   it('edits a product through the list and preserves its identity and unknown fields after reopening', async () => {
     await open();

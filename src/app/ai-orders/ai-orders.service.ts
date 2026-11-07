@@ -41,6 +41,7 @@ export class AiOrdersService {
   );
   private requestToken: string | null = null;
   private selectionInitialized = false;
+  private selectionVersion = 0;
 
   active(): AiDraft | null {
     return this.drafts().find((d) => d.id === this.activeId()) ?? null;
@@ -86,7 +87,16 @@ export class AiOrdersService {
     });
   }
   open(id?: string): void {
-    void this.server.initialize().catch(() => undefined);
+    const selectionVersion = ++this.selectionVersion;
+    const chooseLatest = !id && !this.activeId() && !this.selectionInitialized;
+    void this.server
+      .initialize()
+      .then(() => {
+        if (chooseLatest && selectionVersion === this.selectionVersion && !this.activeId()) {
+          this.activeId.set([...this.drafts()].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))[0]?.id ?? null);
+        }
+      })
+      .catch(() => undefined);
     if (id) {
       if (this.activeId() !== id) this.cancel();
       this.activeId.set(id);
@@ -99,6 +109,7 @@ export class AiOrdersService {
     this.error.set(null);
   }
   newChat(): void {
+    this.selectionVersion++;
     this.cancel();
     this.selectionInitialized = true;
     this.activeId.set(null);
@@ -106,6 +117,7 @@ export class AiOrdersService {
     this.opened.set(true);
   }
   hideForLogout(): void {
+    this.selectionVersion++;
     this.selectionInitialized = false;
     this.cancel();
     this.opened.set(false);
