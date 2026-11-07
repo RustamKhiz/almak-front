@@ -48,6 +48,7 @@ export interface AiIssue {
   message: string;
 }
 export interface AiDraft {
+  targetOrderId?: number;
   schemaVersion: 1;
   orderId?: number;
   id: string;

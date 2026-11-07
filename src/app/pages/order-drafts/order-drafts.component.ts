@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { Router } from '@angular/router';
 import { aiKnownAmount } from '../../ai-orders/ai-order.types';
+import { AiOrdersService } from '../../ai-orders/ai-orders.service';
 import { getOrderTotal } from '../../common/utils/order-calculations';
 import { AuthService } from '../../services/auth.service';
 import { ServerDraftsService } from '../../services/server-drafts.service';
@@ -20,6 +21,7 @@ export class OrderDraftsComponent {
   protected readonly server = inject(ServerDraftsService);
   protected readonly auth = inject(AuthService);
   private readonly router = inject(Router);
+  private readonly ai = inject(AiOrdersService);
   protected readonly scope = signal('all');
   protected readonly search = signal('');
   protected readonly archived = signal(false);
@@ -83,7 +85,8 @@ export class OrderDraftsComponent {
       this.actionError.set('Не удалось сохранить черновик. Сначала разрешите ошибку сохранения.');
       return;
     }
-    if (row.kind === 'ai') void this.router.navigate(['/order'], { queryParams: { aiDraft: row.id } });
+    if (row.targetOrderId) this.ai.open(row.id);
+    else if (row.kind === 'ai') void this.router.navigate(['/order'], { queryParams: { aiDraft: row.id } });
     else void this.router.navigate(['/drafts', row.id]);
   }
   protected refresh(): void {

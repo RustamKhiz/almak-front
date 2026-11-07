@@ -20,6 +20,8 @@ export class ServerDraftsService {
   private readonly destroyRef = inject(DestroyRef);
   private readonly zone = inject(NgZone);
   private readonly url = `${inject(CoreService).apiBaseUrl}/order-drafts`;
+  private readonly ordersUrl = `${inject(CoreService).apiBaseUrl}/orders`;
+  readonly orderEditApplied = new Subject<number>();
   readonly records = signal<Record<string, ServerDraft>>({});
   readonly rows = computed(() => Object.values(this.records()));
   readonly listedIds = signal<string[]>([]);
@@ -287,6 +289,49 @@ export class ServerDraftsService {
       if (epoch === this.epoch) this.archiveLoading.set(false);
     }
   }
+  async startOrderEdit(orderId: number): Promise<string> {
+    await this.initialize();
+    const epoch = this.epoch;
+    const row = await this.request(
+      this.http.post<ServerDraft>(`${this.ordersUrl}/${orderId}/ai-edit`, { id: crypto.randomUUID() }),
+    );
+    if (epoch !== this.epoch) throw new Error('Account changed');
+    this.adopt(row);
+    return row.id;
+  }
+
+  async applyOrderEdit(id: string, reviewedChanges: DraftDocument['changes']): Promise<void> {
+    const epoch = this.epoch;
+    await this.flush(id);
+    const row = this.records()[id];
+    if (
+      epoch !== this.epoch ||
+      !row?.targetOrderId ||
+      JSON.stringify(row.document.changes) !== JSON.stringify(reviewedChanges)
+    ) {
+      throw new Error('Preview changed');
+    }
+    const result = await this.request(
+      this.http.post<ServerDraft>(`${this.url}/${id}/apply`, {
+        baseRevision: this.reference(id).draftRevision,
+      }),
+    );
+    if (epoch !== this.epoch) return;
+    this.adopt(result, true);
+    this.orderEditApplied.next(row.targetOrderId);
+  }
+
+  async repeatOrder(
+    orderId: number,
+    request: { requestId: string; copyComment: boolean; copyDiscount: boolean },
+  ): Promise<string> {
+    const epoch = this.epoch;
+    const row = await this.request(this.http.post<ServerDraft>(`${this.ordersUrl}/${orderId}/repeat`, request));
+    if (epoch !== this.epoch) throw new Error('Account changed');
+    this.adopt(row);
+    return row.id;
+  }
+
   async loadOne(id: string, convertedOrderId?: number): Promise<void> {
     await this.initialize();
     const epoch = this.epoch;

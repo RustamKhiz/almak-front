@@ -36,12 +36,24 @@ export class OrdersService {
   }
 
   updateOrder(id: number, payload: OrderCreatePayload): Observable<number> {
-    return this.api.updateOrder(id, this.mapper.toBackendPayload(payload)).pipe(map((order) => order.id));
+    return this.saveOrderUpdate(id, payload).pipe(map((order) => order.id));
+  }
+
+  updateOrderDetails(id: number, payload: OrderCreatePayload): Observable<OrderCreatePayload> {
+    return this.saveOrderUpdate(id, payload).pipe(map((order) => this.mapper.toCreatePayload(order)));
+  }
+
+  private saveOrderUpdate(id: number, payload: OrderCreatePayload) {
+    return this.api.updateOrder(id, { ...this.mapper.toBackendPayload(payload), baseRevision: payload.revision });
   }
 
   updateOrderStatus(id: number, status: OrderStatus): Observable<OrderStatus> {
     const request: BackendOrderStatusPayload = { status };
     return this.api.updateOrderStatus(id, request).pipe(map((order) => this.mapper.toOrderStatus(order.status)));
+  }
+
+  updateOrderStatusDetails(id: number, status: OrderStatus): Observable<OrderCreatePayload> {
+    return this.api.updateOrderStatus(id, { status }).pipe(map((order) => this.mapper.toCreatePayload(order)));
   }
 
   addOrderPayment(id: number, amount: number, comment: string): Observable<OrderCreatePayload> {
@@ -60,5 +72,9 @@ export class OrdersService {
 
   deleteOrder(id: number): Observable<void> {
     return this.api.deleteOrder(id);
+  }
+
+  deleteOrders(ids: readonly number[]): Observable<void> {
+    return this.api.deleteOrders(ids);
   }
 }

@@ -11,12 +11,13 @@ import {
   viewChild,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { HttpErrorResponse } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { AiOrdersService } from './ai-orders.service';
 import { DatePipe } from '@angular/common';
 import { ServerDraftStatusComponent } from '../components/server-draft-status/server-draft-status.component';
-import { AiDraft } from './ai-order.types';
+import { AI_SCHEMA, AiDraft, AiValue } from './ai-order.types';
 import { AuthService } from '../services/auth.service';
 import { ServerDraftsService } from '../services/server-drafts.service';
 
@@ -44,6 +45,7 @@ export class AiOrderChatComponent implements OnDestroy {
   protected readonly text = signal('');
   protected readonly newMessages = signal(false);
   protected readonly chatListOpened = signal(false);
+  protected readonly applying = signal(false);
   protected readonly chats = computed(() =>
     [...this.ai.drafts()].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)),
   );
@@ -67,6 +69,9 @@ export class AiOrderChatComponent implements OnDestroy {
     effect(() => {
       const d = this.draft();
       if (!this.ai.storageError()) this.text.set(d?.pendingText ?? '');
+    });
+    effect(() => {
+      if (this.ai.openSelection()) this.chatListOpened.set(false);
     });
     effect(() => {
       const opened = this.ai.opened();
@@ -171,8 +176,33 @@ export class AiOrderChatComponent implements OnDestroy {
     }
     this.ai.cancel();
     this.ai.opened.set(false);
-    if (d.orderId) this.router.navigate(['/order', d.orderId]);
+    if (d.orderId || d.targetOrderId) this.router.navigate(['/order', d.orderId ?? d.targetOrderId]);
     else this.router.navigate(['/order'], { queryParams: { aiDraft: d.id } });
+  }
+
+  protected changeValue(value: AiValue): string {
+    if (value === null || value === undefined || value === '') return '—';
+    if (typeof value === 'boolean') return value ? 'Да' : 'Нет';
+    return typeof value === 'string' ? (AI_SCHEMA.items[value]?.label ?? value) : String(value);
+  }
+
+  protected async applyEdit(draft: AiDraft): Promise<void> {
+    if (this.applying() || this.ai.busy() || !draft.changes.length) return;
+    this.applying.set(true);
+    this.ai.error.set(null);
+    try {
+      await this.server.applyOrderEdit(draft.id, draft.changes);
+    } catch (error) {
+      if (this.ai.activeId() === draft.id) {
+        this.ai.error.set(
+          error instanceof HttpErrorResponse && error.error?.message
+            ? error.error.message
+            : 'Не удалось применить изменения. Проверьте актуальный список правок.',
+        );
+      }
+    } finally {
+      this.applying.set(false);
+    }
   }
   protected startResize(event: PointerEvent, axis: string): void {
     if (window.innerWidth < 600) return;

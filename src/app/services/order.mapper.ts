@@ -72,6 +72,7 @@ export class OrderMapper {
 
   toCreatePayload(order: BackendOrder): OrderCreatePayload {
     return {
+      revision: order.revision,
       name: order.customer,
       phone: order.phone,
       date: order.date,

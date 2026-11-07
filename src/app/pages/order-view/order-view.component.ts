@@ -7,7 +7,7 @@ import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
-import { filter, map, switchMap } from 'rxjs';
+import { filter, switchMap } from 'rxjs';
 import { getOrderPaymentLabel, getOrderStatusLabel, ORDER_STATUS_OPTIONS } from '../../common/constants/order-status';
 import { ConfirmDialogComponent, ConfirmDialogData } from '../../common/confirm-dialog/confirm-dialog.component';
 import { OrderItemDetailsDialogComponent } from '../../common/dialogs/order-item-details-dialog/order-item-details-dialog.component';
@@ -28,6 +28,10 @@ import { FileDownloadService } from '../../services/file-download.service';
 import { OrderDocumentService } from '../../services/order-document.service';
 import { OrderPrintService } from '../../services/order-print.service';
 import { OrdersService } from '../../services/orders.service';
+import { ServerDraftsService } from '../../services/server-drafts.service';
+import { AiOrdersService } from '../../ai-orders/ai-orders.service';
+import { HttpErrorResponse } from '@angular/common/http';
+import { RepeatOrderDialogComponent, RepeatOrderOptions } from './repeat-order-dialog.component';
 import { OrderCreatePayload, OrderPayment, OrderStatus } from '../../types/order.types';
 import {
   OrderViewProductCard,
@@ -68,6 +72,13 @@ export class OrderViewComponent {
   private readonly ordersService = inject(OrdersService);
   private readonly productCardsService = inject(OrderViewProductCardsService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly drafts = inject(ServerDraftsService);
+  private readonly ai = inject(AiOrdersService);
+  protected readonly startingAiEdit = signal(false);
+  protected readonly aiEditError = signal('');
+  protected readonly repeating = signal(false);
+  protected readonly repeatError = signal('');
+  private repeatRequest?: RepeatOrderOptions & { requestId: string; orderId: number };
 
   protected readonly isLoading = signal(true);
   protected readonly errorMessage = signal<string | null>(null);
@@ -87,12 +98,67 @@ export class OrderViewComponent {
 
   constructor() {
     this.fetchOrder(Number(this.route.snapshot.paramMap.get('id') ?? 0));
+    this.drafts.orderEditApplied.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((id) => {
+      if (this.state()?.id === id) this.fetchOrder(id);
+    });
+  }
+
+  protected async onAiEditClick(): Promise<void> {
+    const id = this.state()?.id;
+    if (!id || this.startingAiEdit()) return;
+    this.startingAiEdit.set(true);
+    this.aiEditError.set('');
+    try {
+      const draftId = await this.drafts.startOrderEdit(id);
+      if (!this.destroyRef.destroyed) this.ai.open(draftId);
+    } catch (error) {
+      this.aiEditError.set(
+        error instanceof HttpErrorResponse && error.error?.message
+          ? error.error.message
+          : 'Не удалось открыть рабочую копию заказа.',
+      );
+    } finally {
+      this.startingAiEdit.set(false);
+    }
   }
 
   protected togglePrivateInfo(): void {
     const next = !this.showPrivateInfo();
     this.showPrivateInfo.set(next);
     localStorage.setItem('order_view_show_private', String(next));
+  }
+
+  protected onRepeatClick(): void {
+    const orderId = this.state()?.id;
+    if (!orderId || this.repeating()) return;
+    this.repeating.set(true);
+    this.repeatError.set('');
+    this.dialog
+      .open<RepeatOrderDialogComponent, unknown, RepeatOrderOptions>(RepeatOrderDialogComponent)
+      .afterClosed()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(async (options) => {
+        try {
+          if (!options) return;
+          const previous = this.repeatRequest;
+          const request =
+            previous?.orderId === orderId &&
+            previous.copyComment === options.copyComment &&
+            previous.copyDiscount === options.copyDiscount
+              ? previous
+              : { ...options, orderId, requestId: crypto.randomUUID() };
+          this.repeatRequest = request;
+          const { copyComment, copyDiscount, requestId } = request;
+          const id = await this.drafts.repeatOrder(orderId, { copyComment, copyDiscount, requestId });
+          if (this.destroyRef.destroyed) return;
+          if (!(await this.router.navigate(['/drafts', id]))) throw new Error('Draft navigation failed');
+          this.repeatRequest = undefined;
+        } catch {
+          this.repeatError.set('Не удалось открыть черновик. Повторите попытку с теми же параметрами.');
+        } finally {
+          this.repeating.set(false);
+        }
+      });
   }
 
   protected onDeleteClick(): void {
@@ -171,16 +237,16 @@ export class OrderViewComponent {
     }
 
     this.ordersService
-      .updateOrderStatus(current.id, status)
+      .updateOrderStatusDetails(current.id, status)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-        next: (nextStatus) => {
+        next: (data) => {
           const state = this.state();
-          if (!state) {
+          if (state?.id !== current.id || (state.data.revision ?? 0) > (data.revision ?? 0)) {
             return;
           }
           this.errorMessage.set(null);
-          this.state.set({ ...state, data: { ...state.data, status: nextStatus } });
+          this.state.set({ ...state, data });
         },
         error: () => {
           this.errorMessage.set('Не удалось обновить статус заказа.');
@@ -213,7 +279,7 @@ export class OrderViewComponent {
         filter((result): result is SupplierDialogResult => !!result),
         switchMap((result) => {
           const nextData = this.updateSupplierInOrder(current.data, card.entity, card.itemId, result.supplier);
-          return this.ordersService.updateOrder(current.id, nextData).pipe(map(() => nextData));
+          return this.ordersService.updateOrderDetails(current.id, nextData);
         }),
         takeUntilDestroyed(this.destroyRef),
       )
@@ -222,8 +288,8 @@ export class OrderViewComponent {
           this.errorMessage.set(null);
           this.state.set({ id: current.id, data });
         },
-        error: () => {
-          this.errorMessage.set('Не удалось изменить поставщика.');
+        error: (error) => {
+          this.errorMessage.set(error.error?.message ?? 'Не удалось изменить поставщика.');
         },
       });
   }
@@ -250,7 +316,7 @@ export class OrderViewComponent {
         filter((result): result is OrderPaymentDialogResult => !!result),
         switchMap((result) => {
           const nextData = this.updateCostPriceInOrder(current.data, card.entity, card.itemId, result.amount);
-          return this.ordersService.updateOrder(current.id, nextData).pipe(map(() => nextData));
+          return this.ordersService.updateOrderDetails(current.id, nextData);
         }),
         takeUntilDestroyed(this.destroyRef),
       )
@@ -259,8 +325,8 @@ export class OrderViewComponent {
           this.errorMessage.set(null);
           this.state.set({ id: current.id, data });
         },
-        error: () => {
-          this.errorMessage.set('Не удалось изменить закупочную цену.');
+        error: (error) => {
+          this.errorMessage.set(error.error?.message ?? 'Не удалось изменить закупочную цену.');
         },
       });
   }

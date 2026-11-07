@@ -19,7 +19,7 @@ import { ServerDraftsService } from '../../services/server-drafts.service';
           <button mat-button type="button" (click)="download(id)">Скачать мой вариант</button>
           @if (current.orderId) {
             <a [routerLink]="['/order', current.orderId]">Заказ №{{ current.orderId }} уже создан</a>
-          } @else {
+          } @else if (!current.targetOrderId) {
             <button mat-button type="button" [disabled]="busy()" (click)="copy(id)">
               Сохранить мой вариант отдельной копией
             </button>
