@@ -17,7 +17,8 @@ import { MatIconModule } from '@angular/material/icon';
 import { AiOrdersService } from './ai-orders.service';
 import { DatePipe } from '@angular/common';
 import { ServerDraftStatusComponent } from '../components/server-draft-status/server-draft-status.component';
-import { AI_SCHEMA, AiDraft, AiValue } from './ai-order.types';
+import { AiDraft } from './ai-order.types';
+import { aiDisplayText, aiDisplayValue } from './ai-presentation';
 import { AuthService } from '../services/auth.service';
 import { ServerDraftsService } from '../services/server-drafts.service';
 
@@ -180,11 +181,8 @@ export class AiOrderChatComponent implements OnDestroy {
     else this.router.navigate(['/order'], { queryParams: { aiDraft: d.id } });
   }
 
-  protected changeValue(value: AiValue): string {
-    if (value === null || value === undefined || value === '') return '—';
-    if (typeof value === 'boolean') return value ? 'Да' : 'Нет';
-    return typeof value === 'string' ? (AI_SCHEMA.items[value]?.label ?? value) : String(value);
-  }
+  protected readonly changeValue = aiDisplayValue;
+  protected readonly displayText = aiDisplayText;
 
   protected async applyEdit(draft: AiDraft): Promise<void> {
     if (this.applying() || this.ai.busy() || !draft.changes.length) return;

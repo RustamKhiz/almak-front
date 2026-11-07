@@ -134,7 +134,7 @@
           @for (message of draft()?.messages || []; track $index) {
             <article class="message" [class.user]="message.role === 'user'">
               <span>{{ message.role === 'user' ? 'Вы' : 'Помощник' }}</span>
-              <p>{{ message.text }}</p>
+              <p>{{ message.role === 'assistant' ? displayText(message.text) : message.text }}</p>
             </article>
           }
           @if (ai.busy()) {
@@ -147,7 +147,9 @@
                 <dl>
                   @for (change of d.changes; track change.path) {
                     <dt>{{ change.label }}</dt>
-                    <dd>{{ changeValue(change.before) }} → {{ changeValue(change.after) }}</dd>
+                    <dd>
+                      {{ changeValue(change.before, change.path) }} → {{ changeValue(change.after, change.path) }}
+                    </dd>
                   }
                 </dl>
                 @if (!d.orderId) {

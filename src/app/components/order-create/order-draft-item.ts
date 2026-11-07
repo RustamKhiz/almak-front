@@ -1,3 +1,4 @@
+import { aiDisplayValue } from '../../ai-orders/ai-presentation';
 import { AI_SCHEMA, AiItem, AiValue, aiKnownAmount } from '../../ai-orders/ai-order.types';
 
 export const DRAFT_ITEM_GROUPS: Record<string, string> = {
@@ -11,21 +12,8 @@ export const DRAFT_ITEM_GROUPS: Record<string, string> = {
   skirting: 'Плинтус',
 };
 
-const VALUE_LABELS: Record<string, string> = {
-  Single: 'Одностворчатая',
-  Double: 'Двустворчатая',
-  left: 'Левое',
-  right: 'Правое',
-  factory: 'Фабричная',
-  welded: 'Сварочная',
-  oval: 'Овальный',
-  smooth: 'Гладкий',
-  figure: 'Фигурный',
-  baguette: 'Багет',
-};
-
-export function draftValueLabel(value: AiValue): string {
-  return typeof value === 'boolean' ? (value ? 'Да' : 'Нет') : (VALUE_LABELS[String(value)] ?? String(value));
+export function draftValueLabel(value: AiValue, path: string): string {
+  return aiDisplayValue(value, path);
 }
 
 export function draftItemTitle(item: AiItem): string {
@@ -40,7 +28,7 @@ export function draftItemDetails(item: AiItem): string {
     .filter(([key]) => !['model', 'name', 'handleModel', 'costPrice'].includes(key))
     .filter(([key]) => item.fields[key] != null && item.fields[key] !== '')
     .filter(([key]) => !dimensions || (key !== 'width' && key !== 'height'))
-    .map(([key, field]) => `${field.label}: ${draftValueLabel(item.fields[key])}`)
+    .map(([key, field]) => `${field.label}: ${draftValueLabel(item.fields[key], key)}`)
     .join(' · ');
   return [dimensions ? `${item.fields['width']} × ${item.fields['height']} см` : '', details]
     .filter(Boolean)
