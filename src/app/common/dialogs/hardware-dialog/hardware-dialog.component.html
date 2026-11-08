@@ -55,15 +55,15 @@
       </div>
 
       <div class="dialog-section">
-        <div class="dialog-section__title">Щелчок</div>
+        <div class="dialog-section__title">Барабан</div>
         <div class="dialog-row">
           <mat-form-field appearance="outline">
             <mat-label>Кол-во</mat-label>
-            <input matInput type="number" appNumberInputNoWheel formControlName="clickCount" min="0" step="1" />
+            <input matInput type="number" appNumberInputNoWheel formControlName="cylinderCount" min="0" step="1" />
           </mat-form-field>
           <mat-form-field appearance="outline">
             <mat-label>Цена</mat-label>
-            <input matInput type="number" appNumberInputNoWheel formControlName="clickPrice" placeholder="0" />
+            <input matInput type="number" appNumberInputNoWheel formControlName="cylinderPrice" placeholder="0" />
           </mat-form-field>
         </div>
       </div>
@@ -97,15 +97,15 @@
       </div>
 
       <div class="dialog-section">
-        <div class="dialog-section__title">Барабан</div>
+        <div class="dialog-section__title">Щелчок</div>
         <div class="dialog-row">
           <mat-form-field appearance="outline">
             <mat-label>Кол-во</mat-label>
-            <input matInput type="number" appNumberInputNoWheel formControlName="cylinderCount" min="0" step="1" />
+            <input matInput type="number" appNumberInputNoWheel formControlName="clickCount" min="0" step="1" />
           </mat-form-field>
           <mat-form-field appearance="outline">
             <mat-label>Цена</mat-label>
-            <input matInput type="number" appNumberInputNoWheel formControlName="cylinderPrice" placeholder="0" />
+            <input matInput type="number" appNumberInputNoWheel formControlName="clickPrice" placeholder="0" />
           </mat-form-field>
         </div>
       </div>
@@ -125,8 +125,22 @@
       </div>
 
       <div class="dialog-section">
-        <div class="dialog-section__title">Петли</div>
+        <div class="dialog-section__title">Ограничитель</div>
         <div class="dialog-row">
+          <mat-form-field appearance="outline">
+            <mat-label>Кол-во</mat-label>
+            <input matInput type="number" appNumberInputNoWheel formControlName="doorStopCount" min="0" step="1" />
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Цена</mat-label>
+            <input matInput type="number" appNumberInputNoWheel formControlName="doorStopPrice" placeholder="0" />
+          </mat-form-field>
+        </div>
+      </div>
+
+      <div class="dialog-section hinges-section">
+        <div class="dialog-section__title">Петли</div>
+        <div class="dialog-row hinge-row">
           <mat-form-field appearance="outline">
             <mat-label>Правые, кол-во</mat-label>
             <input matInput type="number" appNumberInputNoWheel formControlName="hingeRightCount" min="0" step="1" />
@@ -138,20 +152,6 @@
           <mat-form-field appearance="outline">
             <mat-label>Цена</mat-label>
             <input matInput type="number" appNumberInputNoWheel formControlName="hingePrice" placeholder="0" />
-          </mat-form-field>
-        </div>
-      </div>
-
-      <div class="dialog-section">
-        <div class="dialog-section__title">Ограничитель</div>
-        <div class="dialog-row">
-          <mat-form-field appearance="outline">
-            <mat-label>Кол-во</mat-label>
-            <input matInput type="number" appNumberInputNoWheel formControlName="doorStopCount" min="0" step="1" />
-          </mat-form-field>
-          <mat-form-field appearance="outline">
-            <mat-label>Цена</mat-label>
-            <input matInput type="number" appNumberInputNoWheel formControlName="doorStopPrice" placeholder="0" />
           </mat-form-field>
         </div>
       </div>

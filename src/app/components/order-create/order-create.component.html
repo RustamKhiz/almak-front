@@ -96,7 +96,10 @@
 
       <mat-form-field appearance="outline">
         <mat-label>Дата</mat-label>
-        <input matInput type="date" formControlName="date" />
+        <input #orderDate matInput type="date" formControlName="date" (blur)="ensureDate()" />
+        <button mat-icon-button matSuffix type="button" aria-label="Открыть календарь" (click)="orderDate.showPicker()">
+          <mat-icon>calendar_month</mat-icon>
+        </button>
         @if (form.controls.date.touched && form.controls.date.invalid) {
           <mat-error>Обязательное поле</mat-error>
         }

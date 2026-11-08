@@ -19,6 +19,7 @@ import { SUPPLIER_OPTIONS } from '../../constants/reference-catalogs';
 import { NumberInputNoWheelDirective } from '../../directives/number-input-no-wheel.directive';
 import { CatalogsService } from '../../../services/catalogs.service';
 import { bindLeadingCapitalization } from '../../utils/form-text';
+import { bindLockAccessories } from '../../utils/hardware-defaults';
 import { DraggableDialogTitleComponent } from '../draggable-dialog-title/draggable-dialog-title.component';
 
 export interface HardwareDialogData {
@@ -95,6 +96,8 @@ export class HardwareDialogComponent {
     bindLeadingCapitalization(this.form.controls.handleModel, this.destroyRef);
     bindLeadingCapitalization(this.form.controls.handleColor, this.destroyRef);
 
+    bindLockAccessories(this.form.controls, this.destroyRef, !!this.data.hardware);
+
     this.form.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
       if (this.form.hasError('emptyHardware')) {
         this.form.updateValueAndValidity({ emitEvent: false });
@@ -129,9 +132,9 @@ export class HardwareDialogComponent {
       clickPrice: value.clickPrice,
       thumbturnCount: normalizeOptionalInteger(value.thumbturnCount),
       thumbturnPrice: value.thumbturnPrice,
-      escutcheonCount: normalizeOptionalInteger(value.escutcheonCount),
+      escutcheonCount: value.escutcheonCount === 0 ? 0 : normalizeOptionalInteger(value.escutcheonCount),
       escutcheonPrice: value.escutcheonPrice,
-      cylinderCount: normalizeOptionalInteger(value.cylinderCount),
+      cylinderCount: value.cylinderCount === 0 ? 0 : normalizeOptionalInteger(value.cylinderCount),
       cylinderPrice: value.cylinderPrice,
       boltCount: normalizeOptionalInteger(value.boltCount),
       boltPrice: value.boltPrice,

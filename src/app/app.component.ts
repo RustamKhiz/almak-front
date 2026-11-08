@@ -9,6 +9,7 @@ import { AuthService } from './services/auth.service';
 import { AiOrderChatComponent } from './ai-orders/ai-order-chat.component';
 import { ServerDraftStatusComponent } from './components/server-draft-status/server-draft-status.component';
 import { AiOrdersService } from './ai-orders/ai-orders.service';
+import { TextInputCapitalizationService } from './common/utils/text-input-capitalization.service';
 
 @Component({
   selector: 'app-root',
@@ -25,6 +26,7 @@ import { AiOrdersService } from './ai-orders/ai-orders.service';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AppComponent implements OnInit {
+  private readonly capitalization = inject(TextInputCapitalizationService);
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
   private readonly authService = inject(AuthService);

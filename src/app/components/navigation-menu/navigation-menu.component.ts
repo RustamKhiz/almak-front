@@ -30,7 +30,7 @@ declare global {
       checkForUpdates: () => Promise<DesktopUpdateState>;
       onUpdateState: (callback: (state: DesktopUpdateState) => void) => () => void;
       installUpdate: () => void;
-      onSaveBeforeClose?: (callback: () => Promise<boolean>) => () => void;
+      onSaveBeforeClose?: (callback: (complete: (saved: boolean) => void) => void) => () => void;
     };
   }
 }

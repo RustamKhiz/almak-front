@@ -143,7 +143,7 @@ export function aiToPayload(order: AiOrder): OrderCreatePayload {
   if (aiIssues(order).length) throw new Error('Сначала заполните обязательные данные');
   const h = order.header;
   const payload: OrderCreatePayload = {
-    name: String(h['name']),
+    name: String(h['name']).trim(),
     phone: String(h['phone']),
     date: String(h['date']),
     prepayment: Number(h['prepayment'] ?? 0),

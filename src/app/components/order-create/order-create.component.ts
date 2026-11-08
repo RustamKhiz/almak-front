@@ -419,6 +419,7 @@ export class OrderCreateComponent implements OnInit, OnChanges {
   }
 
   protected onSaveClick(): void {
+    this.ensureDate();
     if (this.aiDraftId()) {
       if (!this.saveAiEditor()) return;
       if (this.aiPartial()) {
@@ -680,21 +681,31 @@ export class OrderCreateComponent implements OnInit, OnChanges {
         : row.document.editorState?.accepted && row.document.editorState.payload
           ? row.document.editorState.payload
           : aiToPayload(row.document.order!);
-    return firstValueFrom(this.ordersService.createOrder(current, this.server.reference(source)));
+    return firstValueFrom(
+      this.ordersService.createOrder(
+        {
+          ...current,
+          name: current.name.trim(),
+          comment: current.comment.trim(),
+          deliveryAddress: current.deliveryAddress.trim(),
+        },
+        this.server.reference(source),
+      ),
+    );
   }
 
-  private buildOrderPayload(): OrderCreatePayload {
+  private buildOrderPayload(trimText = true): OrderCreatePayload {
     const value = this.form.getRawValue();
 
     return {
-      name: value.name.trim(),
+      name: trimText ? value.name.trim() : value.name,
       phone: value.phone,
-      date: value.date,
+      date: value.date || this.todayIso(),
       prepayment: this.prepayment(),
       discount: this.discount(),
       needsDelivery: value.needsDelivery === true,
-      deliveryAddress: value.deliveryAddress.trim(),
-      comment: value.comment.trim(),
+      deliveryAddress: trimText ? value.deliveryAddress.trim() : value.deliveryAddress,
+      comment: trimText ? value.comment.trim() : value.comment,
       status: value.status,
       isPaid: value.isPaid,
       payments: [],
@@ -723,7 +734,7 @@ export class OrderCreateComponent implements OnInit, OnChanges {
       {
         name: order.name,
         phone: order.phone,
-        date: order.date,
+        date: order.date || this.todayIso(),
         comment: order.comment,
         status: order.status,
         isPaid: order.isPaid,
@@ -773,7 +784,7 @@ export class OrderCreateComponent implements OnInit, OnChanges {
       {
         name: String(h['name'] ?? ''),
         phone: String(h['phone'] ?? ''),
-        date: String(h['date'] ?? ''),
+        date: String(h['date'] || this.todayIso()),
         comment: String(h['comment'] ?? ''),
         needsDelivery: typeof h['needsDelivery'] === 'boolean' ? h['needsDelivery'] : null,
         deliveryAddress: String(h['deliveryAddress'] ?? ''),
@@ -798,12 +809,12 @@ export class OrderCreateComponent implements OnInit, OnChanges {
       if (!current) return false;
       const value = this.form.getRawValue();
       const header = {
-        name: value.name.trim() || null,
+        name: value.name || null,
         phone: value.phone || null,
-        date: value.date || null,
-        comment: value.comment.trim() || null,
+        date: value.date || this.todayIso(),
+        comment: value.comment || null,
         needsDelivery: value.needsDelivery,
-        deliveryAddress: value.deliveryAddress.trim() || null,
+        deliveryAddress: value.deliveryAddress || null,
         prepayment: value.draftPrepayment,
         discount: value.draftDiscount,
       };
@@ -818,7 +829,7 @@ export class OrderCreateComponent implements OnInit, OnChanges {
       });
     }
     const updated = this.ai.update(id, (d) => {
-      d.editorState = { payload: this.buildOrderPayload(), accepted: true, defaultsConfirmed: true };
+      d.editorState = { payload: this.buildOrderPayload(false), accepted: true, defaultsConfirmed: true };
     });
     if (!updated) this.submitError.set(this.ai.storageError() || 'Не удалось сохранить черновик.');
     return !!updated;
@@ -838,7 +849,7 @@ export class OrderCreateComponent implements OnInit, OnChanges {
   }
 
   private saveDraft() {
-    const draft = this.draftsService.saveDraft(this.buildOrderPayload(), this.activeDraftId());
+    const draft = this.draftsService.saveDraft(this.buildOrderPayload(false), this.activeDraftId());
     this.activeDraftId.set(draft.temporaryId);
     return draft;
   }
@@ -870,5 +881,8 @@ export class OrderCreateComponent implements OnInit, OnChanges {
   private todayIso(): string {
     const now = new Date();
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  }
+  protected ensureDate(): void {
+    if (!this.form.controls.date.value) this.form.controls.date.setValue(this.todayIso());
   }
 }

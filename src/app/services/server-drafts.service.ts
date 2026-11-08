@@ -66,13 +66,10 @@ export class ServerDraftsService {
   >();
 
   constructor() {
-    const stopCloseListener = window.almakDesktop?.onSaveBeforeClose?.(async () => {
-      try {
-        await this.flushAll();
-        return this.dirty().size === 0 && this.recoveries.size === 0;
-      } catch {
-        return false;
-      }
+    const stopCloseListener = window.almakDesktop?.onSaveBeforeClose?.((complete) => {
+      void this.flushAll()
+        .then(() => complete(this.dirty().size === 0 && this.recoveries.size === 0))
+        .catch(() => complete(false));
     });
     this.destroyRef.onDestroy(() => stopCloseListener?.());
     effect(() => {

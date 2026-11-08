@@ -114,13 +114,39 @@ describe('Opening incomplete AI drafts in the order editor', () => {
     fixture.detectChanges();
     const el: HTMLElement = fixture.nativeElement;
     expect(el.querySelector('a[href="/order/42"]')?.textContent).toContain('заказа №42');
-    expect(el.querySelector<HTMLInputElement>('[formControlName="date"]')?.value).toBe('');
+    expect(el.querySelector<HTMLInputElement>('[formControlName="date"]')?.value).toMatch(/^\d{4}-\d{2}-\d{2}$/);
     const discount = el.querySelector<HTMLInputElement>('[formControlName="draftDiscount"]')!;
     expect(discount.value).toBe('300');
     discount.value = '125';
     discount.dispatchEvent(new Event('input', { bubbles: true }));
     fixture.detectChanges();
     expect(server.records()[row.id].document.payload?.discount).toBe(125);
+  });
+  it('keeps the space between first and last name during autosave and defaults only a missing date', async () => {
+    await open();
+    const input: HTMLInputElement = fixture.nativeElement.querySelector('[formControlName="name"]');
+    input.value = 'магомед ';
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+    expect(input.value).toBe('Магомед ');
+    input.value += 'магомедов';
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+    expect(input.value).toBe('Магомед Магомедов');
+    const date: HTMLInputElement = fixture.nativeElement.querySelector('[formControlName="date"]');
+    expect(date.value).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    expect(fixture.nativeElement.querySelector('[aria-label="Открыть календарь"]')).toBeTruthy();
+    ai.update(id, (draft) => {
+      draft.order.header['date'] = '2026-10-01';
+    });
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+    expect(date.value).toBe('2026-10-01');
   });
   it('opens the normal editor with missing fields and without an approval gate', async () => {
     await open();
@@ -136,7 +162,7 @@ describe('Opening incomplete AI drafts in the order editor', () => {
     expect(el.querySelector('.door-item')!.textContent).toContain('80');
     expect((el.querySelector('[formControlName="name"]') as HTMLInputElement).value).toBe('Рустам');
     expect((el.querySelector('[formControlName="phone"]') as HTMLInputElement).value).toBe('');
-    expect((el.querySelector('[formControlName="date"]') as HTMLInputElement).value).toBe('');
+    expect((el.querySelector('[formControlName="date"]') as HTMLInputElement).value).toMatch(/^\d{4}-\d{2}-\d{2}$/);
     expect(ai.active()!.order.items[0].fields['price']).toBeUndefined();
     click('Сохранить черновик');
     fixture.detectChanges();
