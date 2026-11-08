@@ -42,7 +42,7 @@ describe('Server draft persistence', () => {
       onUpdateState: () => () => undefined,
       installUpdate: () => undefined,
       onSaveBeforeClose: (callback) => {
-        saveBeforeClose = callback;
+        saveBeforeClose = () => new Promise<boolean>((resolve) => callback(resolve));
         return () => undefined;
       },
     };

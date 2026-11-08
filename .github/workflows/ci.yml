@@ -25,5 +25,8 @@ jobs:
       - name: Test desktop updates
         run: npm run test:desktop
 
+      - name: Test Electron close bridge with Zone.js
+        run: xvfb-run -a npm run test:desktop:bridge
+
       - name: Build
         run: npm run build

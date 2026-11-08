@@ -5,14 +5,18 @@ contextBridge.exposeInMainWorld('almakDesktop', {
   platform: process.platform,
   version,
   onSaveBeforeClose: (callback) => {
-    const listener = async (_event, id) => {
-      let saved = false;
+    const listener = (_event, id) => {
+      let replied = false;
+      const complete = (saved) => {
+        if (replied) return;
+        replied = true;
+        ipcRenderer.send('saved-before-close', id, saved === true);
+      };
       try {
-        saved = await callback();
+        callback(complete);
       } catch {
-        /* Keep the window open. */
+        complete(false);
       }
-      ipcRenderer.send('saved-before-close', id, saved === true);
     };
     ipcRenderer.on('save-before-close', listener);
     ipcRenderer.send('close-guard-ready');
