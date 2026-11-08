@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, inject } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
@@ -13,6 +13,7 @@ import { of } from 'rxjs';
 import { CatalogsService } from '../../../services/catalogs.service';
 import { CATALOG_KEYS, CatalogKey } from '../../../common/constants/catalog-keys';
 import { CatalogAutocompleteFieldComponent } from '../../../ui/catalog-autocomplete-field/catalog-autocomplete-field.component';
+import { bindLockAccessories } from '../../../common/utils/hardware-defaults';
 
 export interface OrderDraftItemDialogData {
   item: AiItem;
@@ -69,6 +70,10 @@ export class OrderDraftItemDialogComponent {
       ]),
     ),
   );
+  constructor() {
+    const destroyRef = inject(DestroyRef);
+    if (this.data.item.type === 'hardware') bindLockAccessories(this.form.controls, destroyRef, true);
+  }
 
   protected visible(key: string): boolean {
     const value = this.form.getRawValue();

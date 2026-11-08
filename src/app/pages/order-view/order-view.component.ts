@@ -31,7 +31,6 @@ import { OrdersService } from '../../services/orders.service';
 import { ServerDraftsService } from '../../services/server-drafts.service';
 import { AiOrdersService } from '../../ai-orders/ai-orders.service';
 import { HttpErrorResponse } from '@angular/common/http';
-import { RepeatOrderDialogComponent, RepeatOrderOptions } from './repeat-order-dialog.component';
 import { OrderCreatePayload, OrderPayment, OrderStatus } from '../../types/order.types';
 import {
   OrderViewProductCard,
@@ -76,9 +75,6 @@ export class OrderViewComponent {
   private readonly ai = inject(AiOrdersService);
   protected readonly startingAiEdit = signal(false);
   protected readonly aiEditError = signal('');
-  protected readonly repeating = signal(false);
-  protected readonly repeatError = signal('');
-  private repeatRequest?: RepeatOrderOptions & { requestId: string; orderId: number };
 
   protected readonly isLoading = signal(true);
   protected readonly errorMessage = signal<string | null>(null);
@@ -126,39 +122,6 @@ export class OrderViewComponent {
     const next = !this.showPrivateInfo();
     this.showPrivateInfo.set(next);
     localStorage.setItem('order_view_show_private', String(next));
-  }
-
-  protected onRepeatClick(): void {
-    const orderId = this.state()?.id;
-    if (!orderId || this.repeating()) return;
-    this.repeating.set(true);
-    this.repeatError.set('');
-    this.dialog
-      .open<RepeatOrderDialogComponent, unknown, RepeatOrderOptions>(RepeatOrderDialogComponent)
-      .afterClosed()
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(async (options) => {
-        try {
-          if (!options) return;
-          const previous = this.repeatRequest;
-          const request =
-            previous?.orderId === orderId &&
-            previous.copyComment === options.copyComment &&
-            previous.copyDiscount === options.copyDiscount
-              ? previous
-              : { ...options, orderId, requestId: crypto.randomUUID() };
-          this.repeatRequest = request;
-          const { copyComment, copyDiscount, requestId } = request;
-          const id = await this.drafts.repeatOrder(orderId, { copyComment, copyDiscount, requestId });
-          if (this.destroyRef.destroyed) return;
-          if (!(await this.router.navigate(['/drafts', id]))) throw new Error('Draft navigation failed');
-          this.repeatRequest = undefined;
-        } catch {
-          this.repeatError.set('Не удалось открыть черновик. Повторите попытку с теми же параметрами.');
-        } finally {
-          this.repeating.set(false);
-        }
-      });
   }
 
   protected onDeleteClick(): void {

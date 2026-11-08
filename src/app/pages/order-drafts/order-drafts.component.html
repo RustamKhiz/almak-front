@@ -6,20 +6,6 @@
     </div>
     <button mat-stroked-button type="button" (click)="refresh()" [disabled]="server.loading()">Обновить</button>
   </header>
-  @if (server.legacyCount()) {
-    <div class="drafts-page__row">
-      <span
-        >На этом устройстве найдены прежние черновики и переписки: {{ server.legacyCount() }}. Их можно перенести в
-        общую очередь. Исходные записи сохранятся.</span
-      >
-      <button mat-stroked-button type="button" [disabled]="server.importing()" (click)="server.importLegacy()">
-        {{ server.importing() ? 'Переносим…' : 'Перенести черновики' }}
-      </button>
-    </div>
-  }
-  @if (server.importMessage()) {
-    <p role="status">{{ server.importMessage() }}</p>
-  }
   <div class="drafts-page__row">
     <button mat-stroked-button type="button" (click)="toggleArchive()">
       {{ archived() ? 'Активные черновики' : 'Архив' }}
