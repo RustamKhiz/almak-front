@@ -21,10 +21,12 @@ import { AiDraft } from './ai-order.types';
 import { aiDisplayText, aiDisplayValue } from './ai-presentation';
 import { AuthService } from '../services/auth.service';
 import { ServerDraftsService } from '../services/server-drafts.service';
+import { OrderDictationService } from './order-dictation.service';
 
 @Component({
   selector: 'app-ai-order-chat',
   imports: [FormsModule, MatIconModule, DatePipe, ServerDraftStatusComponent],
+  providers: [OrderDictationService],
   templateUrl: './ai-order-chat.component.html',
   styleUrl: './ai-order-chat.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -32,6 +34,7 @@ import { ServerDraftsService } from '../services/server-drafts.service';
 export class AiOrderChatComponent implements OnDestroy {
   protected readonly ai = inject(AiOrdersService);
   protected readonly server = inject(ServerDraftsService);
+  protected readonly voice = inject(OrderDictationService);
   protected loadMoreChats(): void {
     void this.server.loadMore().catch(() => undefined);
   }
@@ -61,6 +64,7 @@ export class AiOrderChatComponent implements OnDestroy {
   private drag: { x: number; y: number; width: number; height: number; axis: string } | null = null;
   private previousMessageCount = 0;
   private previousDraftId: string | null = null;
+  private dictationDraftId: string | null = null;
   constructor() {
     try {
       const size = JSON.parse(localStorage.getItem('ai_chat_size') ?? 'null');
@@ -73,6 +77,9 @@ export class AiOrderChatComponent implements OnDestroy {
     }
     effect(() => {
       if (!this.auth.authenticated()) this.ai.hideForLogout();
+    });
+    effect(() => {
+      if (this.voice.phase() && !this.canUseDictation()) this.voice.cancel();
     });
     effect(() => {
       const d = this.draft();
@@ -111,6 +118,7 @@ export class AiOrderChatComponent implements OnDestroy {
     });
   }
   ngOnDestroy(): void {
+    this.voice.cancel();
     this.ai.hideForLogout();
     this.endResize();
   }
@@ -123,6 +131,7 @@ export class AiOrderChatComponent implements OnDestroy {
     setTimeout(() => this.input()?.nativeElement.focus());
   }
   protected minimize(): void {
+    this.voice.cancel();
     this.ai.opened.set(false);
     this.endResize();
     this.launcher()?.nativeElement.focus();
@@ -132,8 +141,33 @@ export class AiOrderChatComponent implements OnDestroy {
     this.ai.setText(value);
   }
   protected send(): void {
+    if (this.voice.phase()) return;
     if (!this.ai.setText(this.text())) return;
     this.ai.send();
+  }
+  protected startDictation(): void {
+    this.dictationDraftId = this.ai.activeId();
+    void this.voice.start((transcript) => {
+      if (!this.canUseDictation()) return;
+      const current = this.text();
+      const combined = current && !/\s$/.test(current) ? `${current} ${transcript}` : current + transcript;
+      if (combined.length > 10000) {
+        this.voice.error.set('Текст записи не помещается в сообщение. Сократите сообщение и повторите запись.');
+        return;
+      }
+      this.changed(combined);
+    });
+  }
+
+  private canUseDictation(): boolean {
+    return (
+      this.auth.authenticated() &&
+      this.ai.opened() &&
+      this.canCompose() &&
+      !this.applying() &&
+      !this.chatListOpened() &&
+      this.ai.activeId() === this.dictationDraftId
+    );
   }
   protected key(event: KeyboardEvent): void {
     if (event.key === 'Enter' && !event.shiftKey && !event.isComposing) {
@@ -154,6 +188,7 @@ export class AiOrderChatComponent implements OnDestroy {
   }
   protected startNew(): void {
     if (!this.ai.setText(this.text())) return;
+    this.voice.cancel();
     this.ai.newChat();
     this.chatListOpened.set(false);
     this.text.set('');
@@ -178,11 +213,13 @@ export class AiOrderChatComponent implements OnDestroy {
   }
   protected toggleChatList(): void {
     if (this.canCompose() && !this.ai.setText(this.text())) return;
+    this.voice.cancel();
     this.chatListOpened.set(!this.chatListOpened());
     if (!this.chatListOpened()) setTimeout(() => this.scrollBottom());
   }
   protected switchChat(id: string): void {
     if (this.canCompose() && !this.ai.setText(this.text())) return;
+    this.voice.cancel();
     this.ai.open(id);
     this.chatListOpened.set(false);
     this.text.set(this.ai.active()?.pendingText ?? '');

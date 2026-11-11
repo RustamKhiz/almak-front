@@ -202,23 +202,77 @@
       }
       @if (!chatListOpened()) {
         @if (canCompose()) {
-          <div class="composer">
+          @if (voice.error()) {
+            <p class="voice-status" role="alert">{{ voice.error() }}</p>
+          } @else if (voice.phase(); as phase) {
+            <p class="voice-status">
+              @if (phase === 'recording' && voice.level() !== null) {
+                <span class="voice-meter" [style.--level]="voice.level()" aria-hidden="true">
+                  @for (height of [7, 13, 19, 13, 7]; track $index) {
+                    <span [style.--peak.px]="height"></span>
+                  }
+                </span>
+              }
+              <span role="status">
+                {{
+                  phase === 'recording' ? 'Идёт запись' : phase === 'starting' ? 'Включаю микрофон…' : 'Распознаю речь…'
+                }}
+              </span>
+              @if (phase === 'recording') {
+                <span class="voice-timer">0:{{ voice.elapsedSeconds().toString().padStart(2, '0') }} / 1:00</span>
+              }
+            </p>
+          }
+          <div class="composer" [class.with-microphone]="voice.supported" [class.with-cancel]="voice.phase()">
             <textarea
               #composer
               rows="2"
               maxlength="10000"
-              [disabled]="applying()"
+              [disabled]="applying() || !!voice.phase()"
               aria-label="Описание заказа или уточнение"
               placeholder="Напишите сообщение…"
               [ngModel]="text()"
               (ngModelChange)="changed($event)"
               (keydown)="key($event)"
             ></textarea>
+            @if (voice.phase()) {
+              <button
+                class="dictation cancel-dictation"
+                type="button"
+                aria-label="Отменить запись"
+                title="Отменить запись"
+                (click)="voice.cancel()"
+              >
+                <mat-icon>close</mat-icon>
+              </button>
+              @if (voice.phase() === 'recording') {
+                <button
+                  class="dictation recording"
+                  type="button"
+                  aria-label="Остановить и распознать запись"
+                  title="Остановить и распознать запись"
+                  (click)="voice.stop()"
+                >
+                  <mat-icon>stop</mat-icon>
+                </button>
+              }
+            } @else if (voice.supported) {
+              <button
+                class="dictation"
+                type="button"
+                aria-label="Диктовать сообщение"
+                title="Диктовать сообщение"
+                [disabled]="applying() || ai.busy()"
+                (click)="startDictation()"
+              >
+                <mat-icon>mic</mat-icon>
+              </button>
+            }
             <button
               class="send"
               type="button"
               aria-label="Отправить"
-              [disabled]="!text().trim() || ai.busy() || applying()"
+              [disabled]="!text().trim() || ai.busy() || applying() || !!voice.phase()"
               (click)="send()"
             >
               <mat-icon>arrow_upward</mat-icon>

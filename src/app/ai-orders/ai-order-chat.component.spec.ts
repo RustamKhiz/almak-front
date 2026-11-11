@@ -1,4 +1,4 @@
-import { TestBed, ComponentFixture } from '@angular/core/testing';
+import { TestBed, ComponentFixture, fakeAsync, flushMicrotasks, tick } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideRouter, Router } from '@angular/router';
@@ -65,6 +65,114 @@ describe('Floating AI chat', () => {
       (el) => el.getAttribute('aria-label') === label || el.textContent!.trim() === label,
     )!;
   }
+  function mockMicrophone() {
+    const stopTrack = jasmine.createSpy('stopTrack');
+    spyOn(navigator.mediaDevices, 'getUserMedia').and.resolveTo({
+      getTracks: () => [{ stop: stopTrack }],
+    } as unknown as MediaStream);
+    const recorder = {
+      state: 'inactive',
+      mimeType: 'audio/webm',
+      ondataavailable: null as ((event: { data: Blob }) => void) | null,
+      onstop: null as (() => void) | null,
+      start() {
+        this.state = 'recording';
+      },
+      stop() {
+        this.state = 'inactive';
+        this.ondataavailable?.({ data: new Blob(['test audio'], { type: this.mimeType }) });
+        this.onstop?.();
+      },
+    };
+    const createRecorder = spyOn(window, 'MediaRecorder').and.returnValue(recorder as unknown as MediaRecorder);
+    Object.assign(createRecorder, { isTypeSupported: () => true });
+    return stopTrack;
+  }
+  const transcription = (request: { url: string }) => request.url.endsWith('/ai/order-drafts/transcribe');
+
+  it('shows microphone activity during recording and clears it on cancel', fakeAsync(() => {
+    mockMicrophone();
+    let amplitude = 0;
+    const close = jasmine.createSpy('close').and.resolveTo();
+    spyOn(window, 'AudioContext').and.returnValue({
+      createAnalyser: () => ({
+        getFloatTimeDomainData: (samples: Float32Array) => samples.fill(amplitude),
+      }),
+      createMediaStreamSource: () => ({ connect: () => undefined }),
+      resume: () => Promise.resolve(),
+      close,
+    } as unknown as AudioContext);
+    ai.open(add('Клиент', ''));
+    fixture = TestBed.createComponent(AiOrderChatComponent);
+    fixture.detectChanges();
+    button('Диктовать сообщение').click();
+    http.expectOne(transcription).flush({ enabled: true });
+    flushMicrotasks();
+    tick(64);
+    fixture.detectChanges();
+    const meter: HTMLElement = fixture.nativeElement.querySelector('.voice-meter');
+    expect(meter.style.getPropertyValue('--level')).toBe('0');
+    const bar = meter.children[2] as HTMLElement;
+    expect(bar.style.getPropertyValue('--peak')).toBe('19px');
+    expect(getComputedStyle(bar).height).toBe('3px');
+    amplitude = 0.2;
+    tick(64);
+    fixture.detectChanges();
+    expect(meter.style.getPropertyValue('--level')).toBe('1');
+    button('Отменить запись').click();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.voice-meter')).toBeNull();
+    expect(close).toHaveBeenCalledTimes(1);
+    http.expectNone(transcription);
+  }));
+
+  it('appends the transcript after one minute and waits for manual send', fakeAsync(() => {
+    const stopTrack = mockMicrophone();
+    ai.open(add('Клиент', 'Начало заказа.'));
+    const send = spyOn(ai, 'send');
+    fixture = TestBed.createComponent(AiOrderChatComponent);
+    fixture.detectChanges();
+    button('Диктовать сообщение').click();
+    http.expectOne(transcription).flush({ enabled: true });
+    flushMicrotasks();
+    fixture.detectChanges();
+    const timer = (): string | undefined => fixture.nativeElement.querySelector('.voice-timer')?.textContent.trim();
+    expect(timer()).toBe('0:00 / 1:00');
+    tick(59_999);
+    fixture.detectChanges();
+    expect(timer()).toBe('0:59 / 1:00');
+    http.expectNone(transcription);
+    tick(1);
+    fixture.detectChanges();
+    expect(timer()).toBeUndefined();
+    const upload = http.expectOne(transcription);
+    expect(upload.request.method).toBe('POST');
+    expect((upload.request.body as Blob).type).toBe('audio/webm');
+    upload.flush({ text: 'Две двери.' });
+    fixture.detectChanges();
+    expect(ai.active()?.pendingText).toBe('Начало заказа. Две двери.');
+    expect(stopTrack).toHaveBeenCalledTimes(1);
+    expect(send).not.toHaveBeenCalled();
+    button('Отправить').click();
+    expect(send).toHaveBeenCalledTimes(1);
+    tick();
+  }));
+
+  it('discards a cancelled recording and keeps the typed text', fakeAsync(() => {
+    const stopTrack = mockMicrophone();
+    ai.open(add('Клиент', 'Набранный текст'));
+    fixture = TestBed.createComponent(AiOrderChatComponent);
+    fixture.detectChanges();
+    button('Диктовать сообщение').click();
+    http.expectOne(transcription).flush({ enabled: true });
+    flushMicrotasks();
+    fixture.detectChanges();
+    button('Отменить запись').click();
+    tick(60_000);
+    http.expectNone(transcription);
+    expect(ai.active()?.pendingText).toBe('Набранный текст');
+    expect(stopTrack).toHaveBeenCalledTimes(1);
+  }));
   it('contains only text entry and draft links, without field editors or technical footnotes', async () => {
     const id = add('Магомед', '');
     ai.open(id);
