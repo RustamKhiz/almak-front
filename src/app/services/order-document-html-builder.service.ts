@@ -645,9 +645,9 @@ export class OrderDocumentHtmlBuilderService {
     if (item.frameBoxCount > 0 || frameTotal > 0) {
       rows.push({
         ...common,
-        title: `Коробка (${item.frameCount} шт.)`,
+        title: 'Коробка',
         size: item.frameLength !== null ? `${item.frameLength}` : '-',
-        count: item.frameBoxCount,
+        count: item.frameCount,
         price: item.framePrice,
         amount: frameTotal,
       });

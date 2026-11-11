@@ -248,6 +248,67 @@ h2 {
 .composer textarea::placeholder {
   color: #98a2b4;
 }
+.with-microphone textarea {
+  padding-right: 86px;
+}
+.with-cancel textarea {
+  padding-right: 122px;
+}
+.voice-status {
+  margin: 0 16px 6px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: #425474;
+}
+.voice-meter {
+  height: 22px;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  color: #315dc5;
+}
+.voice-meter span {
+  width: 3px;
+  height: calc(3px + var(--level) * var(--peak));
+  border-radius: 3px;
+  background: currentColor;
+  transition: height 110ms ease-out;
+}
+@media (prefers-reduced-motion: reduce) {
+  .voice-meter span {
+    transition: none;
+  }
+}
+.voice-status[role='alert'] {
+  color: #a32935;
+}
+.voice-timer {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.dictation {
+  position: absolute;
+  right: 46px;
+  bottom: 10px;
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 11px;
+  background: #edf2ff;
+  color: #315dc5;
+}
+.cancel-dictation {
+  right: 82px;
+}
+.recording {
+  background: #fff0ef;
+  color: #a32935;
+}
 .composer textarea:focus {
   outline: 3px solid #315dc510;
   border-color: #8ba6e4;
